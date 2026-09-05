@@ -1,0 +1,43 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <title>Naad — Ambient AI Clinic</title>
+
+    <!-- PWA: lets doctors "Add to Home Screen" on iPhone or Android for a
+         free, app-like install -- no app store, no developer account. -->
+    <link rel="manifest" href="/manifest.webmanifest" />
+    <meta name="theme-color" content="#070a12" />
+
+    <!-- iOS Safari doesn't read the manifest for home-screen behavior the
+         way Android/Chrome does -- these meta tags are what actually make
+         "Add to Home Screen" open full-screen without Safari's UI chrome,
+         and use our icon instead of a screenshot of the page. -->
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="apple-mobile-web-app-title" content="Naad" />
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+  </head>
+  <body>
+    <div id="root"></div>
+    <!-- Service worker registration lives here, as a plain classic script,
+         deliberately independent of the React app bundle -- installability
+         (Add to Home Screen) should keep working even if App.tsx itself
+         fails to boot (e.g. a misconfigured deploy missing Supabase env
+         vars). Registering from inside main.tsx would make it silently
+         never run in exactly that failure case. -->
+    <script>
+      if ('serviceWorker' in navigator) {
+        window.addEventListener('load', function () {
+          navigator.serviceWorker.register('/sw.js').catch(function () {
+            // Installability is a nice-to-have, not a requirement -- a
+            // failed registration must never surface as a user-facing error.
+          });
+        });
+      }
+    </script>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>

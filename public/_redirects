@@ -1,0 +1,5 @@
+# SPA fallback for Netlify: every deep link (e.g. /doctor, /reception, a
+# reopened "Add to Home Screen" bookmark) must resolve to index.html so
+# react-router-dom's BrowserRouter can take over client-side, instead of
+# Netlify 404ing on a path that has no matching static file.
+/*  /index.html  200

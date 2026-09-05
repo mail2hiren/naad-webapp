@@ -1,0 +1,162 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=IBM+Plex+Mono:wght@400;500;600;700&display=swap');
+@import "tailwindcss";
+
+/*
+  Design tokens ported 1:1 from the live production app's own stylesheet
+  (app/digiyaan-live.html, the "borderless glass" design pass) so this
+  rewrite shares the exact same visual language: solid unified dark canvas,
+  border-less tinted cards, the indigo/purple/pink ambient-AI aura, and the
+  glowing accent-ink used for the phone-frame borders in the mobile shell.
+  Do not introduce new hues here -- extend this palette, never replace it.
+*/
+:root {
+  --bg: #070a12;
+  --surface: rgba(255, 255, 255, 0.02);
+  --surface-2: rgba(255, 255, 255, 0.04);
+  --surface-panel: rgba(255, 255, 255, 0.03);
+  --ink: #EDEFF4;
+  --ink-soft: rgba(237, 239, 244, 0.66);
+  /* Was 0.42 -- measured ~3.7:1 against --bg, below the 4.5:1 WCAG AA floor
+     for normal text, and this token is what every field label, placeholder,
+     and helper line in the app uses. Doctor feedback (Dr. Jayani,
+     2026-09-03: "statements and words... many fields are not readable
+     properly") traced back to this. 0.58 measures ~6.1:1 -- clearly legible
+     at the small mono label sizes used throughout, while staying visually
+     one step down from --ink-soft so the faint/soft/full hierarchy still
+     reads. Do not lower this again without re-checking contrast. */
+  --ink-faint: rgba(237, 239, 244, 0.58);
+  --line: rgba(255, 255, 255, 0.05);
+  --line-strong: rgba(255, 255, 255, 0.06);
+  --accent: #6EE7D8;
+  --accent-ink: #8FD9FF;
+  --accent-soft: rgba(110, 231, 216, 0.12);
+  --accent-2: #8B93FF;
+  --gate: #F0C36B;
+  --gate-soft: rgba(240, 195, 107, 0.12);
+  --ok: #6FE7A9;
+  --ok-soft: rgba(111, 231, 169, 0.12);
+  --danger: #FF8C7C;
+  --danger-soft: rgba(255, 140, 124, 0.12);
+  --aura-1: #6366F1;
+  --aura-2: #A855F7;
+  --aura-3: #EC4899;
+  --radius: 12px;
+  --radius-lg: 20px;
+  --blur: 24px;
+  --frame-edge: #1c2230;
+}
+
+@theme {
+  --color-bg: var(--bg);
+  --color-surface: var(--surface);
+  --color-surface-2: var(--surface-2);
+  --color-surface-panel: var(--surface-panel);
+  --color-ink: var(--ink);
+  --color-ink-soft: var(--ink-soft);
+  --color-ink-faint: var(--ink-faint);
+  --color-line: var(--line);
+  --color-line-strong: var(--line-strong);
+  --color-accent: var(--accent);
+  --color-accent-ink: var(--accent-ink);
+  --color-accent-soft: var(--accent-soft);
+  --color-accent-2: var(--accent-2);
+  --color-gate: var(--gate);
+  --color-gate-soft: var(--gate-soft);
+  --color-ok: var(--ok);
+  --color-ok-soft: var(--ok-soft);
+  --color-danger: var(--danger);
+  --color-danger-soft: var(--danger-soft);
+  --color-aura-1: var(--aura-1);
+  --color-aura-2: var(--aura-2);
+  --color-aura-3: var(--aura-3);
+  --color-frame-edge: var(--frame-edge);
+  --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  --font-mono: 'IBM Plex Mono', ui-monospace, monospace;
+  --radius-radius: var(--radius);
+  --radius-radius-lg: var(--radius-lg);
+}
+
+* { box-sizing: border-box; }
+html, body, #root { height: 100%; }
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--ink);
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+}
+h1, h2, h3, h4 { font-weight: 800; letter-spacing: -0.015em; line-height: 1.15; color: var(--ink); margin: 0; }
+a { color: var(--accent-ink); text-decoration: none; }
+::selection { background: var(--accent); color: var(--bg); }
+button:focus-visible, a:focus-visible, input:focus-visible, textarea:focus-visible, select:focus-visible {
+  outline: 2px solid var(--accent); outline-offset: 2px;
+}
+button, input, textarea, select { font-family: inherit; font-size: inherit; color: inherit; }
+button { cursor: pointer; }
+
+@keyframes blobMorph {
+  0%, 100% { border-radius: 46% 54% 62% 38% / 40% 46% 54% 60%; }
+  50% { border-radius: 58% 42% 40% 60% / 55% 45% 55% 45%; }
+}
+@keyframes blobSpin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+@keyframes chipPulse {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(143, 217, 255, 0.45); }
+  50% { box-shadow: 0 0 0 5px rgba(143, 217, 255, 0); }
+}
+@keyframes redPulse {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(255, 90, 90, 0.55); }
+  50% { box-shadow: 0 0 0 9px rgba(255, 90, 90, 0); }
+}
+@keyframes toastIn {
+  from { opacity: 0; transform: translateY(-10px) scale(.98); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+/* Ambient-AI aura: an organic morphing blob (not a circle) filled with a
+   rotating conic gradient through the product's indigo -> purple -> pink
+   hues -- carried over verbatim from the live app's own .aura component. */
+.aura-orb {
+  border-radius: 46% 54% 62% 38% / 40% 46% 54% 60%;
+  background: conic-gradient(from 210deg, var(--aura-1), var(--aura-2), var(--aura-3), var(--aura-1));
+  filter: blur(1px) saturate(150%);
+  box-shadow: 0 0 40px 6px rgba(139, 92, 246, .3);
+  animation: blobMorph 6s ease-in-out infinite, blobSpin 10s linear infinite;
+  transition: background .6s ease, filter .6s ease, box-shadow .6s ease, opacity .6s ease;
+}
+.aura-orb.paused {
+  animation: none;
+  background: linear-gradient(135deg, #3b4252, #5b6478);
+  filter: blur(3px) saturate(50%) grayscale(.35);
+  box-shadow: none;
+  opacity: .5;
+}
+
+/* orb-stage: centerpiece placement for the ambient orb, used wherever an
+   ambient-capture control (dictation, ambient intake) should read as the
+   focal point of the card rather than a small inline accent -- restores the
+   "screen hero" treatment across every ambient-capture screen, not just
+   Doctor Portal's compact status row. */
+.orb-stage {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 96px;
+  padding: 8px 0;
+}
+
+/* Phone-frame device shell -- the glowing blue container border this app
+   is built around. Reused for the mobile-simulator gallery views. */
+.device-frame {
+  background: #07090e;
+  border-radius: 44px;
+  border: 6px solid var(--frame-edge);
+  box-shadow: 0 30px 70px -20px rgba(0, 0, 0, .75), 0 0 0 1px rgba(255, 255, 255, .02);
+  transition: box-shadow .35s ease;
+}
+.device-frame.focused {
+  box-shadow: 0 30px 70px -20px rgba(0, 0, 0, .8), 0 0 0 2px var(--accent-ink), 0 0 44px -6px rgba(143, 217, 255, .35);
+}
+
+::-webkit-scrollbar { width: 10px; height: 10px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: rgba(255, 255, 255, .08); border-radius: 8px; }

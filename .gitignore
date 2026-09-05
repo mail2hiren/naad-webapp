@@ -1,0 +1,15 @@
+node_modules
+dist
+test-results
+playwright-report
+.env
+.env.local
+
+# One-off scratch/demo artifacts, not part of the deployed app -- keeps the
+# repo scoped to the real production source Netlify actually builds.
+naad-production-dist.zip
+naad-demo-artifact.html
+naad-flow-walkthrough.html
+walkthrough.template.html
+build_walkthrough.py
+video/
