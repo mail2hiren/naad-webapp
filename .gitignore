@@ -1,5 +1,6 @@
 node_modules
 dist
+dist-realambient
 test-results
 playwright-report
 .env

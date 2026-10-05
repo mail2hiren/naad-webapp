@@ -193,10 +193,11 @@ class MockChannel {
 }
 
 type AuthUser = { id: string; email: string };
-type AuthChangeCb = (event: string, session: { user: AuthUser } | null) => void;
+type MockSession = { user: AuthUser; access_token: string };
+type AuthChangeCb = (event: string, session: MockSession | null) => void;
 
 class MockAuth {
-  private session: { user: AuthUser } | null = null;
+  private session: MockSession | null = null;
   private listeners = new Set<AuthChangeCb>();
 
   async signInWithPassword({ email, password }: { email: string; password: string }) {
@@ -205,7 +206,7 @@ class MockAuth {
       return { data: { user: null, session: null }, error: { message: 'Invalid login credentials' } };
     }
     const user: AuthUser = { id: cred.userId, email };
-    this.session = { user };
+    this.session = { user, access_token: 'mock-access-token' };
     this.listeners.forEach((cb) => cb('SIGNED_IN', this.session));
     return { data: { user, session: this.session }, error: null };
   }

@@ -5,7 +5,7 @@ import { useAmbientIntake } from '../hooks/useAmbientIntake';
 import { useRealAmbientCapture, type ExtractResult } from '../hooks/useRealAmbientCapture';
 import { AmbientOrb, Card, Btn, Pill, SectionHead, Field, inputCls, Modal } from '../components/ui';
 import Shell from '../components/Shell';
-import { supabase, isMockBackend } from '../lib/supabaseClient';
+import { supabase, scriptedAmbient } from '../lib/supabaseClient';
 import type { DocumentLabel, TriageVitals } from '../types/db';
 
 /** Local, not-yet-registered doc attached to the in-progress walk-in draft.
@@ -145,7 +145,7 @@ export default function ReceptionView() {
 
   // Real ambient AI (Deepgram transcription + Claude structured extraction
   // via the `transcribe-and-extract` edge function) -- gated behind
-  // `isMockBackend` so mock mode / Playwright CI keeps using the scripted
+  // `scriptedAmbient` so mock mode / Playwright CI keeps using the scripted
   // simulation above completely unchanged. `patientId` closes over the
   // component's `walkInPatientId` state, so `ensureWalkInPatientId()` must
   // resolve (and trigger the resulting re-render) before `.start()`/`.stop()`
@@ -160,7 +160,7 @@ export default function ReceptionView() {
   // missing server keys, etc. Never blocks the workflow: reception can
   // always fall back to typing (the box below, or the plain intake fields).
   useEffect(() => {
-    if (!isMockBackend && realCapture.error) {
+    if (!scriptedAmbient && realCapture.error) {
       pushToast({ tone: 'warning', title: 'Ambient AI', detail: realCapture.error.message });
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -197,7 +197,7 @@ export default function ReceptionView() {
   }
 
   async function handleAmbientMicClick() {
-    if (isMockBackend) { startAmbientIntake(); return; }
+    if (scriptedAmbient) { startAmbientIntake(); return; }
     if (realCapture.status === 'recording') {
       const result = await realCapture.stop();
       if (result) applyReceptionExtraction(result);
@@ -209,9 +209,10 @@ export default function ReceptionView() {
   }
 
   async function handleSubmitTypedIntake() {
-    if (isMockBackend || !typedIntakeText.trim()) return;
-    await ensureWalkInPatientId();
-    const result = await realCapture.submitTypedText(typedIntakeText.trim());
+    if (scriptedAmbient || !typedIntakeText.trim()) return;
+    if (realCapture.status === 'recording') realCapture.cancel();
+    const pid = await ensureWalkInPatientId();
+    const result = await realCapture.submitTypedText(typedIntakeText.trim(), { patientId: pid });
     if (result) {
       applyReceptionExtraction(result);
       setTypedIntakeText('');
@@ -545,7 +546,7 @@ export default function ReceptionView() {
     }
   }
 
-  const isAmbientRecording = isMockBackend ? intake.isRecording : realCapture.status === 'recording';
+  const isAmbientRecording = scriptedAmbient ? intake.isRecording : realCapture.status === 'recording';
   const showPauseGate = isAmbientRecording || selectedPatientId != null;
   const pauseTargetPatient = selectedPatientId ? patients.find((p) => p.id === selectedPatientId) ?? null : null;
 
@@ -723,16 +724,16 @@ export default function ReceptionView() {
         {/* Central Audio Anchor -- the heroic pulsing violet/indigo capture
             orb, freezing into a muted static state (.aura-orb.paused) the
             instant intake is paused. */}
-        <AmbientOrb size="hero" active={isMockBackend ? intake.isRecording : realCapture.status === 'recording'} />
+        <AmbientOrb size="hero" active={scriptedAmbient ? intake.isRecording : realCapture.status === 'recording'} />
 
         <div className="mt-1 flex flex-wrap items-center justify-center gap-3">
           <Btn
             variant={isAmbientRecording ? 'danger' : 'primary'}
             data-testid="start-ambient-intake"
-            disabled={walkInPaused || (!isMockBackend && realCapture.status === 'processing')}
+            disabled={walkInPaused || (!scriptedAmbient && realCapture.status === 'processing')}
             onClick={handleAmbientMicClick}
           >
-            🎙️ {isMockBackend
+            🎙️ {scriptedAmbient
               ? (intake.isRecording ? 'Recording…' : 'Start Ambient AI Registration')
               : (realCapture.status === 'recording' ? 'Recording… (tap to stop)'
                 : realCapture.status === 'processing' ? 'Transcribing…'
@@ -760,7 +761,7 @@ export default function ReceptionView() {
           )}
         </div>
 
-        {!isMockBackend && !realCapture.supported && (
+        {!scriptedAmbient && !realCapture.supported && (
           <div className="mt-2 text-center text-[11px] text-ink-faint">
             Voice capture isn't supported in this browser — use typed dictation below instead.
           </div>
@@ -771,7 +772,7 @@ export default function ReceptionView() {
             reception simply prefers to type. Real mode only; mock mode has
             no equivalent since the scripted simulation already "types" the
             transcript for demo purposes. */}
-        {!isMockBackend && (
+        {!scriptedAmbient && (
           <div className="mt-3 text-center">
             <button
               type="button"

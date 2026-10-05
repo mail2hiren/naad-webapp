@@ -1,4 +1,4 @@
-import { useCallback, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { supabase } from '../lib/supabaseClient';
 
 /**
@@ -18,7 +18,7 @@ import { supabase } from '../lib/supabaseClient';
  * `app/digiyaan-live.html` (search "REAL AMBIENT AI (online mode)").
  *
  * Deliberately NOT used in mock mode (`VITE_USE_MOCK=1`) -- callers must
- * check `isMockBackend` themselves and keep the existing scripted/simulated
+ * check `scriptedAmbient` themselves and keep the existing scripted/simulated
  * path there, since there is no real backend to call in CI/local dev and
  * headless test runners have no microphone anyway. This keeps every
  * existing Playwright test's behavior byte-for-byte unchanged.
@@ -58,6 +58,9 @@ export function micSupported(): boolean {
     && typeof MediaRecorder !== 'undefined';
 }
 
+/** Explicit ids for a call made in the same tick a row was created. */
+export type CaptureOverride = { patientId?: string; encounterId?: string | null };
+
 export function useRealAmbientCapture(opts: {
   stage: CaptureStage;
   patientId: string | null;
@@ -65,6 +68,11 @@ export function useRealAmbientCapture(opts: {
 }) {
   const [status, setStatus] = useState<CaptureStatus>('idle');
   const [error, setError] = useState<CaptureError | null>(null);
+  // Always read the *latest* patient/encounter ids at POST time. A caller that
+  // creates the patient row and immediately submits (typed intake) would
+  // otherwise post with the stale id captured by the previous render.
+  const optsRef = useRef(opts);
+  useEffect(() => { optsRef.current = opts; });
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const streamRef = useRef<MediaStream | null>(null);
   const chunksRef = useRef<Blob[]>([]);
@@ -79,8 +87,11 @@ export function useRealAmbientCapture(opts: {
   /** Low-level POST to the edge function, shared by the mic path (an audio
    * Blob) and the typed-text fallback (plain text, no audio) -- same shape
    * as the old showcase's `postToAI` helper. */
-  const postToAI = useCallback(async (body: Blob | string): Promise<ExtractResult> => {
-    if (!opts.patientId) throw { kind: 'unknown', message: 'No patient selected yet.' } as CaptureError;
+  const postToAI = useCallback(async (body: Blob | string, override?: CaptureOverride): Promise<ExtractResult> => {
+    const cur = optsRef.current;
+    const patientId = override?.patientId ?? cur.patientId;
+    const encounterId = override?.encounterId !== undefined ? override.encounterId : cur.encounterId;
+    if (!patientId) throw { kind: 'unknown', message: 'No patient selected yet.' } as CaptureError;
 
     const { data: sessionData } = await supabase.auth.getSession();
     const token = sessionData?.session?.access_token;
@@ -91,10 +102,10 @@ export function useRealAmbientCapture(opts: {
     const headers: Record<string, string> = {
       Authorization: `Bearer ${token}`,
       'Content-Type': isTyped ? 'text/plain' : (body.type || 'audio/webm'),
-      'x-stage': opts.stage,
-      'x-patient-id': opts.patientId,
+      'x-stage': cur.stage,
+      'x-patient-id': patientId,
     };
-    if (opts.encounterId) headers['x-encounter-id'] = opts.encounterId;
+    if (encounterId) headers['x-encounter-id'] = encounterId;
 
     let res: Response;
     try {
@@ -126,7 +137,7 @@ export function useRealAmbientCapture(opts: {
     }
 
     return res.json();
-  }, [opts.stage, opts.patientId, opts.encounterId]);
+  }, []);
 
   const start = useCallback(async () => {
     setError(null);
@@ -161,7 +172,7 @@ export function useRealAmbientCapture(opts: {
    * via a toast). Never throws, so a failed AI call can never block the
    * consultation workflow -- the doctor/reception can always fall back to
    * typing, exactly like the reference implementation. */
-  const stop = useCallback(async (): Promise<ExtractResult | null> => {
+  const stop = useCallback(async (override?: CaptureOverride): Promise<ExtractResult | null> => {
     const mr = mediaRecorderRef.current;
     if (!mr || mr.state === 'inactive') return null;
     setStatus('processing');
@@ -176,7 +187,7 @@ export function useRealAmbientCapture(opts: {
         setStatus('error');
         return null;
       }
-      const result = await postToAI(blob);
+      const result = await postToAI(blob, override);
       setStatus('idle');
       return result;
     } catch (e) {
@@ -202,12 +213,12 @@ export function useRealAmbientCapture(opts: {
    * audited exactly like the recorded path (the old showcase added this
    * after a live session showed the client falling back to a blank note
    * whenever someone typed instead of recording). */
-  const submitTypedText = useCallback(async (text: string): Promise<ExtractResult | null> => {
+  const submitTypedText = useCallback(async (text: string, override?: CaptureOverride): Promise<ExtractResult | null> => {
     if (!text.trim()) return null;
     setError(null);
     setStatus('processing');
     try {
-      const result = await postToAI(text);
+      const result = await postToAI(text, override);
       setStatus('idle');
       return result;
     } catch (e) {

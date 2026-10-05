@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { useClinic } from '../context/ClinicContext';
-import { supabase, isMockBackend } from '../lib/supabaseClient';
+import { supabase, scriptedAmbient } from '../lib/supabaseClient';
 import { useRealAmbientCapture, type ExtractResult } from '../hooks/useRealAmbientCapture';
 import Shell from '../components/Shell';
 import { AmbientOrb, Btn, BulletList, BulletListEditor, Card, Collapsible, Field, Modal, Pill, SectionHead, Tabs, inputCls } from '../components/ui';
@@ -106,7 +106,7 @@ export default function DoctorView() {
 
   // Real ambient AI (Deepgram transcription + Claude structured extraction
   // via the `transcribe-and-extract` edge function) -- gated behind
-  // `isMockBackend` so mock mode / Playwright CI keeps the existing
+  // `scriptedAmbient` so mock mode / Playwright CI keeps the existing
   // no-op dictation flow (a doctor just types into the note fields
   // directly) completely unchanged. Physiotherapists get the `physio`
   // stage (which never extracts exam findings from surgeons' consults,
@@ -121,7 +121,7 @@ export default function DoctorView() {
   const [showTypedDictation, setShowTypedDictation] = useState(false);
 
   useEffect(() => {
-    if (!isMockBackend && realCapture.error) {
+    if (!scriptedAmbient && realCapture.error) {
       pushToast({ tone: 'warning', title: 'Ambient AI', detail: realCapture.error.message });
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -207,7 +207,10 @@ export default function DoctorView() {
   }
 
   async function handleSubmitTypedDictation() {
-    if (isMockBackend || !typedDictationText.trim()) return;
+    if (scriptedAmbient || !typedDictationText.trim()) return;
+    // Typed text supersedes a live recording: release the mic instead of
+    // leaving it open (and un-uploaded) behind the typed note.
+    if (realCapture.status === 'recording') realCapture.cancel();
     const result = await realCapture.submitTypedText(typedDictationText.trim());
     if (result) {
       applyExtraction(result);
@@ -340,14 +343,14 @@ export default function DoctorView() {
       }
       await logAudit('start-dictation', patient.name);
       pushToast({ tone: 'ok', title: 'Ambient session started', detail: patient.name });
-      if (!isMockBackend) await realCapture.start();
+      if (!scriptedAmbient) await realCapture.start();
     } finally {
       setStartBusy(false);
     }
   }
 
   async function handleStopDictation() {
-    if (!isMockBackend && realCapture.status === 'recording') {
+    if (!scriptedAmbient && realCapture.status === 'recording') {
       const result = await realCapture.stop();
       if (result) applyExtraction(result);
     }
@@ -700,37 +703,44 @@ export default function DoctorView() {
                     </Card>
                   ) : (
                     <Card>
-                      <AmbientOrb size="hero" active={!dictationPaused && (isMockBackend || realCapture.status !== 'processing')} />
+                      <AmbientOrb size="hero" active={!dictationPaused && (scriptedAmbient || realCapture.status === 'recording')} />
                       <div className="flex items-center justify-between gap-4 flex-wrap">
                         <div>
                           <div className="text-ink font-semibold text-sm">
                             {dictationPaused ? 'Ambient Session Paused'
-                              : !isMockBackend && realCapture.status === 'processing' ? 'Transcribing…'
-                                : 'AI Ambient Session Active'}
+                              : !scriptedAmbient && realCapture.status === 'processing' ? 'Transcribing…'
+                                : !scriptedAmbient && realCapture.status !== 'recording' ? 'Ambient Session Open'
+                                  : 'AI Ambient Session Active'}
                           </div>
                           <p className="text-ink-faint text-xs">
                             {dictationPaused ? 'Review the quality gate, then authorize.'
-                              : !isMockBackend && realCapture.status === 'processing' ? 'Extracting the clinical note from the recording…'
-                                : 'Live Dictation'}
+                              : !scriptedAmbient && realCapture.status === 'processing' ? 'Extracting the clinical note from the recording…'
+                                : !scriptedAmbient && realCapture.status !== 'recording' ? 'Microphone is off — tap Start Recording to capture this visit, or type below.'
+                                  : 'Live Dictation'}
                           </p>
                         </div>
+                        {!scriptedAmbient && !dictationPaused && realCapture.status !== 'recording' && realCapture.status !== 'processing' && realCapture.supported && (
+                          <Btn variant="glow" data-testid="resume-recording" onClick={() => { void realCapture.start(); }}>
+                            🎙️ Start Recording
+                          </Btn>
+                        )}
                         <Btn
                           variant="gate"
                           data-testid="stop-dictation"
-                          disabled={!isMockBackend && realCapture.status === 'processing'}
+                          disabled={!scriptedAmbient && realCapture.status === 'processing'}
                           onClick={handleStopDictation}
                         >
-                          {!isMockBackend && realCapture.status === 'processing' ? 'Transcribing…' : 'Stop Dictation'}
+                          {!scriptedAmbient && realCapture.status === 'processing' ? 'Transcribing…' : 'Stop Dictation'}
                         </Btn>
                       </div>
 
-                      {!isMockBackend && !realCapture.supported && (
+                      {!scriptedAmbient && !realCapture.supported && (
                         <div className="mt-2 text-[11px] text-ink-faint">
                           Voice capture isn't supported in this browser — use typed dictation below instead.
                         </div>
                       )}
 
-                      {!isMockBackend && (
+                      {!scriptedAmbient && (
                         <div className="mt-3">
                           <button
                             type="button"
