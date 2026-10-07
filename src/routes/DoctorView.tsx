@@ -803,6 +803,7 @@ export default function DoctorView() {
                               onChange={(next) => updateNote({ soapSummary: { ...noteDraft.soapSummary, examination: next } })}
                               placeholder="e.g. Tenderness over medial joint line"
                               emptyLabel="No examination findings added yet."
+                              itemLabel="Examination finding"
                             />
                           </Field>
                           <Field label="Assessment">
@@ -811,6 +812,7 @@ export default function DoctorView() {
                               onChange={(next) => updateNote({ soapSummary: { ...noteDraft.soapSummary, assessment: next } })}
                               placeholder="e.g. Likely grade II MCL sprain"
                               emptyLabel="No assessment points added yet."
+                              itemLabel="Assessment point"
                             />
                           </Field>
                           <Field label="Plan">
@@ -864,7 +866,7 @@ export default function DoctorView() {
                           <div className="flex flex-col gap-1.5">
                             {noteDraft.precautions.map((p, idx) => (
                               <div key={idx} className="flex gap-1.5">
-                                <input className={inputCls} value={p} onChange={(e) => updatePrecaution(idx, e.target.value)} />
+                                <input className={inputCls} aria-label={`Precaution ${idx + 1}`} value={p} onChange={(e) => updatePrecaution(idx, e.target.value)} />
                                 <Btn variant="danger" onClick={() => removePrecaution(idx)}>Remove</Btn>
                               </div>
                             ))}
@@ -882,7 +884,7 @@ export default function DoctorView() {
                           <div className="flex flex-col gap-1.5">
                             {noteDraft.dosAndDonts.map((p, idx) => (
                               <div key={idx} className="flex gap-1.5">
-                                <input className={inputCls} value={p} onChange={(e) => updateDosDont(idx, e.target.value)} />
+                                <input className={inputCls} aria-label={`Do or don't ${idx + 1}`} value={p} onChange={(e) => updateDosDont(idx, e.target.value)} />
                                 <Btn variant="danger" onClick={() => removeDosDont(idx)}>Remove</Btn>
                               </div>
                             ))}

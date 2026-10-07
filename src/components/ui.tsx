@@ -102,13 +102,15 @@ export const inputCls =
  * as bullet points, not a paragraph, for a quick glance mid-consult).
  */
 export function BulletListEditor({
-  items, onChange, placeholder, addLabel = '+ Add point', emptyLabel = 'Nothing added yet.',
+  items, onChange, placeholder, addLabel = '+ Add point', emptyLabel = 'Nothing added yet.', itemLabel = 'Point',
 }: {
   items: string[];
   onChange: (next: string[]) => void;
   placeholder?: string;
   addLabel?: string;
   emptyLabel?: string;
+  /** Accessible name prefix for each row's input and remove button. */
+  itemLabel?: string;
 }) {
   function add() { onChange([...items, '']); }
   function update(idx: number, val: string) { onChange(items.map((it, i) => (i === idx ? val : it))); }
@@ -123,11 +125,12 @@ export function BulletListEditor({
             <input
               className={inputCls}
               data-testid="bullet-input"
+              aria-label={`${itemLabel} ${idx + 1}`}
               placeholder={placeholder}
               value={it}
               onChange={(e) => update(idx, e.target.value)}
             />
-            <Btn variant="danger" onClick={() => remove(idx)}>✕</Btn>
+            <Btn variant="danger" aria-label={`Remove ${itemLabel.toLowerCase()} ${idx + 1}`} onClick={() => remove(idx)}>✕</Btn>
           </div>
         ))}
         {items.length === 0 && <p className="text-ink-faint text-xs">{emptyLabel}</p>}

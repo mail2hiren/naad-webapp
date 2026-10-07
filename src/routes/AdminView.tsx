@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import Shell from '../components/Shell';
 import { Card, Btn, Pill, SectionHead, StatTile, inputCls } from '../components/ui';
 import { useClinic } from '../context/ClinicContext';
@@ -80,6 +80,8 @@ export default function AdminView() {
         <StatTile label="Total Revenue Collected" value={fmtRupees(totalRevenue)} tone="accent" />
       </div>
 
+      <PlanAndSeats practitionerCount={practitioners.length} />
+
       <FeeEditor doctors={doctors} pushToast={pushToast} />
 
       <PasswordRecovery practitioners={practitioners} logAudit={logAudit} />
@@ -93,6 +95,76 @@ export default function AdminView() {
         logAudit={logAudit}
       />
     </Shell>
+  );
+}
+
+/* ---------------------------------------------------------------------- */
+/* Plan & seats (subscription)                                            */
+/* ---------------------------------------------------------------------- */
+
+interface SeatUsage {
+  plan: string;
+  subscription_status: 'trialing' | 'active' | 'past_due' | 'canceled';
+  seat_limit: number;
+  seats_used: number;
+  trial_ends_at: string | null;
+  current_period_end: string | null;
+}
+
+const STATUS_TONE = { active: 'ok', trialing: 'accent', past_due: 'gate', canceled: 'danger' } as const;
+
+/** Read-only view of this hospital's plan and how many of its user seats are
+ * in use. The limit itself is enforced in the database (see
+ * supabase/migrations) and can only be changed by the service role -- i.e.
+ * your billing webhook or an admin SQL update -- never from this screen. */
+function PlanAndSeats({ practitionerCount }: { practitionerCount: number }) {
+  const [usage, setUsage] = useState<SeatUsage | null>(null);
+  const [failed, setFailed] = useState(false);
+
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      const { data, error } = await supabase.rpc('org_seat_usage');
+      if (cancelled) return;
+      const row = Array.isArray(data) ? data[0] : data;
+      if (error || !row) { setFailed(true); return; }
+      setUsage(row as SeatUsage);
+    })();
+    return () => { cancelled = true; };
+    // practitionerCount: re-read when staff are added/removed.
+  }, [practitionerCount]);
+
+  if (failed) return null; // older database without the subscription migration
+  if (!usage) return null;
+
+  const pct = usage.seat_limit > 0 ? Math.min(100, Math.round((usage.seats_used / usage.seat_limit) * 100)) : 100;
+  const nearLimit = pct >= 90;
+  const fmtDate = (iso: string | null) => (iso ? new Date(iso).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' }) : null);
+  const renews = usage.subscription_status === 'trialing' ? fmtDate(usage.trial_ends_at) : fmtDate(usage.current_period_end);
+
+  return (
+    <Card className="mb-6" data-testid="plan-seats">
+      <div className="flex items-start justify-between gap-3 flex-wrap mb-3">
+        <div className="font-mono text-[10px] tracking-[.14em] uppercase text-accent-ink">Plan &amp; User Seats</div>
+        <Pill tone={STATUS_TONE[usage.subscription_status]}>{usage.subscription_status.replace('_', ' ')}</Pill>
+      </div>
+      <div className="flex items-baseline gap-2 flex-wrap">
+        <span className="font-mono text-xl font-bold text-ink" data-testid="seats-used">{usage.seats_used} / {usage.seat_limit}</span>
+        <span className="text-sm text-ink-soft">user seats in use · <span className="capitalize">{usage.plan}</span> plan</span>
+      </div>
+      <div
+        className="mt-3 h-2 rounded-full bg-surface-2 overflow-hidden"
+        role="progressbar" aria-label="User seats in use" aria-valuemin={0} aria-valuemax={usage.seat_limit} aria-valuenow={usage.seats_used}
+      >
+        <div className={`h-full rounded-full ${nearLimit ? 'bg-gate' : 'bg-accent-ink'}`} style={{ width: `${pct}%` }} />
+      </div>
+      <p className="text-xs text-ink-faint mt-2">
+        {nearLimit
+          ? 'You are close to your seat limit. Contact DigiYaan to add more seats before onboarding new staff.'
+          : 'Each active staff account uses one seat. Patients never use a seat.'}
+        {renews ? ` ${usage.subscription_status === 'trialing' ? 'Trial ends' : 'Current period ends'} ${renews}.` : ''}
+      </p>
+    </Card>
   );
 }
 
@@ -154,6 +226,7 @@ function FeeEditor({
                 type="number"
                 min={0}
                 data-testid="fee-input"
+                aria-label={`Consultation fee for ${doc.name}`}
                 className={`${inputCls} w-28`}
                 value={valueFor(doc)}
                 onChange={(e) => setDrafts((prev) => ({ ...prev, [doc.id]: e.target.value }))}

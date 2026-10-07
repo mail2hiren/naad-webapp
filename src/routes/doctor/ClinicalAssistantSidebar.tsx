@@ -239,6 +239,7 @@ function SkeletalAssessmentLog({ note, onUpdateNote }: { note: ClinicalNote; onU
             <span className={`w-2 h-2 rounded-full shrink-0 ${ALIGNMENT_TONE[e.alignment]}`} />
             <input
               className={inputCls}
+              aria-label={`Joint ${idx + 1}`}
               placeholder="Joint (e.g. Left Knee)"
               value={e.joint}
               onChange={(ev) => updateJoint(idx, { joint: ev.target.value })}

@@ -31,10 +31,9 @@ interface ClinicState {
   pushToast: (t: Omit<Toast, 'id'>) => void;
   dismissToast: (id: string) => void;
   logAudit: (action: string, detail: string) => Promise<void>;
-  refresh: () => Promise<void>;
+  refresh: (baseline?: boolean) => Promise<void>;
 }
 
-const ORG_ID = 'org1';
 // Row 4.0 (Clinical_User_Stories) -- "Card flashes neon border glow on
 // incoming updates". How long a pharmacy order stays in the "just arrived"
 // set after its INSERT event lands, so PharmacyView can ring its card.
@@ -88,18 +87,32 @@ export function ClinicProvider({ children }: { children: ReactNode }) {
   }, []);
   const dismissToast = useCallback((id: string) => setToasts((prev) => prev.filter((x) => x.id !== id)), []);
 
-  const refresh = useCallback(async () => {
+  const orgId = practitioner?.org_id ?? '';
+
+  /** Loads every table for the signed-in practitioner's hospital. `baseline`
+   * marks whatever notifications already exist as seen, so logging in never
+   * replays weeks-old alerts as toasts + chimes (only notifications that
+   * arrive afterwards are announced). With nobody signed in nothing is
+   * fetched and any previously loaded data is dropped, so a sign-out never
+   * leaves the last user's patient list in memory. */
+  const refresh = useCallback(async (baseline = false) => {
+    if (!orgId) {
+      setPatients([]); setPractitioners([]); setAppointments([]); setEncounters([]);
+      setPrescriptions([]); setPharmacyOrders([]); setReferrals([]); setWardLedger([]);
+      setInventory([]); setNotifications([]);
+      return;
+    }
     const [p, pr, ap, en, rx, po, rf, wl, inv, nt] = await Promise.all([
-      supabase.from('patients').select('*').eq('org_id', ORG_ID),
-      supabase.from('practitioners').select('*').eq('org_id', ORG_ID),
-      supabase.from('appointments').select('*').eq('org_id', ORG_ID),
-      supabase.from('encounters').select('*').eq('org_id', ORG_ID),
-      supabase.from('prescriptions').select('*').eq('org_id', ORG_ID),
-      supabase.from('pharmacy_orders').select('*').eq('org_id', ORG_ID),
-      supabase.from('referrals').select('*').eq('org_id', ORG_ID),
-      supabase.from('ward_billing_ledger').select('*').eq('org_id', ORG_ID),
-      supabase.from('inventory').select('*').eq('org_id', ORG_ID),
-      supabase.from('notifications').select('*').eq('org_id', ORG_ID).order('created_at', { ascending: false }).limit(50),
+      supabase.from('patients').select('*').eq('org_id', orgId),
+      supabase.from('practitioners').select('*').eq('org_id', orgId),
+      supabase.from('appointments').select('*').eq('org_id', orgId),
+      supabase.from('encounters').select('*').eq('org_id', orgId),
+      supabase.from('prescriptions').select('*').eq('org_id', orgId),
+      supabase.from('pharmacy_orders').select('*').eq('org_id', orgId),
+      supabase.from('referrals').select('*').eq('org_id', orgId),
+      supabase.from('ward_billing_ledger').select('*').eq('org_id', orgId),
+      supabase.from('inventory').select('*').eq('org_id', orgId),
+      supabase.from('notifications').select('*').eq('org_id', orgId).order('created_at', { ascending: false }).limit(50),
     ]);
     setPatients((p.data as PatientRow[]) ?? []);
     setPractitioners((pr.data as PractitionerRow[]) ?? []);
@@ -110,19 +123,21 @@ export function ClinicProvider({ children }: { children: ReactNode }) {
     setReferrals((rf.data as ReferralRow[]) ?? []);
     setWardLedger((wl.data as WardBillingLedgerRow[]) ?? []);
     setInventory((inv.data as InventoryRow[]) ?? []);
-    setNotifications((nt.data as NotificationRow[]) ?? []);
-  }, []);
+    const loadedNotifications = (nt.data as NotificationRow[]) ?? [];
+    if (baseline) loadedNotifications.forEach((n) => seenNotificationIds.current.add(n.id));
+    setNotifications(loadedNotifications);
+  }, [orgId]);
 
   const logAudit = useCallback(async (action: string, detail: string) => {
     await supabase.from('audit_events').insert({
       id: `ae-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
-      org_id: ORG_ID,
+      org_id: orgId,
       actor: practitioner?.name ?? 'system',
       role: practitioner?.role ?? 'system',
       action,
       detail,
     });
-  }, [practitioner]);
+  }, [practitioner, orgId]);
 
   // Re-fetch whenever the signed-in practitioner changes -- not just once on
   // mount. ClinicProvider mounts at the app root and stays mounted across the
@@ -136,7 +151,7 @@ export function ClinicProvider({ children }: { children: ReactNode }) {
   // moment AuthContext resolves a real practitioner (interactive sign-in,
   // session restoration on load, or switching accounts), so data always
   // shows up without requiring a manual refresh.
-  useEffect(() => { refresh(); }, [refresh, practitioner?.id]);
+  useEffect(() => { void refresh(true); }, [refresh, practitioner?.id]);
 
   // One real-time channel per table, applying inserts/updates/deletes
   // directly onto local state so every screen reading from this context
@@ -200,7 +215,7 @@ export function ClinicProvider({ children }: { children: ReactNode }) {
   }, [notifications, practitioner?.id]);
 
   const value: ClinicState = {
-    orgId: ORG_ID, patients, practitioners, appointments, encounters, prescriptions,
+    orgId, patients, practitioners, appointments, encounters, prescriptions,
     pharmacyOrders, referrals, wardLedger, inventory, notifications, newPharmacyOrderIds,
     toasts, pushToast, dismissToast, logAudit, refresh,
   };

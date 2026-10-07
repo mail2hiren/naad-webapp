@@ -233,6 +233,15 @@ export function createMockSupabaseClient() {
     channel: (name: string) => new MockChannel(name),
     removeChannel: (ch: MockChannel) => ch.unsubscribe(),
     auth: new MockAuth(),
+    // Mirrors the org_seat_usage() SQL function (supabase/migrations).
+    rpc: async (fn: string) => {
+      if (fn !== 'org_seat_usage') return { data: null, error: { message: `mock: unknown rpc "${fn}"` } };
+      const used = TABLES.practitioners.filter((p) => p.active).length;
+      return {
+        data: [{ plan: 'pilot', subscription_status: 'active', seat_limit: 25, seats_used: used, trial_ends_at: null, current_period_end: null }],
+        error: null,
+      };
+    },
     // No edge functions in mock mode (no real backend to run them against).
     // Callers -- currently just the Clinical Whisperer's AI prompt fetch --
     // are written to treat `fallback: true` exactly like "AI unavailable"

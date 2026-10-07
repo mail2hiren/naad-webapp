@@ -31,7 +31,7 @@
     <script>
       if ('serviceWorker' in navigator) {
         window.addEventListener('load', function () {
-          navigator.serviceWorker.register('/sw.js').catch(function () {
+          navigator.serviceWorker.register('%BASE_URL%sw.js').catch(function () {
             // Installability is a nice-to-have, not a requirement -- a
             // failed registration must never surface as a user-facing error.
           });

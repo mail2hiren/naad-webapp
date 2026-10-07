@@ -557,7 +557,7 @@ export default function ReceptionView() {
           type="button"
           data-testid="red-alert-btn"
           onClick={openRedAlert}
-          className="rounded-full bg-danger text-white font-extrabold tracking-wide px-6 py-3 text-sm shadow-lg"
+          className="rounded-full bg-danger text-[#2a0a06] font-extrabold tracking-wide px-6 py-3 text-sm shadow-lg"
           style={{ animation: 'redPulse 1.6s ease-in-out infinite' }}
         >
           🚨 RED ALERT — Critical Bypass

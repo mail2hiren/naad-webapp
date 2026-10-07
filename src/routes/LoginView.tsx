@@ -45,7 +45,7 @@ export default function LoginView() {
     <div className="min-h-screen flex items-center justify-center p-6">
       <Panel className="max-w-[440px] w-full p-8 md:p-10">
         <div className="flex items-center gap-3 mb-6">
-          <img src="/favicon.svg" alt="" className="w-10 h-10 shrink-0" />
+          <img src={`${import.meta.env.BASE_URL}favicon.svg`} alt="" className="w-10 h-10 shrink-0" />
           <div>
             <div className="font-extrabold text-2xl tracking-wide bg-gradient-to-r from-ink to-accent-ink bg-clip-text text-transparent leading-none">
               NAAD

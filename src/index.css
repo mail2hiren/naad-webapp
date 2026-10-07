@@ -76,23 +76,29 @@
   --radius-radius-lg: var(--radius-lg);
 }
 
-* { box-sizing: border-box; }
-html, body, #root { height: 100%; }
-body {
-  margin: 0;
-  background: var(--bg);
-  color: var(--ink);
-  font-family: var(--font-sans);
-  -webkit-font-smoothing: antialiased;
+/* Base element styles live in @layer base so Tailwind utilities (text-[#04121c],
+   text-accent-ink, text-gate...) can override them. Unlayered `button { color: inherit }`
+   used to beat every button variant's colour -- primary buttons rendered white on
+   light cyan at 1.34:1 contrast. */
+@layer base {
+  * { box-sizing: border-box; }
+  html, body, #root { height: 100%; }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--ink);
+    font-family: var(--font-sans);
+    -webkit-font-smoothing: antialiased;
+  }
+  h1, h2, h3, h4 { font-weight: 800; letter-spacing: -0.015em; line-height: 1.15; color: var(--ink); margin: 0; }
+  a { color: var(--accent-ink); text-decoration: none; }
+  ::selection { background: var(--accent); color: var(--bg); }
+  button:focus-visible, a:focus-visible, input:focus-visible, textarea:focus-visible, select:focus-visible {
+    outline: 2px solid var(--accent); outline-offset: 2px;
+  }
+  button, input, textarea, select { font-family: inherit; font-size: inherit; color: inherit; }
+  button { cursor: pointer; }
 }
-h1, h2, h3, h4 { font-weight: 800; letter-spacing: -0.015em; line-height: 1.15; color: var(--ink); margin: 0; }
-a { color: var(--accent-ink); text-decoration: none; }
-::selection { background: var(--accent); color: var(--bg); }
-button:focus-visible, a:focus-visible, input:focus-visible, textarea:focus-visible, select:focus-visible {
-  outline: 2px solid var(--accent); outline-offset: 2px;
-}
-button, input, textarea, select { font-family: inherit; font-size: inherit; color: inherit; }
-button { cursor: pointer; }
 
 @keyframes blobMorph {
   0%, 100% { border-radius: 46% 54% 62% 38% / 40% 46% 54% 60%; }

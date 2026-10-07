@@ -1,3 +1,4 @@
+import { existsSync } from 'node:fs';
 import { defineConfig, devices } from '@playwright/test';
 
 /**
@@ -13,7 +14,11 @@ import { defineConfig, devices } from '@playwright/test';
  *                   device with the edge function stubbed via page.route
  *                   (port 4174, built with `--mode realambient`)
  */
-const chromiumExe = { executablePath: '/opt/pw-browsers/chromium' };
+// Some sandboxes ship a pinned Chromium that predates the installed Playwright;
+// use it when present. Elsewhere (CI, a laptop) fall back to the browser that
+// `npx playwright install chromium` provides.
+const PINNED_CHROMIUM = '/opt/pw-browsers/chromium';
+const chromiumExe = existsSync(PINNED_CHROMIUM) ? { executablePath: PINNED_CHROMIUM } : {};
 
 export default defineConfig({
   testDir: './e2e',

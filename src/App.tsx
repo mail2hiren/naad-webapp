@@ -15,7 +15,7 @@ export default function App() {
   return (
     <AuthProvider>
       <ClinicProvider>
-        <BrowserRouter>
+        <BrowserRouter basename={import.meta.env.BASE_URL.replace(/\/$/, '')}>
           <ToastHost />
           <Routes>
             <Route path="/" element={<Navigate to="/login" replace />} />
