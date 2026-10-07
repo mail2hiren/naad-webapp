@@ -778,7 +778,7 @@ export default function ReceptionView() {
               type="button"
               data-testid="toggle-typed-intake"
               onClick={() => setShowTypedIntake((v) => !v)}
-              className="text-[11px] text-accent-ink underline underline-offset-2"
+              className="min-h-11 text-[11px] text-accent-ink underline underline-offset-2"
             >
               {showTypedIntake ? 'Hide typed dictation' : 'Or type the conversation instead'}
             </button>

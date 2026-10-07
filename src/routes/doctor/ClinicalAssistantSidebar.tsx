@@ -169,7 +169,7 @@ export function ClinicalAssistantSidebar({
                   type="button"
                   data-testid="checklist-item"
                   onClick={() => onToggle(item)}
-                  className={`w-full text-left flex items-start gap-2.5 rounded-lg px-2.5 py-2 text-xs leading-snug transition-colors ${
+                  className={`w-full min-h-11 text-left flex items-start gap-2.5 rounded-lg px-2.5 py-2 text-xs leading-snug transition-colors ${
                     checked ? 'bg-ok-soft text-ok' : 'text-ink-soft hover:bg-white/5 hover:text-ink'
                   }`}
                 >

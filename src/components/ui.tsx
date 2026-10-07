@@ -41,7 +41,7 @@ export function Btn({
 }: ButtonHTMLAttributes<HTMLButtonElement> & { variant?: BtnVariant }) {
   return (
     <button
-      className={`inline-flex items-center justify-center gap-1.5 rounded-lg px-3 py-2 text-sm font-semibold transition-colors disabled:opacity-40 disabled:cursor-not-allowed ${BTN_VARIANT[variant]} ${className}`}
+      className={`inline-flex items-center justify-center gap-1.5 min-h-11 min-w-11 rounded-lg px-3 py-2 text-sm font-semibold transition-colors disabled:opacity-40 disabled:cursor-not-allowed ${BTN_VARIANT[variant]} ${className}`}
       {...rest}
     >
       {children}
@@ -91,7 +91,7 @@ export function Field({ label, children }: { label: string; children: ReactNode 
 }
 
 export const inputCls =
-  'w-full bg-surface-2 border border-line rounded-lg px-3 py-2 text-sm text-ink placeholder:text-ink-faint focus:outline-none focus:ring-2 focus:ring-accent';
+  'w-full min-h-11 bg-surface-2 border border-line rounded-lg px-3 py-2 text-sm text-ink placeholder:text-ink-faint focus:outline-none focus:ring-2 focus:ring-accent';
 
 /**
  * Add/remove/edit list of short text entries, one per line with a bullet
@@ -177,7 +177,7 @@ export function Collapsible({
         type="button"
         onClick={() => setOpen((o) => !o)}
         data-testid={testId ? `${testId}-toggle` : undefined}
-        className="w-full flex items-center justify-between gap-2 py-1 text-left"
+        className="w-full min-h-11 flex items-center justify-between gap-2 py-1 text-left"
       >
         <span className="font-mono text-[9.5px] uppercase text-ink-faint">{title}</span>
         <span className="text-ink-faint text-[10px]" aria-hidden="true">{open ? '▲' : '▼'}</span>
@@ -246,7 +246,7 @@ export function Tabs<T extends string>({
             aria-selected={isActive}
             data-testid={`tab-${t.id}`}
             onClick={() => onChange(t.id)}
-            className={`shrink-0 px-3.5 py-2.5 text-sm font-semibold border-b-2 -mb-px transition-colors ${
+            className={`shrink-0 min-h-11 px-3.5 py-2.5 text-sm font-semibold border-b-2 -mb-px transition-colors ${
               isActive ? 'border-accent-ink text-accent-ink' : 'border-transparent text-ink-faint hover:text-ink'
             }`}
           >

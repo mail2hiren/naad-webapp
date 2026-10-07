@@ -137,16 +137,17 @@ function ToastPill({
 
   return (
     <div
-      className={`pointer-events-auto backdrop-blur-md bg-bg/80 border border-line-strong rounded-full py-2.5 px-5 shadow-[0_12px_40px_rgba(0,0,0,0.5)] flex items-center gap-3 max-w-[min(420px,calc(100vw-2rem))] transition-all duration-300 ease-[cubic-bezier(0.34,1.56,0.64,1)] ${
+      role={t.tone === 'critical' ? 'alert' : undefined}
+      className={`pointer-events-auto backdrop-blur-md bg-bg/80 border border-line-strong rounded-2xl py-2.5 px-5 shadow-[0_12px_40px_rgba(0,0,0,0.5)] flex items-center gap-3 max-w-[min(420px,calc(100vw-2rem))] transition-all duration-300 ease-[cubic-bezier(0.34,1.56,0.64,1)] ${
         entered ? 'translate-y-0 opacity-100' : `${hiddenTransform} opacity-0`
       }`}
     >
       <span className={`w-2 h-2 rounded-full shrink-0 animate-pulse ${DOT_TONE[t.tone]}`} />
       <div className="min-w-0 flex-1">
-        <div className="text-sm font-bold text-ink truncate">{t.title}</div>
-        {t.detail && <div className="text-xs text-ink-soft mt-0.5 truncate">{t.detail}</div>}
+        <div className="text-sm font-bold text-ink break-words">{t.title}</div>
+        {t.detail && <div className="text-xs text-ink-soft mt-0.5 break-words">{t.detail}</div>}
       </div>
-      <button onClick={handleManualDismiss} className="text-ink-faint hover:text-ink text-xs shrink-0">✕</button>
+      <button onClick={handleManualDismiss} aria-label="Dismiss notification" className="text-ink-faint hover:text-ink text-xs shrink-0 min-h-11 min-w-11">✕</button>
     </div>
   );
 }
@@ -165,9 +166,13 @@ export default function ToastHost() {
   const { toasts, dismissToast } = useClinic();
   const top = useHeaderOffset();
   const isNarrow = useIsNarrowViewport();
-  if (!toasts.length) return null;
+  // The live region stays mounted even when empty: screen readers only
+  // announce changes inside a region that already existed.
   return (
     <div
+      role="status"
+      aria-live="polite"
+      aria-atomic="false"
       className="fixed inset-x-4 z-50 flex flex-col items-center gap-2 pointer-events-none"
       style={isNarrow ? { bottom: 'max(1rem, env(safe-area-inset-bottom))' } : { top }}
     >

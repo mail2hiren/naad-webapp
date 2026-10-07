@@ -80,3 +80,54 @@ test('patient portal phone', async ({ page }) => {
   console.log(`OVERFLOW [portal-phone] ${await page.evaluate(() => document.documentElement.scrollWidth - window.innerWidth)}`);
   expect(v.filter((x) => x.impact === 'serious' || x.impact === 'critical')).toEqual([]);
 });
+
+// ---- Touch targets, keyboard and screen-reader affordances -----------------
+
+/** Visible interactive controls smaller than 44x44 CSS px (Apple HIG / WCAG 2.5.5). */
+async function undersized(page: Page) {
+  return page.evaluate(() => Array.from(document.querySelectorAll(
+    'button, a[href], select, input:not([type=hidden]):not([type=checkbox]):not([type=radio]), textarea, [role=tab]',
+  )).filter((el) => {
+    if (el.closest('.sr-only')) return false;
+    const b = el.getBoundingClientRect();
+    return b.width > 0 && b.height > 0 && (b.height < 43.5 || b.width < 43.5) && getComputedStyle(el).visibility !== 'hidden';
+  }).map((el) => `${el.tagName.toLowerCase()}[${(el.getAttribute('data-testid') || el.textContent || '').trim().slice(0, 24)}] ${Math.round(el.getBoundingClientRect().width)}x${Math.round(el.getBoundingClientRect().height)}`));
+}
+
+test('phone: every primary control is at least 44px tall on each screen', async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  const failures: string[] = [];
+  const screens: [string, string, string][] = [
+    ['receptionist', 'sunita@digiyaan.demo', 'reception'], ['surgeon', 'sagar@digiyaan.demo', 'doctor'],
+    ['pharmacist', 'vikram@digiyaan.demo', 'pharmacy'], ['admin', 'raj@digiyaan.demo', 'admin'],
+  ];
+  await page.goto('/login');
+  failures.push(...(await undersized(page)).map((f) => `login ${f}`));
+  for (const [role, email, name] of screens) {
+    await login(page, role, email);
+    await page.waitForTimeout(500);
+    failures.push(...(await undersized(page)).map((f) => `${name} ${f}`));
+    if (name === 'doctor') {
+      await page.getByTestId('open-chart').first().click();
+      await page.waitForTimeout(500);
+      failures.push(...(await undersized(page)).map((f) => `chart ${f}`));
+    }
+    await page.getByTestId('sign-out').click();
+  }
+  expect(failures).toEqual([]);
+});
+
+test('keyboard: a skip link is the first tab stop and jumps to main content', async ({ page }) => {
+  await login(page, 'receptionist', 'sunita@digiyaan.demo');
+  await expect(page).toHaveURL(/\/reception$/);
+  await page.keyboard.press('Tab');
+  const skip = page.getByRole('link', { name: 'Skip to main content' });
+  await expect(skip).toBeFocused();
+  await page.keyboard.press('Enter');
+  await expect(page.locator('main#main')).toBeFocused();
+});
+
+test('screen readers: notifications are announced through a persistent live region', async ({ page }) => {
+  await login(page, 'receptionist', 'sunita@digiyaan.demo');
+  await expect(page.locator('[role=status][aria-live=polite]')).toHaveCount(1);
+});

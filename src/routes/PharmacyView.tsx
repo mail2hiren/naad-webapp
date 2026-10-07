@@ -258,7 +258,7 @@ export default function PharmacyView() {
         <Card className="h-fit">
           <div className="flex items-center justify-between mb-1">
             <SectionHead eyebrow="Stock" title="Inventory" />
-            <Btn variant="ghost" className="!px-2 !py-1 !text-[11px] -mt-5" onClick={() => setShowInventory((v) => !v)}>
+            <Btn variant="ghost" className="!px-2 !py-1 !text-[11px]" onClick={() => setShowInventory((v) => !v)}>
               {showInventory ? 'Hide' : 'Show'}
             </Btn>
           </div>
@@ -404,7 +404,7 @@ function OrderCard({
               {low && (
                 <Btn
                   variant="danger"
-                  className="!px-2 !py-1 !text-[10px] mt-1.5"
+                  className="!px-2 !py-1 !text-[11px] mt-1.5"
                   data-testid="flag-alternate"
                   disabled={busy}
                   onClick={() => onFlagAlternate(order, item)}

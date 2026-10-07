@@ -32,20 +32,26 @@ export default function Shell({ title, children }: { title: string; children: Re
 
   return (
     <div className="min-h-screen">
+      <a
+        href="#main"
+        className="sr-only focus:not-sr-only focus:fixed focus:top-2 focus:left-2 focus:z-50 focus:rounded-lg focus:bg-accent-ink focus:text-[#04121c] focus:px-4 focus:py-2 focus:font-bold"
+      >
+        Skip to main content
+      </a>
       <header className="sticky top-0 z-40 bg-surface-panel backdrop-blur-2xl border-b border-line-strong px-4 md:px-6 py-3 flex items-center justify-between gap-4 flex-wrap">
         <div className="flex items-baseline gap-2.5">
           <b className="font-extrabold text-[1.1rem] tracking-wide bg-gradient-to-r from-ink to-accent-ink bg-clip-text text-transparent">NAAD</b>
           <span className="font-mono text-[10px] text-ink-faint">{title}</span>
         </div>
         {navLinks.length > 1 && (
-          <nav className="flex items-center gap-1" data-testid="workspace-nav">
+          <nav aria-label="Workspaces" className="flex items-center gap-1" data-testid="workspace-nav">
             {navLinks.map((link) => (
               <NavLink
                 key={link.to}
                 to={link.to}
                 data-testid={`nav-${link.to.slice(1)}`}
                 className={({ isActive }) =>
-                  `text-xs font-semibold px-2.5 py-1.5 rounded-lg transition-colors ${
+                  `inline-flex items-center min-h-11 text-xs font-semibold px-2.5 py-1.5 rounded-lg transition-colors ${
                     isActive ? 'bg-accent-soft text-accent-ink' : 'text-ink-faint hover:text-ink hover:bg-white/5'
                   }`
                 }
@@ -64,13 +70,13 @@ export default function Shell({ title, children }: { title: string; children: Re
           <button
             onClick={handleSignOut}
             data-testid="sign-out"
-            className="text-ink-faint hover:text-accent-ink text-xs font-semibold px-2.5 py-1.5 rounded-lg hover:bg-white/5"
+            className="min-h-11 text-ink-faint hover:text-accent-ink text-xs font-semibold px-2.5 py-1.5 rounded-lg hover:bg-white/5"
           >
             Sign out
           </button>
         </div>
       </header>
-      <main className="max-w-5xl mx-auto px-4 md:px-6 py-6">{children}</main>
+      <main id="main" tabIndex={-1} className="max-w-5xl mx-auto px-4 md:px-6 py-6 focus:outline-none">{children}</main>
     </div>
   );
 }
