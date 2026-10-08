@@ -113,6 +113,37 @@ test.describe('Reception — real ambient capture', () => {
     await expect(page.locator('text=worse when I try to walk')).toHaveCount(0);
   });
 
+  test('Pause Intake really pauses the microphone, Resume continues, and the upload still works', async ({ page }) => {
+    await page.addInitScript(() => {
+      const w = window as unknown as { __mr: string[] };
+      w.__mr = [];
+      for (const m of ['pause', 'resume'] as const) {
+        const orig = MediaRecorder.prototype[m];
+        MediaRecorder.prototype[m] = function (this: MediaRecorder) { w.__mr.push(m); return orig.call(this); };
+      }
+    });
+    const calls = await stubFunction(page, () => ({ status: 200, body: RECEPTION_OK }));
+    await login(page, 'receptionist', 'sunita@digiyaan.demo', 'pass1234');
+    await page.getByTestId('intake-name').fill('Pause Mic Patient');
+    await page.getByTestId('start-ambient-intake').click();
+    await expect(page.getByTestId('start-ambient-intake')).toContainText('Recording');
+    await page.waitForTimeout(800);
+
+    await page.getByTestId('pause-walkin-btn').click();
+    await expect(page.getByTestId('resume-walkin-btn')).toBeVisible();
+    expect(await page.evaluate(() => (window as unknown as { __mr: string[] }).__mr)).toEqual(['pause']);
+
+    await page.getByTestId('resume-walkin-btn').click();
+    await expect(page.getByTestId('pause-walkin-btn')).toBeVisible();
+    expect(await page.evaluate(() => (window as unknown as { __mr: string[] }).__mr)).toEqual(['pause', 'resume']);
+
+    await page.waitForTimeout(800);
+    await page.getByTestId('start-ambient-intake').click(); // stop
+    await expect(page.getByTestId('triage-notes')).toHaveValue(/AI Extracted Summary/, { timeout: 10_000 });
+    expect(calls).toHaveLength(1);
+    expect(calls[0].bodyBytes).toBeGreaterThan(500);
+  });
+
   test('typed fallback sends text/plain and applies the same extraction', async ({ page }) => {
     const calls = await stubFunction(page, () => ({ status: 200, body: RECEPTION_OK }));
     await login(page, 'receptionist', 'sunita@digiyaan.demo', 'pass1234');

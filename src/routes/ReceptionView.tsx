@@ -402,6 +402,7 @@ export default function ReceptionView() {
     try {
       clearScriptedTimeouts();
       intake.setIsRecording(false);
+      if (!scriptedAmbient) realCapture.pause(); // real mic stops capturing while intake is paused
       setWalkInPaused(true);
       const patientId = await ensureWalkInPatientId();
       await supabase.from('patients').update({
@@ -418,6 +419,7 @@ export default function ReceptionView() {
     setWalkInPaused(false);
     setWalkInPauseOpen(false);
     intake.setIsRecording(true);
+    if (!scriptedAmbient) realCapture.resume();
     const patientId = walkInPatientIdRef.current;
     if (patientId) {
       await supabase.from('patients').update({

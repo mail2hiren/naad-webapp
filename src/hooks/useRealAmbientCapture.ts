@@ -199,6 +199,19 @@ export function useRealAmbientCapture(opts: {
     }
   }, [postToAI]);
 
+  /** Pauses the live recording without ending it (the Intake Pause Gate):
+   * the microphone stops feeding the recorder, so nothing said while intake
+   * is paused is captured or later uploaded. */
+  const pause = useCallback(() => {
+    const mr = mediaRecorderRef.current;
+    if (mr && mr.state === 'recording') mr.pause();
+  }, []);
+
+  const resume = useCallback(() => {
+    const mr = mediaRecorderRef.current;
+    if (mr && mr.state === 'paused') mr.resume();
+  }, []);
+
   const cancel = useCallback(() => {
     const mr = mediaRecorderRef.current;
     stopResolveRef.current = null;
@@ -229,5 +242,5 @@ export function useRealAmbientCapture(opts: {
     }
   }, [postToAI]);
 
-  return { status, error, start, stop, cancel, submitTypedText, supported: micSupported() };
+  return { status, error, start, stop, pause, resume, cancel, submitTypedText, supported: micSupported() };
 }
