@@ -1,5 +1,5 @@
-import type { ReactNode } from 'react';
-import { NavLink, useNavigate } from 'react-router-dom';
+import { useEffect, useRef, type ReactNode } from 'react';
+import { NavLink, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import type { StaffRole } from '../types/db';
 
@@ -24,6 +24,18 @@ export default function Shell({ title, children }: { title: string; children: Re
   const { practitioner, signOut } = useAuth();
   const navigate = useNavigate();
   const navLinks = practitioner ? ROLE_NAV[practitioner.role] : [];
+  const { pathname } = useLocation();
+  const pageStart = useRef<HTMLDivElement>(null);
+
+  /* An SPA route change keeps focus wherever it was (e.g. the sign-in button
+   * that no longer exists), so the next Tab would skip past the skip link.
+   * Reset focus to the top of the page and give each workspace its own tab
+   * title, the way a full page load would, so keyboard and screen-reader
+   * users start every workspace at "Skip to main content". */
+  useEffect(() => {
+    document.title = `${title} — Naad`;
+    pageStart.current?.focus({ preventScroll: true });
+  }, [pathname, title]);
 
   async function handleSignOut() {
     await signOut();
@@ -32,6 +44,9 @@ export default function Shell({ title, children }: { title: string; children: Re
 
   return (
     <div className="min-h-screen">
+      <div ref={pageStart} tabIndex={-1} className="sr-only">
+        {title}
+      </div>
       <a
         href="#main"
         className="sr-only focus:not-sr-only focus:fixed focus:top-2 focus:left-2 focus:z-50 focus:rounded-lg focus:bg-accent-ink focus:text-[#04121c] focus:px-4 focus:py-2 focus:font-bold"

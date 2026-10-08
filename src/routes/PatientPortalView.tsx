@@ -1,4 +1,4 @@
-import { useMemo, useState, type FormEvent } from 'react';
+import { useEffect, useMemo, useState, type FormEvent } from 'react';
 import { supabase } from '../lib/supabaseClient';
 import { Card, Panel, Btn, BulletList, Pill, SectionHead, inputCls } from '../components/ui';
 import { toBullets } from '../lib/clinicalNote';
@@ -42,6 +42,10 @@ export default function PatientPortalView() {
   const [password, setPassword] = useState('');
   const [loginError, setLoginError] = useState<string | null>(null);
   const [signingIn, setSigningIn] = useState(false);
+
+  useEffect(() => {
+    document.title = 'Patient portal — Naad';
+  }, []);
 
   // -- portal data --------------------------------------------------------
   const [encounters, setEncounters] = useState<EncounterRow[]>([]);

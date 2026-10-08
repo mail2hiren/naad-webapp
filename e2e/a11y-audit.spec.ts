@@ -120,11 +120,21 @@ test('phone: every primary control is at least 44px tall on each screen', async 
 test('keyboard: a skip link is the first tab stop and jumps to main content', async ({ page }) => {
   await login(page, 'receptionist', 'sunita@digiyaan.demo');
   await expect(page).toHaveURL(/\/reception$/);
+  // The title is set in the same effect that resets focus to the page top,
+  // so it marks the moment the workspace is ready for keyboard input.
+  await expect(page).toHaveTitle('Front Desk — Naad');
   await page.keyboard.press('Tab');
   const skip = page.getByRole('link', { name: 'Skip to main content' });
   await expect(skip).toBeFocused();
   await page.keyboard.press('Enter');
   await expect(page.locator('main#main')).toBeFocused();
+});
+
+test('every workspace has its own page title', async ({ page }) => {
+  await page.goto('/login');
+  await expect(page).toHaveTitle('Staff sign-in — Naad');
+  await login(page, 'receptionist', 'sunita@digiyaan.demo');
+  await expect(page).toHaveTitle('Front Desk — Naad');
 });
 
 test('screen readers: notifications are announced through a persistent live region', async ({ page }) => {

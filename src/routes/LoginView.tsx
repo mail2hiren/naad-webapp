@@ -35,6 +35,10 @@ export default function LoginView() {
   }
 
   useEffect(() => {
+    document.title = 'Staff sign-in — Naad';
+  }, []);
+
+  useEffect(() => {
     if (practitioner) {
       // Already signed in (e.g. hot reload) -- send straight to their workspace.
       navigate(routeForRole(practitioner.role), { replace: true });
