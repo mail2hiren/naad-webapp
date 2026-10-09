@@ -36,6 +36,16 @@ npx playwright test               # both projects below
 - **chromium** — scripted flows for every role, plus an **accessibility gate** (axe-core WCAG 2.1 AA at phone and desktop widths; serious/critical violations fail).
 - **real-ambient** — Chromium's fake microphone drives the real capture path (`getUserMedia` → `MediaRecorder` → upload) against a stubbed edge function, asserting the request contract and how the extraction lands in Reception and Doctor screens.
 
+Edge function and database checks (no browser needed):
+
+```bash
+npm run test:functions                     # transcribe-and-extract contract
+DATABASE_URL=postgres://… npm run test:db  # schema + RLS tests on a throwaway Postgres
+```
+
+- **test:functions** runs the real `transcribe-and-extract` handler against stubbed Deepgram, Anthropic and Supabase and compares the pinned model, prompt hash, tool schemas and response shape with `tests/functions/transcribe-and-extract.contract.json`. A deliberate change: `UPDATE_CONTRACT=1 npm run test:functions`, then commit the snapshot.
+- **test:db** loads `supabase/schema.sql` (the production `public` schema, dumped 2026-10-09) plus any newer migration, then runs `supabase/tests/*.test.sql`. It drops and recreates a `naad_test` database.
+
 CI (`.github/workflows/ci.yml`) runs all of the above on every push and pull request.
 
 ## Deploy
@@ -44,7 +54,7 @@ CI (`.github/workflows/ci.yml`) runs all of the above on every push and pull req
 
 Netlify still works with the same code (`netlify.toml`), but it is no longer required.
 
-Edge functions live in `supabase/functions` and are deployed to the Supabase project; secrets (`DEEPGRAM_API_KEY`, `ANTHROPIC_API_KEY`) are set there, **never** in this repo. The browser only ever holds the public anon key (`.env.production`).
+Edge functions live in `supabase/functions`. `transcribe-and-extract` deploys from this repo only: `.github/workflows/deploy-functions.yml` runs on pushes to `main` that touch it (repository secret `SUPABASE_ACCESS_TOKEN` required); secrets (`DEEPGRAM_API_KEY`, `ANTHROPIC_API_KEY`) are set there, **never** in this repo. The browser only ever holds the public anon key (`.env.production`).
 
 > Supabase free-tier projects pause after a week of inactivity. A paying hospital deployment needs the Pro plan (or an uptime ping).
 
