@@ -106,6 +106,8 @@ export interface VendorOptions {
   deepgramBody?: string;
   anthropicStatus?: number;
   anthropicBody?: string;
+  /** Anthropic answers 200 but with plain text instead of a tool_use block. */
+  anthropicNoToolUse?: boolean;
 }
 
 export function fakeVendors(opts: VendorOptions) {
@@ -120,7 +122,9 @@ export function fakeVendors(opts: VendorOptions) {
     if (url.startsWith('https://api.anthropic.com/')) {
       if (opts.anthropicStatus && opts.anthropicStatus >= 400) return new Response(opts.anthropicBody ?? 'anthropic error', { status: opts.anthropicStatus });
       return Response.json({
-        content: [{ type: 'tool_use', name: 'tool', input: opts.toolInput }],
+        content: opts.anthropicNoToolUse
+          ? [{ type: 'text', text: 'model prose that repeats the transcript' }]
+          : [{ type: 'tool_use', name: 'tool', input: opts.toolInput }],
         usage: { input_tokens: 1200, output_tokens: 300 },
       });
     }

@@ -2,6 +2,10 @@
 // and `jsr:` imports so the same code runs under Deno (index.ts) and under
 // Node's test runner (tests/functions). Everything that touches the outside
 // world -- env, fetch, the Supabase client -- comes in through `Deps`.
+//
+// Privacy rule: patient words, model output and vendor error bodies never go
+// into logs or error responses. Log status codes only. (Successful responses
+// do return the transcript and extraction -- that is what the app shows.)
 
 import {
   ANTHROPIC_MESSAGES_URL,
@@ -128,8 +132,9 @@ export async function handle(req: Request, deps: Deps): Promise<Response> {
       body: audioBytes,
     });
     if (!dgRes.ok) {
-      const errText = await dgRes.text().catch(() => "");
-      return jsonResponse({ error: "Transcription failed", detail: errText }, 502);
+      // Status only: a vendor error body can echo request content or account details.
+      console.error(`deepgram request failed: HTTP ${dgRes.status}`);
+      return jsonResponse({ error: "Transcription failed" }, 502);
     }
     const dgJson = await dgRes.json();
     const words: Array<{ punctuated_word?: string; word: string; speaker?: number }> =
@@ -184,13 +189,14 @@ export async function handle(req: Request, deps: Deps): Promise<Response> {
     }),
   });
   if (!claudeRes.ok) {
-    const errText = await claudeRes.text().catch(() => "");
-    return jsonResponse({ error: "Extraction failed", detail: errText, diarizedText, transcriptId }, 502);
+    console.error(`anthropic request failed: HTTP ${claudeRes.status}`);
+    return jsonResponse({ error: "Extraction failed", transcriptId }, 502);
   }
   const claudeJson = await claudeRes.json();
   const toolUse = (claudeJson?.content || []).find((c: { type: string }) => c.type === "tool_use");
   if (!toolUse) {
-    return jsonResponse({ error: "Model did not return structured output", diarizedText, transcriptId }, 502);
+    console.error(`anthropic reply had no tool_use (stop_reason ${claudeJson?.stop_reason})`);
+    return jsonResponse({ error: "Model did not return structured output", transcriptId }, 502);
   }
 
   const inTok = claudeJson?.usage?.input_tokens || 0;
