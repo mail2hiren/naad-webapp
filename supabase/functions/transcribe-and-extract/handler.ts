@@ -27,6 +27,15 @@ export interface Deps {
   createClient: (url: string, key: string, options?: Record<string, unknown>) => SupabaseLike;
 }
 
+// Which staff roles may run each stage, matching the screens that call it:
+// Reception (receptionist) records intake; the Doctor screen (surgeon, physio)
+// records a consult or a physio session depending on the doctor's specialty.
+const STAGE_ROLES: Record<string, string[]> = {
+  reception: ["receptionist"],
+  consult: ["surgeon", "physio"],
+  physio: ["surgeon", "physio"],
+};
+
 function jsonResponse(body: unknown, status = 200) {
   return new Response(JSON.stringify(body), {
     status,
@@ -80,6 +89,28 @@ export async function handle(req: Request, deps: Deps): Promise<Response> {
   }
   if (!pract) {
     return jsonResponse({ error: "Only staff accounts may record a consultation" }, 403);
+  }
+
+  // The admin client bypasses RLS, so this function must do the hospital and
+  // role checks itself, before any money is spent or anything is stored.
+  if (!STAGE_ROLES[stage].includes(String(pract.role))) {
+    return jsonResponse({ error: `A ${pract.role} account cannot record the ${stage} stage.` }, 403);
+  }
+  const { data: patient } = await admin.from("patients").select("org_id").eq("id", patientId).maybeSingle();
+  if (!patient || patient.org_id !== orgId) {
+    return jsonResponse({ error: "This patient is not in your hospital." }, 403);
+  }
+  if (encounterId) {
+    const { data: enc } = await admin.from("encounters").select("org_id, patient_id").eq("id", encounterId).maybeSingle();
+    if (!enc || enc.org_id !== orgId || enc.patient_id !== patientId) {
+      return jsonResponse({ error: "This encounter does not belong to this patient in your hospital." }, 403);
+    }
+  }
+  if (planId) {
+    const { data: plan } = await admin.from("physiotherapy_plans").select("org_id, patient_id").eq("id", planId).maybeSingle();
+    if (!plan || plan.org_id !== orgId || plan.patient_id !== patientId) {
+      return jsonResponse({ error: "This therapy plan does not belong to this patient in your hospital." }, 403);
+    }
   }
 
   const { data: org } = await admin.from("organizations").select("ai_monthly_budget_usd").eq("id", orgId).maybeSingle();
