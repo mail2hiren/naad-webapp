@@ -1,0 +1,6 @@
+# Supabase CLI settings for deploying this repo's edge functions.
+project_id = "naad-webapp"
+
+[functions.transcribe-and-extract]
+# Only signed-in users reach the function; it then checks staff role itself.
+verify_jwt = true

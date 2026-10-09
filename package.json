@@ -10,7 +10,9 @@
     "lint": "oxlint",
     "preview": "vite preview",
     "test:e2e": "playwright test",
-    "build:realambient": "tsc -b && vite build --mode realambient --outDir dist-realambient"
+    "build:realambient": "tsc -b && vite build --mode realambient --outDir dist-realambient",
+    "test:functions": "node --test 'tests/functions/**/*.test.ts'",
+    "test:db": "bash supabase/tests/run.sh"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.112.4",
