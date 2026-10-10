@@ -2,7 +2,7 @@
   "model": "claude-haiku-4-5",
   "anthropicVersion": "2023-06-01",
   "maxTokens": 1024,
-  "deepgramListenUrl": "https://api.deepgram.com/v1/listen?model=nova-3&language=multi&smart_format=true&punctuate=true&diarize_model=latest",
+  "deepgramListenUrl": "https://api.deepgram.com/v1/listen?model=nova-3&language=multi&smart_format=true&punctuate=true&diarize_model=latest&mip_opt_out=true",
   "systemPromptSha256": "c8772537961115443e4d74ec265459d4fc78b391333f2b9de10247055a7d5a28",
   "tools": {
     "reception": {
@@ -170,7 +170,7 @@
     }
   },
   "deepgramRequest": {
-    "url": "https://api.deepgram.com/v1/listen?model=nova-3&language=multi&smart_format=true&punctuate=true&diarize_model=latest",
+    "url": "https://api.deepgram.com/v1/listen?model=nova-3&language=multi&smart_format=true&punctuate=true&diarize_model=latest&mip_opt_out=true",
     "method": "POST",
     "headers": [
       "Authorization",

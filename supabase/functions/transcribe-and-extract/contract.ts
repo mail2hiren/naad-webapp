@@ -9,8 +9,10 @@ export const ANTHROPIC_MESSAGES_URL = "https://api.anthropic.com/v1/messages";
 export const ANTHROPIC_VERSION = "2023-06-01";
 export const CLAUDE_MAX_TOKENS = 1024;
 
+// mip_opt_out=true keeps our audio out of Deepgram's Model Improvement
+// Program: Deepgram keeps it only as long as needed to process the request.
 export const DEEPGRAM_LISTEN_URL =
-  "https://api.deepgram.com/v1/listen?model=nova-3&language=multi&smart_format=true&punctuate=true&diarize_model=latest";
+  "https://api.deepgram.com/v1/listen?model=nova-3&language=multi&smart_format=true&punctuate=true&diarize_model=latest&mip_opt_out=true";
 
 export const DEEPGRAM_USD_PER_MINUTE = 0.005;
 export const CLAUDE_USD_PER_MTOK_INPUT = 1.0;
