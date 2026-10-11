@@ -34,6 +34,13 @@ jobs:
           # Project pages live at /<repo>/; override with a repo variable for a custom domain.
           BASE_PATH: ${{ vars.PAGES_BASE_PATH || format('/{0}/', github.event.repository.name) }}
         run: npm run build
+      # SEC06: the demo password and the mock seed must never ship in the live
+      # bundle. Fails the deploy if either shows up.
+      - name: Keep demo credentials out of the build
+        run: |
+          if grep -rIl --include='*.js' -e 'pass1234' dist; then
+            echo "::error::demo password found in the production bundle"; exit 1
+          fi
       # GitHub Pages has no SPA rewrites: serve the app shell for unknown paths
       # (deep links like /doctor, /patient) by duplicating it as 404.html.
       - run: cp dist/index.html dist/404.html

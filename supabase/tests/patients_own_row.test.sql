@@ -52,6 +52,7 @@ begin
   if exists (select 1 from public.patients) then
     raise exception 'anon can read patients';
   end if;
+exception when insufficient_privilege then null;  -- anon has no table grants (SEC08)
 end $$;
 
 rollback;

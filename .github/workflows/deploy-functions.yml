@@ -1,6 +1,6 @@
 name: Deploy edge functions
 
-# transcribe-and-extract deploys from this repo, never by hand: every push to
+# transcribe-and-extract and clinical-whisperer deploy from this repo, never by hand: every push to
 # main that touches it re-runs the contract tests and then deploys it to the
 # production Supabase project. Needs the repository secret
 # SUPABASE_ACCESS_TOKEN (a Supabase personal access token); without it the
@@ -11,6 +11,7 @@ on:
     branches: [main]
     paths:
       - 'supabase/functions/transcribe-and-extract/**'
+      - 'supabase/functions/clinical-whisperer/**'
       - 'supabase/config.toml'
   workflow_dispatch:
 
@@ -40,4 +41,6 @@ jobs:
         with:
           version: latest
       - if: env.SUPABASE_ACCESS_TOKEN != ''
-        run: supabase functions deploy transcribe-and-extract --project-ref "$SUPABASE_PROJECT_REF" --use-api
+        run: |
+          supabase functions deploy transcribe-and-extract --project-ref "$SUPABASE_PROJECT_REF" --use-api
+          supabase functions deploy clinical-whisperer --project-ref "$SUPABASE_PROJECT_REF" --use-api

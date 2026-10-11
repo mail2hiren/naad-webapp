@@ -20,6 +20,13 @@ jobs:
       - run: npm run lint
       # Edge function contract: response shape, pinned model, prompt and tools.
       - run: npm run test:functions
+      # SEC06: a normal (non-mock) production build must not contain the demo password.
+      - name: Production bundle has no demo credentials
+        run: |
+          VITE_SUPABASE_URL=https://example.supabase.co VITE_SUPABASE_ANON_KEY=ci npx vite build --outDir /tmp/dist-prod
+          if grep -rIl --include='*.js' -e 'pass1234' /tmp/dist-prod; then
+            echo "::error::demo password found in the production bundle"; exit 1
+          fi
       - run: npx playwright install --with-deps chromium
       # Runs both Playwright projects: the scripted/mock suite (incl. the
       # accessibility gate) and the real-ambient-capture suite.

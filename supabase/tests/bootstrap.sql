@@ -32,3 +32,17 @@ grant usage on schema extensions to anon, authenticated, service_role;
 grant usage on schema public to anon, authenticated, service_role;
 alter default privileges in schema public grant all on tables to anon, authenticated, service_role;
 alter default privileges in schema public grant all on sequences to anon, authenticated, service_role;
+
+-- Stand-in for Supabase Storage: just enough of storage.objects and
+-- storage.foldername() to exercise the bucket policies in migrations.
+create schema if not exists storage;
+create table storage.objects (
+  id uuid primary key default gen_random_uuid(),
+  bucket_id text not null,
+  name text not null
+);
+alter table storage.objects enable row level security;
+create function storage.foldername(name text) returns text[]
+  language sql immutable as $$ select string_to_array(name, '/') $$;
+grant usage on schema storage to anon, authenticated, service_role;
+grant all on storage.objects to anon, authenticated, service_role;
