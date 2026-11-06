@@ -181,7 +181,7 @@ export const patients: PatientRow[] = [
 
 export const appointments: AppointmentRow[] = [
   { id: 'ap-1', org_id: ORG_ID, patient_id: 'p-priya', specialty: 'Orthopedics', date: null, reason: 'Right shoulder pain, 2 days', practitioner_id: 'pr-surgeon', status: 'scheduled', start_time: null, duration_minutes: 20, requested_by_patient: false },
-  { id: 'ap-2', org_id: ORG_ID, patient_id: 'p-priya', specialty: 'Physiotherapy', date: '30 Aug, 11:00 AM', reason: 'Knee stiffness follow-up (telephonic booking)', practitioner_id: 'pr-physio', status: 'scheduled', start_time: null, duration_minutes: 20, requested_by_patient: false },
+  { id: 'ap-2', org_id: ORG_ID, patient_id: 'p-priya', specialty: 'Physiotherapy', date: '2026-08-30T05:30:00Z', reason: 'Knee stiffness follow-up (telephonic booking)', practitioner_id: 'pr-physio', status: 'scheduled', start_time: null, duration_minutes: 20, requested_by_patient: false },
 ];
 
 export const encounters: EncounterRow[] = [

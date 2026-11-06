@@ -1,5 +1,5 @@
 -- 0004 — Let the Physiotherapist role do what the Doctor screen asks of it.
---         *** NEEDS A PRODUCT DECISION BEFORE "GO" — see notes ***
+--         Applied 2026-11-06. Decision: physio may chart, may not prescribe.
 --
 -- Gap: App.tsx routes role 'physio' to /doctor and /inpatient, but RLS only
 -- lets 'surgeon' create/update encounters, and only receptionist/surgeon/admin

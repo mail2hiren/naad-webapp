@@ -2,7 +2,7 @@
 
 Compared: this repo at `72749a8` (main) against the Naad Supabase project
 `qerqzzqmpeqeknbnvyec` (ap-south-1, Postgres 17, status ACTIVE_HEALTHY).
-Read-only review; nothing was applied.
+Read-only review. **Update (same day, owner's go):** B1, B2, P1, P2, P3, R1 fixed — 0001–0004 applied, demo hospital seeded, app repointed (v0.1.0). Still open: P4/0005, H1, H2, AI keys.
 
 ## Summary
 

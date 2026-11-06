@@ -63,13 +63,14 @@ must match the DB role.
 ## Database
 
 - **Project:** Supabase "Naad", ref **`qerqzzqmpeqeknbnvyec`**, region ap-south-1, Postgres 17, Free plan (pauses after ~7 days idle).
-- ⚠️ As of 2026-11-06 the `.env.*` files still point at an older project (`linxtliatqpoaqbflwvh`). Switching the app to Naad is pending — see `docs/db-gap-report-2026-11-06.md`.
+- The app (`.env.production`) points at this project since v0.1.0.
+- **Demo data:** org `org1` "Naad Demo Hospital" (fictional). Staff logins `sunita|sagar|jayani|namrata|vikram|raj@digiyaan.demo`, patient logins `ramesh|deepak|kavita@digiyaan.demo`; the shared demo password is held by the owner, never in the repo. Monthly AI budget for org1: $5.
 - **Multi-tenant:** every row has `org_id`; RLS scopes to `current_org_id()`. Helper functions: `current_org_id`, `current_staff_role`, `current_patient_id`, `current_practitioner_id`, `current_actor_name` (SECURITY DEFINER).
 - **Tables (public):** organizations, practitioners, patients, appointments, encounters, prescriptions, pharmacy_orders, referrals, ward_billing_ledger, inventory, notifications, documents, transcripts, ai_usage_log, audit_events (hash-chained by trigger), lab_orders, physiotherapy_plans, therapy_sessions, exercise_library.
 - **Subscriptions/seats:** `organizations.plan / subscription_status / seat_limit`; trigger `enforce_seat_limit` on practitioners; `org_seat_usage()` RPC for the Admin screen. Hospitals cannot change their own plan.
 - **Storage:** private bucket `patient-documents`, paths `<org_id>/<patient_id>/...`.
 - **Edge function secrets:** `DEEPGRAM_API_KEY`, `ANTHROPIC_API_KEY` (optional `ANTHROPIC_MODEL`) — set in Supabase, never in the repo.
-- **Migrations:** applied history lives in the DB (`supabase_migrations.schema_migrations`). Proposed-but-unapproved SQL lives in `supabase/proposed/`. The repo's `supabase/migrations/` is not yet in sync with the DB history (gap H1).
+- **Migrations:** applied history lives in the DB (`supabase_migrations.schema_migrations`). Proposed-but-unapproved SQL lives in `supabase/proposed/`. Migrations from 2026-11-06 onward are in `supabase/migrations/` under their applied versions; the 2026-10-28 baseline is still only in the DB (gap H1).
 
 ## Commands
 

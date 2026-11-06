@@ -34,6 +34,15 @@ function classifyFileName(name: string): DocumentLabel {
   return 'other';
 }
 
+
+/** "7 Nov, 4:30 pm" for an ISO time; passes anything unparseable through. */
+function formatWhen(value: string | null): string {
+  if (!value) return 'Time not set';
+  const d = new Date(value);
+  if (Number.isNaN(d.getTime())) return value;
+  return d.toLocaleString('en-IN', { day: 'numeric', month: 'short', hour: 'numeric', minute: '2-digit' });
+}
+
 export default function ReceptionView() {
   const { practitioner } = useAuth();
   const { orgId, patients, practitioners, appointments, pushToast, logAudit } = useClinic();
@@ -75,13 +84,20 @@ export default function ReceptionView() {
         });
       }
       const chosen = bookablePractitioners.find((p) => p.id === apPractitionerId);
-      await supabase.from('appointments').insert({
+      // The picker gives local time ("2026-11-07T16:30"); the DB column is
+      // timestamptz, so store a real instant, never free text.
+      const whenIso = new Date(apWhen).toISOString();
+      const { error: apErr } = await supabase.from('appointments').insert({
         id: newId('ap'), org_id: orgId, patient_id: patientId, specialty: chosen?.specialty ?? null,
-        date: apWhen.trim(), reason: null, practitioner_id: apPractitionerId, status: 'scheduled',
-        start_time: apWhen.trim(), duration_minutes: 20, requested_by_patient: false,
+        date: whenIso, reason: null, practitioner_id: apPractitionerId, status: 'scheduled',
+        start_time: whenIso, duration_minutes: 20, requested_by_patient: false,
       });
+      if (apErr) {
+        pushToast({ tone: 'critical', title: 'Could not schedule appointment', detail: apErr.message });
+        return;
+      }
       await logAudit('reception-book-appointment', `${apName.trim()} with ${chosen?.name ?? apPractitionerId}`);
-      pushToast({ tone: 'ok', title: 'Appointment scheduled', detail: `${apName.trim()} · ${apWhen.trim()}` });
+      pushToast({ tone: 'ok', title: 'Appointment scheduled', detail: `${apName.trim()} · ${formatWhen(whenIso)}` });
       setApName(''); setApPhone(''); setApPractitionerId(''); setApWhen('');
     } finally {
       setApSaving(false);
@@ -585,7 +601,7 @@ export default function ReceptionView() {
             </select>
           </Field>
           <Field label="Date / Time">
-            <input data-testid="ap-when" className={inputCls} value={apWhen} onChange={(e) => setApWhen(e.target.value)} placeholder="e.g. 29 Aug, 4:30 PM" />
+            <input data-testid="ap-when" type="datetime-local" aria-label="Appointment date and time" className={inputCls} value={apWhen} onChange={(e) => setApWhen(e.target.value)} />
           </Field>
           <div className="md:col-span-2 mt-4">
             <Btn type="submit" variant="glow" disabled={apSaving} data-testid="save-appointment">
@@ -609,7 +625,7 @@ export default function ReceptionView() {
                 >
                   <div>
                     <div className="text-sm text-ink font-semibold">{p?.name ?? 'Unknown patient'}</div>
-                    <div className="text-[11px] text-ink-faint">{doc?.name ?? 'Unassigned'} · {a.start_time}</div>
+                    <div className="text-[11px] text-ink-faint">{doc?.name ?? 'Unassigned'} · {formatWhen(a.start_time ?? a.date)}</div>
                   </div>
                   <Btn
                     variant="glow"
