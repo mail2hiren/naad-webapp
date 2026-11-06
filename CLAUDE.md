@@ -56,7 +56,7 @@ must match the DB role.
 ## Hosting
 
 - **GitHub Pages** — primary per README: `.github/workflows/deploy-pages.yml` builds on every push to `main` → `https://mail2hiren.github.io/naad-webapp/` (base path `/naad-webapp/`; `PAGES_BASE_PATH` repo variable overrides for a custom domain).
-- **Netlify** — site `naad-care` (`https://naad-care.netlify.app`) also exists, built from `netlify.toml` (`npm run build` → `dist`, SPA redirect).
+- **Netlify** — site `naad-care` (`https://naad-care.netlify.app`) is the **live demo site** (rebuilds on push to `main`; `netlify.toml`: `npm run build` → `dist`, SPA redirect). Since 2026-11-06 it has **no** `VITE_SUPABASE_*` env vars in Netlify: the build reads `.env.production`. Do not re-add them there (they silently override the repo and once kept the live site on the old database).
 - Pushes to `main` deploy, which is another reason nothing merges without "go".
 - CI: `.github/workflows/ci.yml` — `tsc -b`, `oxlint`, both Playwright projects (incl. axe WCAG 2.1 AA gate) on every push/PR.
 

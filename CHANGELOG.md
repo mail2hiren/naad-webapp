@@ -5,6 +5,9 @@ versions follow [SemVer](https://semver.org/) and each release is tagged `vX.Y.Z
 
 ## [Unreleased]
 
+### Changed
+- Netlify site `naad-care` no longer overrides the database settings; live site verified on the Naad database for all 6 roles.
+
 ## [0.1.0] - 2026-11-06
 
 First version wired to the Naad Supabase project and live for demos.
