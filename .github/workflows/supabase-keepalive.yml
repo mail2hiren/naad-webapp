@@ -1,0 +1,55 @@
+# Keeps the Naad Supabase project (Free plan) from auto-pausing.
+# Supabase pauses free projects after ~7 days with no activity; this sends one
+# tiny read-only request through the REST API every 3 days so Postgres runs a
+# query. No data is read or written: RLS refuses the anonymous request inside
+# Postgres, and that Postgres-side refusal is our proof the database is awake.
+#
+# Needs no secrets: it uses the public URL + anon key already in .env.production.
+# Optional repo variables SUPABASE_URL / SUPABASE_ANON_KEY override them.
+#
+# Note: GitHub disables scheduled workflows after 60 days without repo activity.
+# If that happens, re-enable it under Actions -> "Supabase keep-alive".
+name: Supabase keep-alive
+
+on:
+  schedule:
+    - cron: "17 3 */3 * *" # 03:17 UTC every 3rd day
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  ping:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          sparse-checkout: .env.production
+          sparse-checkout-cone-mode: false
+
+      - name: Ping the database
+        env:
+          URL_OVERRIDE: ${{ vars.SUPABASE_URL }}
+          KEY_OVERRIDE: ${{ vars.SUPABASE_ANON_KEY }}
+        run: |
+          set -euo pipefail
+          set -a; source .env.production; set +a
+          url="${URL_OVERRIDE:-$VITE_SUPABASE_URL}"
+          key="${KEY_OVERRIDE:-$VITE_SUPABASE_ANON_KEY}"
+          for attempt in 1 2 3; do
+            status=$(curl -sS -o body.json -w '%{http_code}' --max-time 30 \
+              "$url/rest/v1/organizations?select=id&limit=1" \
+              -H "apikey: $key" -H "Authorization: Bearer $key" || echo 000)
+            echo "Attempt $attempt: HTTP $status"
+            # 200 = query ran; a Postgres SQLSTATE error (e.g. 42501) = query reached Postgres.
+            if [ "$status" = 200 ] || grep -qE '"code":"[0-9A-Z]{5}"' body.json 2>/dev/null; then
+              echo "Database is awake."
+              exit 0
+            fi
+            head -c 300 body.json 2>/dev/null || true; echo
+            sleep 20
+          done
+          echo "::error::Database did not answer. It may already be paused - restore it in the Supabase dashboard."
+          exit 1
