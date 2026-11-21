@@ -5,6 +5,11 @@ versions follow [SemVer](https://semver.org/) and each release is tagged `vX.Y.Z
 
 ## [Unreleased]
 
+## [0.1.1] - 2026-11-21
+
+### Added
+- `supabase-keepalive` GitHub Actions workflow: pings the Naad database every 3 days so the Free-plan project no longer auto-pauses after 7 idle days (it paused around 2026-11-14 after the last use on 2026-11-07). Free; needs no secrets.
+
 ## [0.1.0] - 2026-11-06
 
 First version wired to the Naad Supabase project and live for demos.

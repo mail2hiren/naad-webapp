@@ -46,7 +46,7 @@ Netlify still works with the same code (`netlify.toml`), but it is no longer req
 
 Edge functions live in `supabase/functions` and are deployed to the Supabase project; secrets (`DEEPGRAM_API_KEY`, `ANTHROPIC_API_KEY`) are set there, **never** in this repo. The browser only ever holds the public anon key (`.env.production`).
 
-> Supabase free-tier projects pause after a week of inactivity. A paying hospital deployment needs the Pro plan (or an uptime ping).
+> Supabase free-tier projects pause after a week of inactivity. `.github/workflows/supabase-keepalive.yml` pings the database every 3 days to prevent this (no secrets needed; it uses the public values in `.env.production`, overridable with repo variables `SUPABASE_URL` / `SUPABASE_ANON_KEY`). GitHub turns scheduled workflows off after 60 days without repo activity: if the database pauses again, re-enable the workflow under **Actions**. A paying hospital deployment should be on the Pro plan.
 
 ## Hospitals, users and subscriptions
 
