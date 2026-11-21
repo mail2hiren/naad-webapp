@@ -18,6 +18,9 @@ jobs:
       - run: npm ci
       - run: npx tsc -b
       - run: npm run lint
+      # Edge function tests: access rules, privacy rules and the pinned
+      # response/prompt contract of transcribe-and-extract, plus clinical-whisperer.
+      - run: npm run test:functions
       - run: npx playwright install --with-deps chromium
       # Runs both Playwright projects: the scripted/mock suite (incl. the
       # accessibility gate) and the real-ambient-capture suite.

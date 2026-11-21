@@ -1,0 +1,10 @@
+# Supabase CLI settings for deploying this repo's edge functions.
+project_id = "naad-webapp"
+
+[functions.transcribe-and-extract]
+# Only signed-in users reach the function; it then checks staff role itself.
+verify_jwt = true
+
+[functions.clinical-whisperer]
+# Gateway also accepts the anon key; the handler checks for a signed-in doctor itself.
+verify_jwt = true

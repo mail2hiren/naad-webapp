@@ -5,6 +5,19 @@ versions follow [SemVer](https://semver.org/) and each release is tagged `vX.Y.Z
 
 ## [Unreleased]
 
+## [0.1.2] - 2026-11-21
+
+Repo now holds exactly what is live. No change to the live app, database or functions.
+
+### Added
+- Source of both live edge functions, copied exactly from Supabase: `transcribe-and-extract` (with the hospital/role checks and Deepgram data opt-out) and `clinical-whisperer` (doctor-only, budget-checked).
+- `npm run test:functions` (and a CI step): 22 tests for access rules, privacy rules and the pinned AI contract.
+- The six 2026-10-28 baseline migrations in `supabase/migrations/`, checksum-identical to the database's history.
+
+### Changed
+- Three migrations from the old Supabase project moved to `supabase/migrations_legacy/`.
+- Replaces old PRs #1–#4 (E01, A01, A02, A03): their fixes were already live; this brings the matching code and tests into the repo.
+
 ## [0.1.1] - 2026-11-21
 
 ### Added
