@@ -1,0 +1,1 @@
+revoke execute on function public.current_actor_name(), public.current_org_id(), public.current_patient_id(), public.current_practitioner_id(), public.current_staff_role() from public, anon;

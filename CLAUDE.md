@@ -70,7 +70,8 @@ must match the DB role.
 - **Subscriptions/seats:** `organizations.plan / subscription_status / seat_limit`; trigger `enforce_seat_limit` on practitioners; `org_seat_usage()` RPC for the Admin screen. Hospitals cannot change their own plan.
 - **Storage:** private bucket `patient-documents`, paths `<org_id>/<patient_id>/...`.
 - **Edge function secrets:** `DEEPGRAM_API_KEY`, `ANTHROPIC_API_KEY` (optional `ANTHROPIC_MODEL`) — set in Supabase, never in the repo.
-- **Migrations:** applied history lives in the DB (`supabase_migrations.schema_migrations`). Proposed-but-unapproved SQL lives in `supabase/proposed/`. Migrations from 2026-11-06 onward are in `supabase/migrations/` under their applied versions; the 2026-10-28 baseline is still only in the DB (gap H1).
+- **Migrations:** applied history lives in the DB (`supabase_migrations.schema_migrations`). Proposed-but-unapproved SQL lives in `supabase/proposed/`. Every applied migration (2026-10-28 baseline onward) is in `supabase/migrations/` under its applied version, byte-for-byte as recorded in the DB. `supabase/migrations_legacy/` holds three files from the old project, kept for history only.
+- **Edge function source:** `supabase/functions/<name>/` is exactly what is deployed (`index.ts` wires Deno, `handler.ts` is the logic, `contract.ts` pins the model/prompt/tools). `npm run test:functions` runs their tests (also in CI). Deploys are manual for now (`supabase functions deploy <name>`); there is no deploy workflow yet.
 
 ## Commands
 
@@ -79,6 +80,7 @@ npm ci
 npm run dev                      # real backend (needs .env.local)
 VITE_USE_MOCK=1 npm run dev      # mock backend, no network
 npx tsc -b && npm run lint
+npm run test:functions          # edge function tests (Node, no network)
 npx playwright test --trace off  # chromium + real-ambient projects
 npm run build
 ```
