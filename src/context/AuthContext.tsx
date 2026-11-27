@@ -7,6 +7,9 @@ interface AuthState {
   authUserId: string | null;
   email: string | null;
   practitioner: PractitionerRow | null;
+  /** New or reset logins must choose their own password before working. */
+  mustChangePassword: boolean;
+  changePassword: (newPassword: string) => Promise<{ error: string | null }>;
   signIn: (email: string, password: string, expectedRole: StaffRole) => Promise<{ error: string | null }>;
   signOut: () => Promise<void>;
 }
@@ -22,6 +25,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [authUserId, setAuthUserId] = useState<string | null>(null);
   const [email, setEmail] = useState<string | null>(null);
   const [practitioner, setPractitioner] = useState<PractitionerRow | null>(null);
+  const [mustChangePassword, setMustChangePassword] = useState(false);
   // Supabase (real and mock alike) fires onAuthStateChange('SIGNED_IN', ...)
   // the moment signInWithPassword succeeds -- BEFORE signIn() below has had
   // a chance to check the dropdown's expected role against the account's
@@ -49,6 +53,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       if (session?.user) {
         setAuthUserId(session.user.id);
         setEmail(session.user.email);
+        setMustChangePassword(session.user.user_metadata?.must_change_password === true);
         await loadPractitioner(session.user.id);
       }
       setLoading(false);
@@ -58,6 +63,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       if (session?.user) {
         setAuthUserId(session.user.id);
         setEmail(session.user.email);
+        setMustChangePassword(session.user.user_metadata?.must_change_password === true);
         await loadPractitioner(session.user.id);
       } else {
         setAuthUserId(null);
@@ -92,6 +98,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
       setAuthUserId(data.user.id);
       setEmail(data.user.email ?? emailIn);
+      setMustChangePassword(data.user.user_metadata?.must_change_password === true);
       setPractitioner(row);
       return { error: null };
     } finally {
@@ -104,10 +111,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setAuthUserId(null);
     setEmail(null);
     setPractitioner(null);
+    setMustChangePassword(false);
+  }
+
+  async function changePassword(newPassword: string) {
+    const { error } = await supabase.auth.updateUser({ password: newPassword, data: { must_change_password: false } });
+    if (error) return { error: error.message };
+    setMustChangePassword(false);
+    return { error: null };
   }
 
   return (
-    <AuthContext.Provider value={{ loading, authUserId, email, practitioner, signIn, signOut }}>
+    <AuthContext.Provider value={{ loading, authUserId, email, practitioner, mustChangePassword, changePassword, signIn, signOut }}>
       {children}
     </AuthContext.Provider>
   );

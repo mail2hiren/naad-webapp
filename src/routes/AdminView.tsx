@@ -1,4 +1,7 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useAuth } from '../context/AuthContext';
+import { platformCall, type DepartmentRow, type StaffWithEmail } from '../lib/platformApi';
+import { DepartmentsManager, StaffManager } from '../components/StaffManager';
 import { subscriptionStatusLabel } from '../lib/labels';
 import Shell from '../components/Shell';
 import { useSection } from '../lib/nav';
@@ -6,20 +9,6 @@ import { Card, Btn, Pill, StatTile, inputCls } from '../components/ui';
 import { useClinic } from '../context/ClinicContext';
 import { supabase } from '../lib/supabaseClient';
 import type { PatientRow, PractitionerRow } from '../types/db';
-
-const TEMP_PW_CHARSET = 'ABCDEFGHJKMNPQRSTUVWXYZabcdefghjkmnpqrstuvwxyz23456789';
-
-function genTempPassword(len = 8): string {
-  let out = '';
-  for (let i = 0; i < len; i++) {
-    out += TEMP_PW_CHARSET[Math.floor(Math.random() * TEMP_PW_CHARSET.length)];
-  }
-  return out;
-}
-
-function firstName(fullName: string): string {
-  return fullName.trim().split(/\s+/)[0] ?? fullName;
-}
 
 function fmtRupees(n: number): string {
   return `₹${n.toLocaleString('en-IN')}`;
@@ -34,7 +23,7 @@ function fmtRupees(n: number): string {
  * live from useClinic().
  */
 export default function AdminView() {
-  const section = useSection<'overview' | 'staff' | 'fees' | 'billing'>('overview');
+  const section = useSection<'overview' | 'staff' | 'departments' | 'fees' | 'billing'>('overview');
   const { patients, practitioners, encounters, wardLedger, pharmacyOrders, pushToast, logAudit } = useClinic();
 
   const doctors = useMemo(
@@ -69,7 +58,7 @@ export default function AdminView() {
   }, [encounters, wardLedger]);
 
   return (
-    <Shell title={{ overview: 'Overview', staff: 'Staff', fees: 'Consultation fees', billing: 'Discharge billing' }[section]}>
+    <Shell title={{ overview: 'Overview', staff: 'Staff', departments: 'Departments', fees: 'Consultation fees', billing: 'Discharge billing' }[section]}>
       {section === 'overview' && (<>
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6">
         <StatTile label="Total Walk-ins" value={walkInCount} />
@@ -83,7 +72,7 @@ export default function AdminView() {
 
       {section === 'fees' && <FeeEditor doctors={doctors} pushToast={pushToast} />}
 
-      {section === 'staff' && <PasswordRecovery practitioners={practitioners} logAudit={logAudit} />}
+      {(section === 'staff' || section === 'departments') && <HospitalTeam section={section} />}
 
       {section === 'billing' && <DischargeSettlement
         patients={pendingClearance}
@@ -246,69 +235,6 @@ function FeeEditor({
 }
 
 /* ---------------------------------------------------------------------- */
-/* Staff password recovery                                                */
-/* ---------------------------------------------------------------------- */
-
-function PasswordRecovery({
-  practitioners,
-  logAudit,
-}: {
-  practitioners: PractitionerRow[];
-  logAudit: (action: string, detail: string) => Promise<void>;
-}) {
-  const [issued, setIssued] = useState<Record<string, string>>({});
-  const [issuingId, setIssuingId] = useState<string | null>(null);
-
-  async function handleReset(staff: PractitionerRow) {
-    setIssuingId(staff.id);
-    const code = genTempPassword();
-    await logAudit('password-reset-issued', staff.name);
-    setIssued((prev) => ({ ...prev, [staff.id]: code }));
-    setIssuingId(null);
-  }
-
-  return (
-    <Card className="mb-6">
-      <div className="text-base font-bold text-ink mb-3">
-        Staff and password resets
-      </div>
-      <div className="flex flex-col divide-y divide-line">
-        {practitioners.map((staff) => (
-          <div key={staff.id} className="py-3 first:pt-0 last:pb-0 flex flex-col gap-2">
-            <div className="flex items-center justify-between gap-3 flex-wrap">
-              <div>
-                <div className="text-sm font-semibold text-ink">{staff.name}</div>
-                <div className="text-xs text-ink-faint mt-0.5">{staff.title ?? staff.role}</div>
-              </div>
-              <Btn
-                variant="default"
-                data-testid="reset-password"
-                onClick={() => handleReset(staff)}
-                disabled={issuingId === staff.id}
-              >
-                {issuingId === staff.id ? 'Issuing…' : 'Reset Password'}
-              </Btn>
-            </div>
-            {issued[staff.id] && (
-              <div className="text-xs text-ok bg-ok-soft rounded-lg px-3 py-2 leading-relaxed">
-                Temp password: <span className="font-mono font-bold">{issued[staff.id]}</span> — share securely
-                with {firstName(staff.name)}, and have them update their real password through their own account
-                settings.
-              </div>
-            )}
-          </div>
-        ))}
-        {practitioners.length === 0 && <div className="text-sm text-ink-faint py-2">No staff on record.</div>}
-      </div>
-      <p className="text-xs text-ink-faint mt-3 leading-relaxed">
-        Reset Password gives a one-time code. Share it with the staff member privately; they use it to sign in
-        and choose a new password.
-      </p>
-    </Card>
-  );
-}
-
-/* ---------------------------------------------------------------------- */
 /* Discharge balance settlement                                           */
 /* ---------------------------------------------------------------------- */
 
@@ -442,4 +368,27 @@ function DischargeSettlement({
       )}
     </Card>
   );
+}
+
+/* ---------------------------------------------------------------------- */
+/* Staff and departments (real logins, via the platform-admin function)   */
+/* ---------------------------------------------------------------------- */
+
+function HospitalTeam({ section }: { section: 'staff' | 'departments' }) {
+  const { practitioner } = useAuth();
+  const orgId = practitioner?.org_id ?? '';
+  const [data, setData] = useState<{ hospital: { seat_limit: number }; departments: DepartmentRow[]; staff: StaffWithEmail[] } | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const load = useCallback(() => {
+    if (!orgId) return;
+    platformCall<{ hospital: { seat_limit: number }; departments: DepartmentRow[]; staff: StaffWithEmail[] }>('get_hospital', { orgId })
+      .then(setData, (e) => setError(e.message));
+  }, [orgId]);
+  useEffect(() => { load(); }, [load]);
+
+  if (error) return <Card><p className="text-danger" role="alert">{error}</p></Card>;
+  if (!data) return <p className="text-ink-soft">Loading…</p>;
+  return section === 'staff'
+    ? <StaffManager orgId={orgId} staff={data.staff} departments={data.departments} seatLimit={data.hospital.seat_limit} onChanged={load} />
+    : <DepartmentsManager orgId={orgId} departments={data.departments} onChanged={load} />;
 }

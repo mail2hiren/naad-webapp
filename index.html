@@ -11,6 +11,9 @@
     <link rel="manifest" href="/manifest.webmanifest" />
     <meta name="theme-color" content="#0B1222" />
     <script>try{if(localStorage.getItem("naad-theme")==="dark")document.documentElement.dataset.theme="dark"}catch(e){}</script>
+    <!-- Opened from an invitation / password-reset email? Remember it before
+         Supabase consumes the link, so the app shows "Set your password". -->
+    <script>try{var m=/[#&?]type=(invite|recovery)(&|$)/.exec(location.hash+location.search);if(m)sessionStorage.setItem("naad-auth-link",m[1])}catch(e){}</script>
 
     <!-- iOS Safari doesn't read the manifest for home-screen behavior the
          way Android/Chrome does -- these meta tags are what actually make

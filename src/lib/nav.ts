@@ -30,6 +30,7 @@ export const ROLE_NAV: Record<StaffRole, NavItem[]> = {
   admin: [
     { to: '/admin', section: 'overview', label: 'Overview', icon: 'chart' },
     { to: '/admin', section: 'staff', label: 'Staff', icon: 'users' },
+    { to: '/admin', section: 'departments', label: 'Departments', icon: 'box' },
     { to: '/admin', section: 'fees', label: 'Consultation fees', icon: 'rupee' },
     { to: '/admin', section: 'billing', label: 'Discharge billing', icon: 'receipt' },
     { to: '/inpatient', label: 'Ward', icon: 'bed' },

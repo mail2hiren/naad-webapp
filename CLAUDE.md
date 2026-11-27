@@ -38,6 +38,7 @@ fallback (mic denied, noisy room, AI budget reached), not a substitute.
 | Pharmacist | `pharmacist` | `/pharmacy` |
 | Hospital Admin | `admin` | `/admin`, `/inpatient` |
 | Patient | `patients.auth_user_id` (not staff) | `/patient` (separate login) |
+| DigiYaan Super admin | `platform_admins.auth_user_id` (not staff, above all hospitals) | `/platform` (separate login) |
 
 Staff login (`AuthContext`) requires an **active** `practitioners` row whose
 `auth_user_id` matches the Supabase auth user, and the role picked at login
@@ -54,6 +55,7 @@ Navigation: `src/lib/nav.ts` (`ROLE_NAV`) lists each role's sidebar pages;
 - **Data access:** `src/lib/supabaseClient.ts`. `src/context/ClinicContext.tsx` loads all org data and keeps it live with one Realtime channel per table.
 - **Ambient capture:** `src/hooks/useRealAmbientCapture.ts` — `getUserMedia` → `MediaRecorder` → POST audio to edge function `transcribe-and-extract` (Deepgram nova-3 diarised STT → Claude structured extraction; logs cost to `ai_usage_log`; refuses with 402 past the hospital's monthly AI budget).
 - **Clinical Whisperer:** edge function `clinical-whisperer` — case-specific reminders; fails soft to a static checklist.
+- **Platform admin:** edge function `platform-admin` — the only code that creates logins or works across hospitals (service role). Super admins may do everything; a hospital admin only staff/departments of their own hospital. Every action is written to `platform_audit`. New/reset logins get a one-time password and `user_metadata.must_change_password`, enforced by `ProtectedRoute` (`ChangePassword` screen). Demo mode runs the same handler against the mock tables.
 - **Mock mode:** `VITE_USE_MOCK=1` uses the in-memory backend in `src/mock/` and scripted ambient (CI, demos). Demo dates shift to today (`VITE_FREEZE_DEMO_DATES=1` in the test builds keeps them fixed); demo recordings fill the note from `src/mock/demoExtraction.ts` (not in `--mode test`). `VITE_FORCE_REAL_AMBIENT=1` drives the real capture path against a stubbed function (Playwright `real-ambient` project).
 - **AI guardrails:** the AI never writes the diagnosis or examination; assessment/plan are tentative; a human sign-off gate precedes authorisation.
 
@@ -73,6 +75,7 @@ Navigation: `src/lib/nav.ts` (`ROLE_NAV`) lists each role's sidebar pages;
 - **Tables (public):** organizations, practitioners, patients, appointments, encounters, prescriptions, pharmacy_orders, referrals, ward_billing_ledger, inventory, notifications, documents, transcripts, ai_usage_log, audit_events (hash-chained by trigger), lab_orders, physiotherapy_plans, therapy_sessions, exercise_library.
 - **Subscriptions/seats:** `organizations.plan / subscription_status / seat_limit`; trigger `enforce_seat_limit` on practitioners; `org_seat_usage()` RPC for the Admin screen. Hospitals cannot change their own plan.
 - **Storage:** private bucket `patient-documents`, paths `<org_id>/<patient_id>/...`.
+- **Super admins:** rows in `platform_admins` (service-role only). The first one is the owner's login, added 2026-11-27. Auth Site URL = the live GitHub Pages app; redirect URLs allow the live site, Netlify, `deploy-preview-*--naad-care.netlify.app` and localhost:5173.
 - **Edge function secrets:** `DEEPGRAM_API_KEY`, `ANTHROPIC_API_KEY` (optional `ANTHROPIC_MODEL`) — set in Supabase, never in the repo.
 - **Migrations:** applied history lives in the DB (`supabase_migrations.schema_migrations`). Proposed-but-unapproved SQL lives in `supabase/proposed/`. Every applied migration (2026-10-28 baseline onward) is in `supabase/migrations/` under its applied version, byte-for-byte as recorded in the DB. `supabase/migrations_legacy/` holds three files from the old project, kept for history only.
 - **Edge function source:** `supabase/functions/<name>/` is exactly what is deployed (`index.ts` wires Deno, `handler.ts` is the logic, `contract.ts` pins the model/prompt/tools). `npm run test:functions` runs their tests (also in CI). Deploys are manual for now (`supabase functions deploy <name>`); there is no deploy workflow yet.

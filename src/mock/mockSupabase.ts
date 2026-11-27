@@ -1,4 +1,5 @@
 import * as seed from './seed';
+import { handle as platformAdminHandle } from '../../supabase/functions/platform-admin/handler';
 
 /**
  * A minimal in-memory implementation of the subset of the @supabase/supabase-js
@@ -47,8 +48,15 @@ const dayShiftMs = import.meta.env.VITE_FREEZE_DEMO_DATES === '1'
 type Listener = (payload: { eventType: 'INSERT' | 'UPDATE' | 'DELETE'; new: Row; old: Row | null }) => void;
 
 const TABLES: Record<string, Row[]> = {
-  organizations: [{ id: seed.ORG_ID, name: 'Naad Demo Hospital', city: 'Pune', ai_monthly_budget_usd: 45 }],
-  practitioners: seed.practitioners as unknown as Row[],
+  organizations: [
+    { id: seed.ORG_ID, name: 'Naad Demo Hospital', city: 'Pune', ai_monthly_budget_usd: 45, plan: 'pilot', subscription_status: 'active', seat_limit: 25, address: 'FC Road, Pune', contact_phone: '+91 20 4000 1234', billing_email: null },
+    { id: seed.ORG2_ID, name: 'Sahyadri Ortho Care', city: 'Nashik', ai_monthly_budget_usd: 20, plan: 'trial', subscription_status: 'trialing', seat_limit: 10, address: null, contact_phone: null, billing_email: null },
+  ],
+  practitioners: [...(seed.practitioners as unknown as Row[]), ...(seed.extraPractitioners as unknown as Row[])],
+  platform_admins: seed.platformAdmins as unknown as Row[],
+  platform_audit: seed.platformAudit as unknown as Row[],
+  departments: seed.departments as unknown as Row[],
+  ai_usage_log: [],
   patients: seed.patients as unknown as Row[],
   appointments: seed.appointments as unknown as Row[],
   encounters: seed.encounters as unknown as Row[],
@@ -72,7 +80,7 @@ function notify(table: string, payload: Parameters<Listener>[0]) {
 let idCounter = 1000;
 function genId(prefix: string) { idCounter += 1; return `${prefix}-${idCounter}`; }
 
-type Filter = { col: string; op: 'eq' | 'neq' | 'in'; val: any };
+type Filter = { col: string; op: 'eq' | 'neq' | 'in' | 'gte'; val: any };
 
 class MockBuilder {
   private filters: Filter[] = [];
@@ -112,6 +120,7 @@ class MockBuilder {
   eq(col: string, val: any) { this.filters.push({ col, op: 'eq', val }); return this; }
   neq(col: string, val: any) { this.filters.push({ col, op: 'neq', val }); return this; }
   in(col: string, vals: any[]) { this.filters.push({ col, op: 'in', val: vals }); return this; }
+  gte(col: string, val: any) { this.filters.push({ col, op: 'gte', val }); return this; }
   order(col: string, opts?: { ascending?: boolean }) { this.orderCol = col; this.orderAsc = opts?.ascending ?? true; return this; }
   limit(n: number) { this.limitN = n; return this; }
   single() { this.wantSingle = 'single'; return this; }
@@ -126,6 +135,7 @@ class MockBuilder {
       if (f.op === 'eq') return r[f.col] === f.val;
       if (f.op === 'neq') return r[f.col] !== f.val;
       if (f.op === 'in') return (f.val as any[]).includes(r[f.col]);
+      if (f.op === 'gte') return String(r[f.col] ?? '') >= String(f.val);
       return true;
     }));
   }
@@ -153,6 +163,10 @@ class MockBuilder {
 
     if (this.op === 'insert') {
       const rowsIn = Array.isArray(this.payload) ? this.payload : [this.payload as Row];
+      // Mirrors the real unique (org_id, name) constraint on departments.
+      if (this.table === 'departments' && rowsIn.some((r) => table.some((d) => d.org_id === r.org_id && d.name === r.name))) {
+        return { data: null, error: { message: 'duplicate key value violates unique constraint' } };
+      }
       const inserted: Row[] = rowsIn.map((r) => {
         const row = { id: r.id ?? genId(this.table.slice(0, 4)), ...r };
         table.push(row);
@@ -226,7 +240,7 @@ class MockChannel {
   }
 }
 
-type AuthUser = { id: string; email: string };
+type AuthUser = { id: string; email: string; user_metadata?: Record<string, unknown> };
 type MockSession = { user: AuthUser; access_token: string };
 type AuthChangeCb = (event: string, session: MockSession | null) => void;
 
@@ -259,7 +273,7 @@ class MockAuth {
     if (!cred || cred.password !== password) {
       return { data: { user: null, session: null }, error: { message: 'Invalid login credentials' } };
     }
-    const user: AuthUser = { id: cred.userId, email };
+    const user: AuthUser = { id: cred.userId, email, user_metadata: { ...(cred.metadata ?? {}) } };
     this.session = { user, access_token: 'mock-access-token' };
     saveSession(this.session);
     this.listeners.forEach((cb) => cb('SIGNED_IN', this.session));
@@ -277,6 +291,56 @@ class MockAuth {
     return { data: { session: this.session }, error: null };
   }
 
+  /** Demo mode sends no email; the UI shows the same neutral message. */
+  async resetPasswordForEmail(_email: string, _opts?: { redirectTo?: string }) {
+    return { data: {}, error: null };
+  }
+
+  async getUser() {
+    return this.session
+      ? { data: { user: this.session.user }, error: null }
+      : { data: { user: null }, error: { message: 'Not signed in' } };
+  }
+
+  /** Signed-in user changes their own password / metadata (first sign-in). */
+  async updateUser(attrs: { password?: string; data?: Record<string, unknown> }) {
+    if (!this.session) return { data: { user: null }, error: { message: 'Not signed in' } };
+    const entry = Object.entries(seed.MOCK_CREDENTIALS).find(([, c]) => c.userId === this.session!.user.id);
+    if (entry) {
+      if (attrs.password) entry[1].password = attrs.password;
+      if (attrs.data) entry[1].metadata = { ...(entry[1].metadata ?? {}), ...attrs.data };
+    }
+    this.session.user.user_metadata = { ...(this.session.user.user_metadata ?? {}), ...(attrs.data ?? {}) };
+    saveSession(this.session);
+    return { data: { user: this.session.user }, error: null };
+  }
+
+  /** Service-role user admin, as used by the platform-admin function. */
+  admin = {
+    createUser: async (a: { email: string; password: string; user_metadata?: Record<string, unknown> }) => {
+      if (seed.MOCK_CREDENTIALS[a.email]) return { data: null, error: { message: 'User already registered' } };
+      const id = genId('auth');
+      seed.MOCK_CREDENTIALS[a.email] = { password: a.password, userId: id, metadata: a.user_metadata };
+      return { data: { user: { id, email: a.email } }, error: null };
+    },
+    getUserById: async (id: string) => {
+      const entry = Object.entries(seed.MOCK_CREDENTIALS).find(([, c]) => c.userId === id);
+      return { data: { user: entry ? { id, email: entry[0] } : null }, error: null };
+    },
+    updateUserById: async (id: string, a: { password?: string; user_metadata?: Record<string, unknown> }) => {
+      const entry = Object.entries(seed.MOCK_CREDENTIALS).find(([, c]) => c.userId === id);
+      if (!entry) return { data: null, error: { message: 'User not found' } };
+      if (a.password) entry[1].password = a.password;
+      if (a.user_metadata) entry[1].metadata = { ...(entry[1].metadata ?? {}), ...a.user_metadata };
+      return { data: {}, error: null };
+    },
+    deleteUser: async (id: string) => {
+      const entry = Object.entries(seed.MOCK_CREDENTIALS).find(([, c]) => c.userId === id);
+      if (entry) delete seed.MOCK_CREDENTIALS[entry[0]];
+      return { data: {}, error: null };
+    },
+  };
+
   onAuthStateChange(cb: AuthChangeCb) {
     this.listeners.add(cb);
     return { data: { subscription: { unsubscribe: () => this.listeners.delete(cb) } } };
@@ -284,15 +348,40 @@ class MockAuth {
 }
 
 export function createMockSupabaseClient() {
+  const auth = new MockAuth();
+  // Demo mode runs the REAL platform-admin handler against the in-memory
+  // tables, so the Super admin console behaves exactly as it will live.
+  const serviceClient = () => ({ from: (table: string) => new MockBuilder(table), auth });
+  async function invokePlatformAdmin(body: unknown) {
+    const res = await platformAdminHandle(
+      new Request('http://mock/functions/v1/platform-admin', {
+        method: 'POST',
+        headers: { authorization: 'Bearer mock', 'content-type': 'application/json' },
+        body: JSON.stringify(body),
+      }),
+      {
+        env: () => 'mock',
+        createClient: serviceClient,
+        randomBytes: (n) => crypto.getRandomValues(new Uint8Array(n)),
+      },
+    );
+    const json = await res.json();
+    return res.ok
+      ? { data: json, error: null }
+      : { data: null, error: { message: json.error ?? 'Request failed', context: { json: async () => json } } };
+  }
   return {
     from: (table: string) => new MockBuilder(table),
     channel: (name: string) => new MockChannel(name),
     removeChannel: (ch: MockChannel) => ch.unsubscribe(),
-    auth: new MockAuth(),
+    auth,
     // Mirrors the org_seat_usage() SQL function (supabase/migrations).
     rpc: async (fn: string) => {
       if (fn !== 'org_seat_usage') return { data: null, error: { message: `mock: unknown rpc "${fn}"` } };
-      const used = TABLES.practitioners.filter((p) => p.active).length;
+      // Like the real function: the signed-in staff member's own hospital.
+      const { data: sess } = await auth.getSession();
+      const me = TABLES.practitioners.find((p) => p.auth_user_id === sess.session?.user.id);
+      const used = TABLES.practitioners.filter((p) => p.active && p.org_id === (me?.org_id ?? seed.ORG_ID)).length;
       return {
         data: [{ plan: 'pilot', subscription_status: 'active', seat_limit: 25, seats_used: used, trial_ends_at: null, current_period_end: null }],
         error: null,
@@ -304,7 +393,7 @@ export function createMockSupabaseClient() {
     // and drop back to their static list, so this keeps mock/test builds
     // working without ever reaching a real function.
     functions: {
-      invoke: async (_name: string, _opts?: unknown) => ({
+      invoke: async (name: string, opts?: { body?: unknown }) => name === 'platform-admin' ? invokePlatformAdmin(opts?.body) : ({
         data: { prompts: null, fallback: true, reason: 'mock: edge functions not available' },
         error: null,
       }),

@@ -445,7 +445,11 @@ export const auditEvents: AuditEventRow[] = [
  * login) -- generic over both, since the Patient Portal authenticates the
  * same way staff do (supabase.auth.signInWithPassword) but is never staff.
  */
-export const MOCK_CREDENTIALS: Record<string, { password: string; userId: string }> = {
+export const MOCK_CREDENTIALS: Record<string, { password: string; userId: string; metadata?: Record<string, unknown> }> = {
+  // DigiYaan super admin (Super admin console at /platform) and the admin of
+  // the second demo hospital.
+  'owner@digiyaan.demo': { password: 'pass1234', userId: 'auth-owner' },
+  'meera@digiyaan.demo': { password: 'pass1234', userId: 'auth-meera' },
   'sunita@digiyaan.demo': { password: 'pass1234', userId: 'auth-recep' },
   'sagar@digiyaan.demo': { password: 'pass1234', userId: 'auth-surgeon' },
   'jayani@digiyaan.demo': { password: 'pass1234', userId: 'auth-physio' },
@@ -462,3 +466,25 @@ export const MOCK_CREDENTIALS: Record<string, { password: string; userId: string
   'deepak@digiyaan.demo': { password: 'pass1234', userId: 'auth-deepak' },
   'kavita@digiyaan.demo': { password: 'pass1234', userId: 'auth-kavita' },
 };
+
+/** Demo platform layer (Phase 2): one DigiYaan super admin, departments for
+ * the demo hospital, and a second hospital so the Super admin console shows
+ * more than one customer. */
+export const ORG2_ID = 'sahyadri-ortho';
+
+export const platformAdmins = [{ auth_user_id: 'auth-owner', name: 'DigiYaan Super Admin', created_at: '2026-08-01T04:30:00Z' }];
+
+export const departments = [
+  { id: 'dep-ortho', org_id: ORG_ID, name: 'Orthopaedics', specialty: 'Orthopedics', active: true, created_at: '2026-08-01T04:30:00Z' },
+  { id: 'dep-physio', org_id: ORG_ID, name: 'Physiotherapy', specialty: 'Physiotherapy', active: true, created_at: '2026-08-01T04:30:00Z' },
+  { id: 'dep-icu', org_id: ORG_ID, name: 'Critical Care', specialty: 'Critical Care', active: true, created_at: '2026-08-01T04:30:00Z' },
+  { id: 'dep-s-ortho', org_id: ORG2_ID, name: 'Orthopaedics', specialty: 'Orthopedics', active: true, created_at: '2026-08-20T04:30:00Z' },
+];
+
+export const extraPractitioners = [
+  { id: 'pr-meera', org_id: ORG2_ID, auth_user_id: 'auth-meera', name: 'Meera Joshi', role: 'admin', title: 'Hospital Administrator', specialty: null, consult_fee: null, preferred_language: 'en', active: true, department_id: null },
+];
+
+export const platformAudit = [
+  { id: 1, ts: '2026-08-20T04:30:00Z', actor: 'DigiYaan Super Admin', actor_role: 'platform_admin', action: 'create_hospital', org_id: ORG2_ID, detail: 'Sahyadri Ortho Care; first admin Meera Joshi <meera@digiyaan.demo>' },
+];

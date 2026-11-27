@@ -8,3 +8,7 @@ verify_jwt = true
 [functions.clinical-whisperer]
 # Gateway also accepts the anon key; the handler checks for a signed-in doctor itself.
 verify_jwt = true
+
+[functions.platform-admin]
+# Signed-in users only; the handler then checks super admin / hospital admin itself.
+verify_jwt = true
