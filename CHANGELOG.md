@@ -26,6 +26,10 @@ Phase 2 of the product gap audit: the DigiYaan Super admin console and departmen
 ### Fixed
 - The hospital Admin "Reset Password" button only displayed a made-up password and changed nothing. It now really resets the login.
 
+### Setup (live)
+- Supabase Auth Site URL set to the live app; redirect URLs allow the live site, Netlify, Netlify PR previews and localhost.
+- First super admin: the owner's own login (password set by the owner via the reset link), added to `platform_admins` with the owner's OK.
+
 ### Demo mode
 - Super admin `owner@digiyaan.demo`, a second hospital (Sahyadri Ortho Care, admin `meera@digiyaan.demo`) and three departments for the demo hospital. Demo mode runs the real `platform-admin` code against the in-memory data.
 
