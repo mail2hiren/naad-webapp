@@ -291,6 +291,11 @@ class MockAuth {
     return { data: { session: this.session }, error: null };
   }
 
+  /** Demo mode sends no email; the UI shows the same neutral message. */
+  async resetPasswordForEmail(_email: string, _opts?: { redirectTo?: string }) {
+    return { data: {}, error: null };
+  }
+
   async getUser() {
     return this.session
       ? { data: { user: this.session.user }, error: null }

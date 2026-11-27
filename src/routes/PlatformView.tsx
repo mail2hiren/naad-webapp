@@ -5,6 +5,7 @@ import {
   platformCall, type AuditEvent, type DepartmentRow, type HospitalSummary, type StaffWithEmail,
 } from '../lib/platformApi';
 import { NaadLogo } from '../components/Brand';
+import { ForgotPassword } from '../components/AuthLinkGate';
 import { DepartmentsManager, StaffManager, TempPasswordNotice } from '../components/StaffManager';
 import { Btn, Card, Field, Modal, Panel, Pill, SectionHead, StatTile, inputCls } from '../components/ui';
 import { subscriptionStatusLabel } from '../lib/labels';
@@ -93,6 +94,7 @@ function PlatformSignIn({ onSignedIn }: { onSignedIn: () => void }) {
         {error && <div className="mt-4 text-sm text-danger bg-danger-soft rounded-lg px-3 py-2" role="alert">{error}</div>}
         <Btn type="submit" variant="glow" className="w-full mt-6" disabled={busy} data-testid="platform-submit">{busy ? 'Signing in…' : 'Sign in'}</Btn>
       </form>
+      <ForgotPassword initialEmail={email} />
     </Centered>
   );
 }

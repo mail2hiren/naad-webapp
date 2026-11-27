@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth, routeForRole } from '../context/AuthContext';
 import { Panel, Btn, inputCls } from '../components/ui';
 import { NaadLogo } from '../components/Brand';
+import { ForgotPassword } from '../components/AuthLinkGate';
 import type { StaffRole } from '../types/db';
 
 const ROLE_OPTIONS: { value: StaffRole; label: string }[] = [
@@ -104,6 +105,7 @@ export default function LoginView() {
             {submitting ? 'Signing in…' : 'Sign in'}
           </Btn>
         </form>
+        <ForgotPassword initialEmail={email} />
       </Panel>
     </div>
   );

@@ -93,3 +93,23 @@ test('a hospital admin adds their own staff and departments', async ({ page }) =
   await expect(page.getByTestId('temp-password-notice')).toContainText('anil@digiyaan.demo');
   await expect(page.getByText('7 of 25 user seats in use')).toBeVisible();
 });
+
+test('arriving from an invitation link asks for a password, then opens the console', async ({ page }) => {
+  await platformSignIn(page, 'owner@digiyaan.demo');
+  await expect(page.getByRole('heading', { name: 'Hospitals' })).toBeVisible();
+  // What index.html records when the page is opened from an invite email.
+  await page.goto('/login#access_token=x&type=invite'); // a full page load, like clicking the email
+  await expect(page.getByRole('heading', { name: 'Welcome to Naad' })).toBeVisible();
+  await page.getByTestId('link-new-password').fill('Owner-2026!');
+  await page.getByTestId('link-new-password-again').fill('Owner-2026!');
+  await page.getByTestId('link-save-password').click();
+  await expect(page.getByRole('heading', { name: 'Hospitals' })).toBeVisible();
+});
+
+test('forgot password shows the same neutral message for any email', async ({ page }) => {
+  await page.goto('/login');
+  await page.getByTestId('forgot-password').click();
+  await page.getByTestId('forgot-email').fill('nobody@example.com');
+  await page.getByTestId('send-reset').click();
+  await expect(page.getByTestId('reset-sent')).toContainText('If that email has a Naad login');
+});

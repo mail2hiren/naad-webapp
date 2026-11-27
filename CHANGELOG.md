@@ -18,6 +18,7 @@ Phase 2 of the product gap audit: the DigiYaan Super admin console and departmen
   - Activity log of every change.
 - **Real staff logins**: add staff (doctor, physiotherapist, receptionist, pharmacist, admin) with a one-time password; reset passwords; deactivate and reactivate. Seat limits are enforced.
 - **Choose your password** screen: new or reset logins must pick their own password at first sign-in.
+- **Set your password from an email link**: invitations and password-reset emails open a Set password screen wherever they land; expired links say so. **Forgot password?** on the staff and super admin sign-in pages.
 - Hospital admins get **Staff** and **Departments** pages for their own hospital (same tools, limited to their hospital).
 - `platform-admin` edge function: the only place logins are created or cross-hospital changes happen; checks the caller on every request and writes an audit entry. 11 Node tests.
 - Migrations `20261127054343_platform_admins_and_audit` and `20261127054404_departments` (applied to the Naad database with the owner's go). `platform-admin` deployed.

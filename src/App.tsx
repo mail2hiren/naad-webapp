@@ -3,6 +3,7 @@ import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom';
 import { AuthProvider } from './context/AuthContext';
 import { ClinicProvider } from './context/ClinicContext';
 import ToastHost from './components/ToastHost';
+import AuthLinkGate from './components/AuthLinkGate';
 import ProtectedRoute from './routes/ProtectedRoute';
 import LoginView from './routes/LoginView';
 
@@ -22,6 +23,7 @@ export default function App() {
       <ClinicProvider>
         <BrowserRouter basename={import.meta.env.BASE_URL.replace(/\/$/, '')}>
           <ToastHost />
+          <AuthLinkGate>
           <Suspense fallback={<div className="min-h-screen flex items-center justify-center text-ink-faint text-sm">Loading…</div>}>
             <Routes>
               <Route path="/" element={<Navigate to="/login" replace />} />
@@ -38,6 +40,7 @@ export default function App() {
               <Route path="*" element={<Navigate to="/login" replace />} />
             </Routes>
           </Suspense>
+          </AuthLinkGate>
         </BrowserRouter>
       </ClinicProvider>
     </AuthProvider>
