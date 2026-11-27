@@ -126,7 +126,9 @@ export async function handle(req: Request, deps: Deps): Promise<Response> {
   const userClient = deps.createClient(url, key, { global: { headers: { Authorization: authHeader } } });
   const admin = deps.createClient(url, key);
 
-  const { data: userData, error: userErr } = await userClient.auth.getUser();
+  const token = authHeader.replace(/^Bearer\s+/i, '');
+  if (!token) return json({ error: 'Not signed in' }, 401);
+  const { data: userData, error: userErr } = await userClient.auth.getUser(token);
   if (userErr || !userData?.user) return json({ error: 'Not signed in' }, 401);
 
   let body: Record<string, unknown>;

@@ -20,7 +20,7 @@ Phase 2 of the product gap audit: the DigiYaan Super admin console and departmen
 - **Choose your password** screen: new or reset logins must pick their own password at first sign-in.
 - Hospital admins get **Staff** and **Departments** pages for their own hospital (same tools, limited to their hospital).
 - `platform-admin` edge function: the only place logins are created or cross-hospital changes happen; checks the caller on every request and writes an audit entry. 11 Node tests.
-- Proposed migrations `0007` (super admins, platform audit, hospital profile fields) and `0008` (departments), awaiting the owner's go.
+- Migrations `20261127054343_platform_admins_and_audit` and `20261127054404_departments` (applied to the Naad database with the owner's go). `platform-admin` deployed.
 
 ### Fixed
 - The hospital Admin "Reset Password" button only displayed a made-up password and changed nothing. It now really resets the login.
