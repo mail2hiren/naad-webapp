@@ -138,13 +138,13 @@ export function ConsultationQualityGate({
     >
       <div className="max-w-3xl mx-auto px-4 md:px-6 py-6 md:py-10">
         <div className="flex items-center justify-between mb-1">
-          <div className="font-mono text-[10px] tracking-[.14em] uppercase text-accent-ink">Human-in-the-Loop Sign-Off</div>
+          <div className="text-base font-bold text-ink">Your review</div>
           <Pill tone={flags.length === 0 ? 'ok' : 'gate'}>{flags.length === 0 ? 'All Clear' : `${flags.length} Flag${flags.length === 1 ? '' : 's'}`}</Pill>
         </div>
-        <h2 className="text-lg mb-1.5">Before you route this consult</h2>
-        <p className="text-ink-faint text-xs font-light mb-5 leading-relaxed">
-          Dictation has stopped and the note has been formatted into 4 quadrants. Review and edit each one, resolve any
-          administrative flags below, then close to return and authorize. Nothing here blocks you from authorizing.
+        <h2 className="text-lg mb-1.5">Check the AI draft before you sign</h2>
+        <p className="text-ink-soft text-sm mb-5 leading-relaxed">
+          Naad has drafted the note from the recording. Edit anything that's wrong, add what's missing, then close this
+          and sign. You stay in charge: nothing is saved to the record until you sign.
         </p>
 
         {/* ---- Row 3.4: the 4 SOAP quadrants, large and editable -- the
@@ -173,7 +173,7 @@ export function ConsultationQualityGate({
           />
         </div>
 
-        <div className="font-mono text-[10px] tracking-[.14em] uppercase text-accent-ink mb-2">Omission Check</div>
+        <div className="text-base font-bold text-ink mb-2">Things that may be missing</div>
 
       {flags.length === 0 ? (
         <div className="bg-ok-soft text-ok rounded-lg px-3 py-3 text-sm font-semibold mb-2">
@@ -190,14 +190,14 @@ export function ConsultationQualityGate({
                   onClick={() => applyFix(flag)}
                   className="text-ok border border-ok/50 bg-ok-soft"
                 >
-                  Apply AI Fix
+                  Add suggested text
                 </Btn>
                 <Btn
                   data-testid="dismiss-override"
                   className="text-ink-faint border border-danger/40"
                   onClick={() => setOpenOverrideId(openOverrideId === flag.id ? null : flag.id)}
                 >
-                  Dismiss / Manual Override
+                  Not needed
                 </Btn>
               </div>
               {openOverrideId === flag.id && (
@@ -229,7 +229,7 @@ export function ConsultationQualityGate({
 function SignOffQuadrant({ label, value, onChange }: { label: string; value: string; onChange: (v: string) => void }) {
   return (
     <label className="block">
-      <span className="block font-mono text-[9.5px] tracking-wider uppercase text-ink-faint mb-1.5">{label}</span>
+      <span className="block text-[13px] font-semibold text-ink-soft mb-1.5">{label}</span>
       <textarea
         className={`${inputCls} min-h-[110px]`}
         data-testid={`signoff-${label.toLowerCase()}`}
@@ -247,7 +247,7 @@ function SignOffQuadrant({ label, value, onChange }: { label: string; value: str
 function SignOffBulletQuadrant({ label, items, onChange }: { label: string; items: string[]; onChange: (v: string[]) => void }) {
   return (
     <div data-testid={`signoff-${label.toLowerCase()}`}>
-      <span className="block font-mono text-[9.5px] tracking-wider uppercase text-ink-faint mb-1.5">{label}</span>
+      <span className="block text-[13px] font-semibold text-ink-soft mb-1.5">{label}</span>
       <BulletListEditor items={items} onChange={onChange} emptyLabel={`No ${label.toLowerCase()} points added yet.`} />
     </div>
   );

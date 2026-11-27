@@ -23,6 +23,7 @@ test.describe('Front Desk — Active Ambient Intake', () => {
     await login(page, 'receptionist', 'sunita@digiyaan.demo', 'pass1234');
     await expect(page).toHaveURL(/\/reception$/);
 
+    await page.getByTestId('nav-reception-walk-in').click();
     await page.getByTestId('intake-name').fill('Chip Test Patient');
     await page.getByTestId('intake-complaint').fill('Twisted knee after a fall');
     await page.getByTestId('start-ambient-intake').click();
@@ -41,6 +42,7 @@ test.describe('Front Desk — Active Ambient Intake', () => {
     await login(page, 'receptionist', 'sunita@digiyaan.demo', 'pass1234');
     await expect(page).toHaveURL(/\/reception$/);
 
+    await page.getByTestId('nav-reception-walk-in').click();
     await page.getByTestId('intake-name').fill('Pause Gate Patient');
     await page.getByTestId('intake-complaint').fill('Chest tightness and breathlessness');
     await page.getByTestId('start-ambient-intake').click();
@@ -70,6 +72,7 @@ test.describe('Front Desk — Active Ambient Intake', () => {
     await login(page, 'receptionist', 'sunita@digiyaan.demo', 'pass1234');
     await expect(page).toHaveURL(/\/reception$/);
 
+    await page.getByTestId('nav-reception-walk-in').click();
     await page.getByTestId('intake-name').fill('Dropzone Patient');
 
     // Playwright has no native OS file-drag simulation, so this dispatches a

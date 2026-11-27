@@ -10,7 +10,7 @@ import type { ButtonHTMLAttributes, HTMLAttributes, ReactNode } from 'react';
 
 export function Card({ children, className = '', ...rest }: HTMLAttributes<HTMLDivElement>) {
   return (
-    <div className={`bg-surface rounded-[var(--radius)] p-5 md:p-6 ${className}`} {...rest}>
+    <div className={`bg-surface rounded-[var(--radius)] shadow-[var(--card-shadow)] p-5 md:p-6 ${className}`} {...rest}>
       {children}
     </div>
   );
@@ -29,12 +29,12 @@ export function Panel({ children, className = '', ...rest }: HTMLAttributes<HTML
 
 type BtnVariant = 'default' | 'primary' | 'gate' | 'danger' | 'ghost' | 'glow';
 const BTN_VARIANT: Record<BtnVariant, string> = {
-  default: 'text-ink-soft hover:bg-white/5 hover:text-ink',
-  primary: 'text-accent-ink font-bold hover:bg-white/5',
-  gate: 'text-gate font-bold hover:bg-white/5',
+  default: 'text-ink-soft hover:bg-hover hover:text-ink',
+  primary: 'text-accent-ink font-bold hover:bg-hover',
+  gate: 'text-gate font-bold hover:bg-hover',
   danger: 'text-danger hover:bg-danger-soft',
-  ghost: 'text-ink-faint hover:text-ink hover:bg-white/5',
-  glow: 'bg-accent-ink text-[#04121c] font-bold hover:brightness-110 shadow-[0_0_0_0_rgba(143,217,255,.6)] hover:shadow-[0_0_18px_1px_rgba(143,217,255,.55)]',
+  ghost: 'text-ink-faint hover:text-ink hover:bg-hover',
+  glow: 'bg-accent text-on-accent font-bold hover:brightness-110 shadow-sm',
 };
 export function Btn({
   variant = 'default', className = '', children, ...rest
@@ -55,7 +55,7 @@ const PILL_TONE: Record<PillTone, string> = {
 };
 export function Pill({ tone = 'default', children }: { tone?: PillTone; children: ReactNode }) {
   return (
-    <span className={`inline-flex items-center gap-1.5 font-mono text-[10px] tracking-wider uppercase font-semibold whitespace-nowrap ${PILL_TONE[tone]}`}>
+    <span className={`inline-flex items-center gap-1.5 font-mono text-xs tracking-wider uppercase font-semibold whitespace-nowrap ${PILL_TONE[tone]}`}>
       <span className="w-1.5 h-1.5 rounded-full" style={{ background: 'currentColor' }} />
       {children}
     </span>
@@ -65,9 +65,9 @@ export function Pill({ tone = 'default', children }: { tone?: PillTone; children
 export function SectionHead({ eyebrow, title, desc }: { eyebrow?: string; title: string; desc?: string }) {
   return (
     <div className="mb-5">
-      {eyebrow && <div className="font-mono text-[10px] tracking-[.14em] uppercase text-accent-ink mb-1.5">{eyebrow}</div>}
+      {eyebrow && <div className="text-xs font-semibold tracking-[.12em] uppercase text-accent mb-1.5">{eyebrow}</div>}
       <h2 className="text-xl md:text-2xl">{title}</h2>
-      {desc && <p className="text-ink-faint text-sm font-light mt-1.5 max-w-[56ch] leading-relaxed">{desc}</p>}
+      {desc && <p className="text-ink-soft text-[15px] mt-1.5 max-w-[60ch] leading-relaxed">{desc}</p>}
     </div>
   );
 }
@@ -76,7 +76,7 @@ export function StatTile({ label, value, tone = 'default' }: { label: string; va
   return (
     <Card className="!p-4">
       <div className={`font-mono text-xl font-bold ${PILL_TONE[tone] === 'text-ink-faint' ? 'text-ink' : PILL_TONE[tone]}`}>{value}</div>
-      <div className="text-[11px] text-ink-faint mt-1 tracking-wide">{label}</div>
+      <div className="text-[13px] text-ink-soft mt-1">{label}</div>
     </Card>
   );
 }
@@ -84,14 +84,14 @@ export function StatTile({ label, value, tone = 'default' }: { label: string; va
 export function Field({ label, children }: { label: string; children: ReactNode }) {
   return (
     <label className="block mt-2.5">
-      <span className="block font-mono text-[9.5px] tracking-wider uppercase text-ink-faint mb-1.5">{label}</span>
+      <span className="block text-[13px] font-semibold text-ink-soft mb-1.5">{label}</span>
       {children}
     </label>
   );
 }
 
 export const inputCls =
-  'w-full min-h-11 bg-surface-2 border border-line rounded-lg px-3 py-2 text-sm text-ink placeholder:text-ink-faint focus:outline-none focus:ring-2 focus:ring-accent';
+  'w-full min-h-11 bg-surface-solid border border-line-strong rounded-lg px-3 py-2 text-[15px] text-ink placeholder:text-ink-faint focus:outline-none focus:ring-2 focus:ring-accent focus:border-accent';
 
 /**
  * Add/remove/edit list of short text entries, one per line with a bullet
@@ -179,8 +179,8 @@ export function Collapsible({
         data-testid={testId ? `${testId}-toggle` : undefined}
         className="w-full min-h-11 flex items-center justify-between gap-2 py-1 text-left"
       >
-        <span className="font-mono text-[9.5px] uppercase text-ink-faint">{title}</span>
-        <span className="text-ink-faint text-[10px]" aria-hidden="true">{open ? '▲' : '▼'}</span>
+        <span className="text-[13px] font-semibold uppercase tracking-wide text-ink-soft">{title}</span>
+        <span className="text-ink-faint text-xs" aria-hidden="true">{open ? '▲' : '▼'}</span>
       </button>
       {open && <div className="mt-1.5">{children}</div>}
     </div>
@@ -191,7 +191,7 @@ export function Modal({ children, onClose }: { children: ReactNode; onClose?: ()
   return (
     <div className="fixed inset-0 z-50 flex items-end md:items-center justify-center bg-bg/80 backdrop-blur-sm p-0 md:p-6" onClick={onClose}>
       <div
-        className="w-full md:max-w-lg max-h-[90vh] overflow-y-auto bg-[#0b0e17] border border-line-strong rounded-t-3xl md:rounded-2xl p-5 md:p-6 shadow-2xl"
+        className="w-full md:max-w-lg max-h-[90vh] overflow-y-auto bg-surface-solid border border-line-strong rounded-t-3xl md:rounded-2xl p-5 md:p-6 shadow-2xl"
         onClick={(e) => e.stopPropagation()}
       >
         {children}

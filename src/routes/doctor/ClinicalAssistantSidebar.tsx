@@ -142,7 +142,7 @@ export function ClinicalAssistantSidebar({
       <Card className="!p-4 md:sticky md:top-20 h-fit">
         <div className="flex items-center justify-between mb-1">
           <div className="flex items-center gap-2">
-            <div className="font-mono text-[10px] tracking-[.14em] uppercase text-accent-ink">Clinical Whisperer</div>
+            <div className="text-base font-bold text-ink">Clinical Whisperer</div>
             {specialty && !loading && (
               <Pill tone={aiActive ? 'accent' : 'default'}>{aiActive ? 'AI · Case-specific' : 'Standard'}</Pill>
             )}
@@ -170,12 +170,12 @@ export function ClinicalAssistantSidebar({
                   data-testid="checklist-item"
                   onClick={() => onToggle(item)}
                   className={`w-full min-h-11 text-left flex items-start gap-2.5 rounded-lg px-2.5 py-2 text-xs leading-snug transition-colors ${
-                    checked ? 'bg-ok-soft text-ok' : 'text-ink-soft hover:bg-white/5 hover:text-ink'
+                    checked ? 'bg-ok-soft text-ok' : 'text-ink-soft hover:bg-hover hover:text-ink'
                   }`}
                 >
                   <span
                     className={`mt-0.5 shrink-0 w-3.5 h-3.5 rounded-[4px] border flex items-center justify-center ${
-                      checked ? 'bg-ok border-ok text-[#04120c]' : 'border-line-strong'
+                      checked ? 'bg-ok border-ok text-on-accent' : 'border-line-strong'
                     }`}
                   >
                     {checked && (
@@ -227,7 +227,7 @@ function SkeletalAssessmentLog({ note, onUpdateNote }: { note: ClinicalNote; onU
   return (
     <Card className="!p-4" data-testid="skeletal-assessment-log">
       <div className="flex items-center justify-between mb-1.5">
-        <div className="font-mono text-[10px] tracking-[.14em] uppercase text-accent-ink">Skeletal Assessment Log</div>
+        <div className="text-base font-bold text-ink">Skeletal Assessment Log</div>
         <Btn variant="ghost" data-testid="add-joint" onClick={addJoint}>+ Joint</Btn>
       </div>
       <p className="text-ink-faint text-xs font-light mb-3 leading-relaxed">
@@ -305,7 +305,7 @@ function ProgressionMatrix({ note, onUpdateNote }: { note: ClinicalNote; onUpdat
   return (
     <Card className="!p-4" data-testid="progression-matrix">
       <div className="flex items-center justify-between mb-1.5">
-        <div className="font-mono text-[10px] tracking-[.14em] uppercase text-accent-ink">Progression Matrix</div>
+        <div className="text-base font-bold text-ink">Progression Matrix</div>
         {primary && <Btn variant="ghost" data-testid="add-week" onClick={addWeek}>+ Week</Btn>}
       </div>
       {!primary ? (
@@ -320,8 +320,8 @@ function ProgressionMatrix({ note, onUpdateNote }: { note: ClinicalNote; onUpdat
           {painSparkline && (
             <div className="mb-3" data-testid="progression-graph">
               <div className="flex items-center justify-between mb-1">
-                <span className="font-mono text-[9px] uppercase text-ink-faint">Pain Score Trend</span>
-                <span className="font-mono text-[9px] text-ink-faint">0-10</span>
+                <span className="text-[13px] font-semibold text-ink-soft">Pain Score Trend</span>
+                <span className="font-mono text-xs text-ink-faint">0-10</span>
               </div>
               <svg viewBox="0 0 100 28" className="w-full h-7" preserveAspectRatio="none">
                 <polyline points={painSparkline} fill="none" stroke="var(--gate)" strokeWidth="2" />
@@ -339,7 +339,7 @@ function ProgressionMatrix({ note, onUpdateNote }: { note: ClinicalNote; onUpdat
               // -- share a row; Note gets the full card width on its own.
               <div key={idx} className="flex flex-col gap-1.5 bg-surface-2 rounded-lg p-2" data-testid="progression-week-row">
                 <div className="flex items-center gap-1.5">
-                  <div className="font-mono text-[10px] text-ink-faint w-8 shrink-0">Wk {w.week}</div>
+                  <div className="font-mono text-xs text-ink-faint w-8 shrink-0">Wk {w.week}</div>
                   <input
                     className={inputCls}
                     type="number"
@@ -385,7 +385,7 @@ function ComorbidityRiskScan({ patient }: { patient: PatientRow }) {
 
   return (
     <Card className="!p-4 border border-gate/40" data-testid="comorbidity-risk-scan">
-      <div className="font-mono text-[10px] tracking-[.14em] uppercase text-gate mb-1.5">Comorbidity Risk Scan</div>
+      <div className="text-base font-bold text-gate mb-1.5">Comorbidity Risk Scan</div>
       {risks.length === 0 ? (
         <p className="text-ink-faint text-xs font-light leading-relaxed">No comorbidity or allergy risk flags for this patient.</p>
       ) : (
@@ -421,7 +421,7 @@ function VitalsTrend({ note, onUpdateNote }: { note: ClinicalNote; onUpdateNote:
   return (
     <Card className="!p-4" data-testid="vitals-trend">
       <div className="flex items-center justify-between mb-1.5">
-        <div className="font-mono text-[10px] tracking-[.14em] uppercase text-accent-ink">Vitals Trend</div>
+        <div className="text-base font-bold text-ink">Vitals Trend</div>
         <Btn variant="ghost" data-testid="log-vitals" onClick={logReading}>+ Log Reading</Btn>
       </div>
       {sparkline && (

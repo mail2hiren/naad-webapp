@@ -5,6 +5,7 @@ import { useAmbientIntake } from '../hooks/useAmbientIntake';
 import { useRealAmbientCapture, type ExtractResult } from '../hooks/useRealAmbientCapture';
 import { AmbientOrb, Card, Btn, Pill, SectionHead, Field, inputCls, Modal } from '../components/ui';
 import Shell from '../components/Shell';
+import { useSection } from '../lib/nav';
 import { supabase, scriptedAmbient } from '../lib/supabaseClient';
 import type { DocumentLabel, TriageVitals } from '../types/db';
 
@@ -44,6 +45,7 @@ function formatWhen(value: string | null): string {
 }
 
 export default function ReceptionView() {
+  const section = useSection<'queue' | 'appointments' | 'walk-in'>('queue');
   const { practitioner } = useAuth();
   const { orgId, patients, practitioners, appointments, pushToast, logAudit } = useClinic();
 
@@ -569,22 +571,23 @@ export default function ReceptionView() {
   const pauseTargetPatient = selectedPatientId ? patients.find((p) => p.id === selectedPatientId) ?? null : null;
 
   return (
-    <Shell title="Front Desk">
-      <div className="mb-6 flex justify-center">
+    <Shell title={section === 'appointments' ? 'Appointments' : section === 'walk-in' ? 'Walk-in registration' : "Today's queue"}>
+      <div className="mb-6 flex justify-end">
         <button
           type="button"
           data-testid="red-alert-btn"
           onClick={openRedAlert}
-          className="rounded-full bg-danger text-[#2a0a06] font-extrabold tracking-wide px-6 py-3 text-sm shadow-lg"
+          className="rounded-full bg-danger text-on-danger font-extrabold tracking-wide px-6 py-3 text-sm shadow-lg"
           style={{ animation: 'redPulse 1.6s ease-in-out infinite' }}
         >
-          🚨 RED ALERT — Critical Bypass
+          🚨 Emergency: send straight to Critical Care
         </button>
       </div>
 
       {/* 1. Telephonic Appointment Form + Scheduled list */}
+      {section === 'appointments' && (
       <Card className="mb-6">
-        <SectionHead eyebrow="Front Desk" title="Telephonic Appointment" desc="Book a phone-in appointment with a specialist." />
+        <SectionHead title="Book an appointment" desc="For phone calls and follow-ups. Pick the doctor, date and time." />
         <form onSubmit={handleBookAppointment} className="grid md:grid-cols-2 gap-x-4">
           <Field label="Patient Name">
             <input data-testid="ap-name" className={inputCls} value={apName} onChange={(e) => setApName(e.target.value)} placeholder="Full name" />
@@ -611,7 +614,7 @@ export default function ReceptionView() {
         </form>
 
         <div className="mt-6">
-          <div className="font-mono text-[10px] tracking-wider uppercase text-ink-faint mb-2">Scheduled Appointments</div>
+          <div className="text-[13px] font-semibold text-ink-soft mb-2">Scheduled Appointments</div>
           {scheduledAppointments.length === 0 && <div className="text-sm text-ink-faint">No scheduled appointments.</div>}
           <div className="space-y-2">
             {scheduledAppointments.map((a) => {
@@ -625,7 +628,7 @@ export default function ReceptionView() {
                 >
                   <div>
                     <div className="text-sm text-ink font-semibold">{p?.name ?? 'Unknown patient'}</div>
-                    <div className="text-[11px] text-ink-faint">{doc?.name ?? 'Unassigned'} · {formatWhen(a.start_time ?? a.date)}</div>
+                    <div className="text-[13px] text-ink-faint">{doc?.name ?? 'Unassigned'} · {formatWhen(a.start_time ?? a.date)}</div>
                   </div>
                   <Btn
                     variant="glow"
@@ -640,10 +643,12 @@ export default function ReceptionView() {
           </div>
         </div>
       </Card>
+      )}
 
       {/* 3. Live "In Queue" board */}
+      {section === 'queue' && (
       <Card className="mb-6">
-        <SectionHead eyebrow="Live" title="In Queue" desc="Patients checked in and awaiting or in verification." />
+        <SectionHead title="Waiting now" desc="Patients who have checked in, in the order they arrived." />
         {inQueuePatients.length === 0 && <div className="text-sm text-ink-faint">Queue is empty.</div>}
         <div className="space-y-2">
           {inQueuePatients.map((p) => {
@@ -656,13 +661,13 @@ export default function ReceptionView() {
               >
                 <div>
                   <div className="text-sm text-ink font-semibold">{p.name}</div>
-                  <div className="text-[11px] text-ink-faint">{p.triage?.complaints || 'No chief complaint recorded'} · {practitionerName(p.assigned_practitioner_id)}</div>
+                  <div className="text-[13px] text-ink-faint">{p.triage?.complaints || 'No chief complaint recorded'} · {practitionerName(p.assigned_practitioner_id)}</div>
                   {p.intake_state?.doctorResponseClearance && (
-                    <div className="mt-1.5 text-[11px] text-ok bg-ok-soft rounded px-2 py-1 inline-flex items-center gap-2">
+                    <div className="mt-1.5 text-[13px] text-ok bg-ok-soft rounded px-2 py-1 inline-flex items-center gap-2">
                       Doctor cleared: {p.intake_state.doctorResponseClearance}
                       <Btn
                         variant="default"
-                        className="!px-2 !py-0.5 !text-[10px]"
+                        className="!px-2 !py-0.5 !text-xs"
                         onClick={(e) => { e.stopPropagation(); handleResumeToQueue(p.id); }}
                       >
                         Resume / Move to Queue
@@ -678,25 +683,27 @@ export default function ReceptionView() {
           })}
         </div>
         {inQueuePatients.length > 0 && (
-          <div className="mt-2 text-[11px] text-ink-faint">Click a patient to select them for the Intake Pause Gate below.</div>
+          <div className="mt-2 text-[13px] text-ink-faint">Select a patient to ask their doctor a question.</div>
         )}
       </Card>
+
+      )}
 
       {/* 6. Intake Pause Gate (already-queued patient) -- visible while
           ambient intake is running for the walk-in draft below, or while a
           queued patient is selected above. */}
-      {showPauseGate && (
+      {showPauseGate && section !== 'appointments' && (
         <Card className="mb-6">
-          <SectionHead eyebrow="Escalate" title="Intake Pause Gate" desc="Pause and route a question straight to the assigned doctor." />
+          <SectionHead title="Ask the doctor" desc="Pause registration and send a quick question to the patient's doctor." />
           <Btn variant="gate" data-testid="pause-intake-btn" onClick={openPauseGate}>
             ⏸ Pause Intake / Query Doctor
           </Btn>
           {!pauseTargetPatient && (
-            <div className="mt-2 text-[11px] text-ink-faint">Select a patient in the queue above to target this query.</div>
+            <div className="mt-2 text-[13px] text-ink-faint">Select a patient in the list above first.</div>
           )}
           {pauseOpen && (
             <Card className="mt-3 !bg-gate-soft">
-              <div className="font-mono text-[10px] tracking-wider uppercase text-gate mb-2">
+              <div className="text-[13px] font-semibold text-gate mb-2">
                 {pauseTargetPatient ? `Query Doctor about ${pauseTargetPatient.name}` : 'Query Doctor'}
               </div>
               <textarea
@@ -722,8 +729,9 @@ export default function ReceptionView() {
       )}
 
       {/* 4/5. AI Guided Intake + Triage & Document Manager */}
+      {section === 'walk-in' && (
       <Card className="mb-6">
-        <SectionHead eyebrow="Walk-in" title="AI Guided Intake" desc="Register a new walk-in patient with ambient AI assistance." />
+        <SectionHead title="Register a walk-in patient" desc="Tap record and talk to the patient. Naad fills in the form as you speak; you can also type." />
         <div className="grid md:grid-cols-2 gap-x-4">
           <Field label="Name">
             <input data-testid="intake-name" className={inputCls} value={inName} onChange={(e) => setInName(e.target.value)} placeholder="Full name" />
@@ -780,7 +788,7 @@ export default function ReceptionView() {
         </div>
 
         {!scriptedAmbient && !realCapture.supported && (
-          <div className="mt-2 text-center text-[11px] text-ink-faint">
+          <div className="mt-2 text-center text-[13px] text-ink-faint">
             Voice capture isn't supported in this browser — use typed dictation below instead.
           </div>
         )}
@@ -796,7 +804,7 @@ export default function ReceptionView() {
               type="button"
               data-testid="toggle-typed-intake"
               onClick={() => setShowTypedIntake((v) => !v)}
-              className="min-h-11 text-[11px] text-accent-ink underline underline-offset-2"
+              className="min-h-11 text-[13px] text-accent-ink underline underline-offset-2"
             >
               {showTypedIntake ? 'Hide typed dictation' : 'Or type the conversation instead'}
             </button>
@@ -826,7 +834,7 @@ export default function ReceptionView() {
 
         {walkInPauseOpen && (
           <Card className="mt-3 !bg-gate-soft">
-            <div className="font-mono text-[10px] tracking-wider uppercase text-gate mb-2">
+            <div className="text-[13px] font-semibold text-gate mb-2">
               Intake Paused — Awaiting Verification
             </div>
             <textarea
@@ -858,7 +866,7 @@ export default function ReceptionView() {
 
         {intake.recommendations.length > 0 && (
           <div className="mt-4">
-            <div className="font-mono text-[10px] tracking-wider uppercase text-accent-ink mb-2">🤖 Ambient AI Live Recommendations</div>
+            <div className="text-[13px] font-semibold text-accent-ink mb-2">🤖 Ambient AI Live Recommendations</div>
             <div className="flex flex-wrap gap-2">
               {intake.recommendations.map((r) => (
                 <button
@@ -904,7 +912,7 @@ export default function ReceptionView() {
         )}
 
         <div className="mt-6 border-t border-line pt-4">
-          <div className="font-mono text-[10px] tracking-wider uppercase text-ink-faint mb-2">Triage & Document Manager</div>
+          <div className="text-[13px] font-semibold text-ink-soft mb-2">Triage & Document Manager</div>
           <div className="grid md:grid-cols-2 gap-x-4">
             <Field label="Height (cm)">
               <input className={inputCls} value={inHeight} onChange={(e) => setInHeight(e.target.value)} inputMode="decimal" />
@@ -943,10 +951,10 @@ export default function ReceptionView() {
                   type="button"
                   data-testid="doc-preview-card"
                   onClick={() => pushToast({ tone: 'info', title: 'Document attached', detail: d.fileName })}
-                  className="bg-surface-2 hover:bg-white/5 rounded-lg px-3 py-2 flex items-center gap-2 text-left transition-colors"
+                  className="bg-surface-2 hover:bg-hover rounded-lg px-3 py-2 flex items-center gap-2 text-left transition-colors"
                 >
                   <span className="text-lg shrink-0">{d.label === 'xray' ? '🩻' : d.label === 'report' ? '🧪' : '📎'}</span>
-                  <span className="text-[11px] text-ink-soft truncate">{d.fileName}</span>
+                  <span className="text-[13px] text-ink-soft truncate">{d.fileName}</span>
                 </button>
               ))}
             </div>
@@ -963,10 +971,11 @@ export default function ReceptionView() {
           </Btn>
         </div>
       </Card>
+      )}
 
       {redAlertOpen && (
         <Modal onClose={() => setRedAlertOpen(false)}>
-          <div className="font-mono text-[10px] tracking-wider uppercase text-danger mb-2">🚨 Critical Bypass Triage</div>
+          <div className="text-[13px] font-semibold text-danger mb-2">🚨 Critical Bypass Triage</div>
           <p className="text-sm text-ink-soft mb-4">
             This routes the patient directly to {criticalCareDoctor?.name ?? 'the Critical Care doctor'}'s queue, skipping normal intake.
           </p>

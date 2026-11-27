@@ -3,6 +3,7 @@ import { useAuth } from '../context/AuthContext';
 import { useClinic } from '../context/ClinicContext';
 import { Card, Btn, Pill, SectionHead } from '../components/ui';
 import Shell from '../components/Shell';
+import { useSection } from '../lib/nav';
 import { supabase } from '../lib/supabaseClient';
 import type { InventoryRow, PharmacyOrderRow, PrescriptionItem } from '../types/db';
 
@@ -24,7 +25,11 @@ function formatDuration(ms: number): string {
   const totalSeconds = Math.max(0, Math.floor(ms / 1000));
   const minutes = Math.floor(totalSeconds / 60);
   const seconds = totalSeconds % 60;
-  return `${minutes}m ${seconds}s`;
+  if (minutes < 60) return `${minutes}m ${seconds}s`;
+  const hours = Math.floor(minutes / 60);
+  if (hours < 24) return `${hours}h ${minutes % 60}m`;
+  const days = Math.floor(hours / 24);
+  return `${days} day${days === 1 ? '' : 's'}`;
 }
 
 /**
@@ -67,6 +72,7 @@ function exceptionNoteFor(matched: InventoryRow | undefined): string {
 }
 
 export default function PharmacyView() {
+  const section = useSection<'orders' | 'stock'>('orders');
   useAuth(); // practitioner identity flows into logAudit via ClinicContext
   // Row 4.0 — Real-Time Sync Notification: the toast + audio chime for a
   // fresh authorization already fire globally (ClinicContext watches
@@ -77,7 +83,7 @@ export default function PharmacyView() {
   // up while this view happens to already be mounted.
   const { orgId, pharmacyOrders, inventory, patients, pushToast, logAudit, newPharmacyOrderIds } = useClinic();
   const [busyIds, setBusyIds] = useState<Set<string>>(new Set());
-  const [showInventory, setShowInventory] = useState(true);
+  const showInventory = true;
 
   function setBusy(id: string, busy: boolean) {
     setBusyIds((prev) => {
@@ -180,14 +186,14 @@ export default function PharmacyView() {
   }
 
   return (
-    <Shell title="Pharmacy Counter">
+    <Shell title={section === 'stock' ? 'Stock' : 'Orders'}>
       {exceptions.length > 0 && (
         <div className="mb-6 space-y-3">
           {exceptions.map((order) => (
             <Card key={order.id} className="border border-danger !bg-danger-soft">
               <div className="flex items-start justify-between gap-3 flex-wrap">
                 <div>
-                  <div className="font-mono text-[10px] tracking-wider uppercase text-danger mb-1">
+                  <div className="text-[13px] font-semibold text-danger mb-1">
                     ⚠ Needs Doctor Clearance
                   </div>
                   <div className="text-sm font-semibold text-ink">{patientName(order.patient_id)}</div>
@@ -209,7 +215,7 @@ export default function PharmacyView() {
         </div>
       )}
 
-      <div className="grid grid-cols-1 lg:grid-cols-[1fr_280px] gap-6 items-start">
+      {section === 'orders' && (
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <KanbanColumn
             title="Pending Orders"
@@ -254,22 +260,19 @@ export default function PharmacyView() {
             timerSourceField={null}
           />
         </div>
+      )}
 
-        <Card className="h-fit">
-          <div className="flex items-center justify-between mb-1">
-            <SectionHead eyebrow="Stock" title="Inventory" />
-            <Btn variant="ghost" className="!px-2 !py-1 !text-[11px]" onClick={() => setShowInventory((v) => !v)}>
-              {showInventory ? 'Hide' : 'Show'}
-            </Btn>
-          </div>
+      {section === 'stock' && (
+        <Card>
+          <SectionHead title="Medicines in stock" desc="Items at or below their reorder level are marked Low." />
           {showInventory && (
-            <div className="space-y-2">
+            <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-2">
               {inventory.length === 0 && <div className="text-sm text-ink-faint">No inventory records.</div>}
               {inventory.map((inv) => (
                 <div key={inv.id} className="flex items-center justify-between bg-surface-2 rounded-lg px-3 py-2">
                   <div>
                     <div className="text-sm text-ink font-semibold">{inv.drug}</div>
-                    <div className="text-[11px] text-ink-faint">{inv.stock} {inv.unit ?? ''}</div>
+                    <div className="text-[13px] text-ink-faint">{inv.stock} {inv.unit ?? ''}</div>
                   </div>
                   <Pill tone={inv.stock <= inv.low ? 'danger' : 'ok'}>{inv.stock <= inv.low ? 'Low' : 'OK'}</Pill>
                 </div>
@@ -277,7 +280,7 @@ export default function PharmacyView() {
             </div>
           )}
         </Card>
-      </div>
+      )}
     </Shell>
   );
 }
@@ -309,7 +312,7 @@ function KanbanColumn({
           <span className={`w-2 h-2 rounded-full ${dotClass}`} />
           <h3 className="text-sm font-bold text-ink">{title}</h3>
         </div>
-        <span className="font-mono text-[11px] text-ink-faint">{orders.length}</span>
+        <span className="font-mono text-[13px] text-ink-faint">{orders.length}</span>
       </div>
       <div className="space-y-3">
         {orders.length === 0 && <div className="text-xs text-ink-faint">No orders.</div>}
@@ -363,7 +366,7 @@ function OrderCard({
       <div className="flex items-start justify-between gap-2">
         <div className="text-sm font-semibold text-ink">{patientName}</div>
         {timerSourceField !== null && (
-          <span className="font-mono text-[11px] text-accent-ink whitespace-nowrap" data-testid="order-elapsed">
+          <span className="font-mono text-[13px] text-accent-ink whitespace-nowrap" data-testid="order-elapsed">
             {elapsed}
           </span>
         )}
@@ -379,6 +382,7 @@ function OrderCard({
         {order.items.map((item, idx) => {
           const matched = matchInventory(inventory, item.name);
           const low = isLowStock(matched);
+          const notListed = !matched;
           return (
             <li key={`${order.id}-${idx}`} className="text-xs text-ink-soft">
               <div className="flex items-center justify-between gap-2 flex-wrap">
@@ -386,15 +390,16 @@ function OrderCard({
                   <span className="text-ink font-medium">{item.name}</span>
                   {' '}· {item.dosage} · {item.frequency}
                 </span>
-                {low && <span className="text-danger font-semibold whitespace-nowrap">⚠ Low stock</span>}
+                {low && notListed && <span className="text-gate font-semibold whitespace-nowrap">Not in stock list</span>}
+                {low && !notListed && <span className="text-danger font-semibold whitespace-nowrap">⚠ Low stock</span>}
               </div>
               {low && matched && matched.alternates.length > 0 && (
                 <div className="flex items-center gap-1.5 flex-wrap mt-1.5" data-testid="generic-equivalent-tags">
-                  <span className="text-[10px] text-ink-faint uppercase tracking-wide">Generic equivalents:</span>
+                  <span className="text-xs text-ink-faint uppercase tracking-wide">Generic equivalents:</span>
                   {matched.alternates.map((alt) => (
                     <span
                       key={alt}
-                      className="font-mono text-[10px] px-1.5 py-0.5 rounded-full bg-accent-soft text-accent-ink"
+                      className="font-mono text-xs px-1.5 py-0.5 rounded-full bg-accent-soft text-accent-ink"
                     >
                       {alt}
                     </span>
@@ -404,7 +409,7 @@ function OrderCard({
               {low && (
                 <Btn
                   variant="danger"
-                  className="!px-2 !py-1 !text-[11px] mt-1.5"
+                  className="!px-2 !py-1 !text-[13px] mt-1.5"
                   data-testid="flag-alternate"
                   disabled={busy}
                   onClick={() => onFlagAlternate(order, item)}

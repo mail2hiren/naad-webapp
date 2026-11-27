@@ -37,16 +37,19 @@ test.describe('Secure Authentication Gateway', () => {
   test('routes Doctor (surgeon) to /doctor on correct credentials', async ({ page }) => {
     await login(page, 'surgeon', 'sagar@digiyaan.demo', 'pass1234');
     await expect(page).toHaveURL(/\/doctor$/);
-    await expect(page.getByText('Welcome, Dr. Sagar Karvir')).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'My patients' })).toBeVisible();
+    await expect(page.getByText('Dr. Sagar Karvir · Orthopedics')).toBeVisible();
   });
 
-  test('routes Doctor (physio) to /doctor via the same Doctor dropdown option', async ({ page }) => {
-    // Jayani is role='physio' in the DB but the login form only exposes a
-    // single "Doctor" option (value=surgeon) -- AuthContext accepts this
-    // because both roles share the "Doctor" label.
-    await login(page, 'surgeon', 'jayani@digiyaan.demo', 'pass1234');
+  test('routes a Physiotherapist to /doctor via the Physiotherapist option', async ({ page }) => {
+    await login(page, 'physio', 'jayani@digiyaan.demo', 'pass1234');
     await expect(page).toHaveURL(/\/doctor$/);
-    await expect(page.getByText('Welcome, Dr. Jayani Bhatt')).toBeVisible();
+    await expect(page.getByText('Dr. Jayani Bhatt · Physiotherapy')).toBeVisible();
+  });
+
+  test('a physiotherapist picking Doctor is told to pick Physiotherapist', async ({ page }) => {
+    await login(page, 'surgeon', 'jayani@digiyaan.demo', 'pass1234');
+    await expect(page.getByTestId('login-error')).toContainText('provisioned as Physiotherapist');
   });
 
   test('routes Pharmacist to /pharmacy on correct credentials', async ({ page }) => {
@@ -57,7 +60,7 @@ test.describe('Secure Authentication Gateway', () => {
   test('routes Admin to /admin on correct credentials', async ({ page }) => {
     await login(page, 'admin', 'raj@digiyaan.demo', 'pass1234');
     await expect(page).toHaveURL(/\/admin$/);
-    await expect(page.getByText('Admin Control Panel')).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'Overview' })).toBeVisible();
   });
 
   test('a route guard sends an unauthenticated visitor back to /login', async ({ page }) => {

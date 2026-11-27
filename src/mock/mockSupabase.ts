@@ -12,10 +12,42 @@ import * as seed from './seed';
  */
 
 type Row = Record<string, any>;
+
+/**
+ * Demo dates move with the calendar. The seed was written as if "today" were
+ * SEED_DAY; every timestamp in it is shifted by whole days so the demo always
+ * happens today (queues, timers, "charges added today", upcoming
+ * appointments). Times of day are kept. The Playwright builds set
+ * VITE_FREEZE_DEMO_DATES=1 so tests stay deterministic.
+ */
+const SEED_DAY = '2026-08-29';
+const ISO_TS = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}/;
+
+function localDay(d: Date): string {
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+}
+
+function shiftDates(value: any, ms: number): any {
+  if (typeof value === 'string') return ISO_TS.test(value) ? new Date(Date.parse(value) + ms).toISOString() : value;
+  if (Array.isArray(value)) {
+    value.forEach((v, i) => { value[i] = shiftDates(v, ms); });
+    return value;
+  }
+  if (value && typeof value === 'object') {
+    Object.keys(value).forEach((k) => { value[k] = shiftDates(value[k], ms); });
+    return value;
+  }
+  return value;
+}
+
+const DAY_MS = 86_400_000;
+const dayShiftMs = import.meta.env.VITE_FREEZE_DEMO_DATES === '1'
+  ? 0
+  : Math.round((Date.parse(localDay(new Date())) - Date.parse(SEED_DAY)) / DAY_MS) * DAY_MS;
 type Listener = (payload: { eventType: 'INSERT' | 'UPDATE' | 'DELETE'; new: Row; old: Row | null }) => void;
 
 const TABLES: Record<string, Row[]> = {
-  organizations: [{ id: seed.ORG_ID, name: 'DigiYaan Ambient AI Healthcare', city: 'Pune', ai_monthly_budget_usd: 45 }],
+  organizations: [{ id: seed.ORG_ID, name: 'Naad Demo Hospital', city: 'Pune', ai_monthly_budget_usd: 45 }],
   practitioners: seed.practitioners as unknown as Row[],
   patients: seed.patients as unknown as Row[],
   appointments: seed.appointments as unknown as Row[],
@@ -29,6 +61,8 @@ const TABLES: Record<string, Row[]> = {
   notifications: seed.notifications as unknown as Row[],
   audit_events: seed.auditEvents as unknown as Row[],
 };
+
+if (dayShiftMs !== 0) Object.values(TABLES).forEach((rows) => shiftDates(rows, dayShiftMs));
 
 const tableListeners: Record<string, Set<Listener>> = {};
 function notify(table: string, payload: Parameters<Listener>[0]) {
@@ -196,8 +230,28 @@ type AuthUser = { id: string; email: string };
 type MockSession = { user: AuthUser; access_token: string };
 type AuthChangeCb = (event: string, session: MockSession | null) => void;
 
+// Demo sign-in survives a page refresh (per browser tab), like the real
+// Supabase client. The demo data itself still resets on reload.
+const SESSION_KEY = 'naad-mock-session';
+function loadSession(): MockSession | null {
+  try {
+    const raw = sessionStorage.getItem(SESSION_KEY);
+    return raw ? (JSON.parse(raw) as MockSession) : null;
+  } catch {
+    return null;
+  }
+}
+function saveSession(session: MockSession | null) {
+  try {
+    if (session) sessionStorage.setItem(SESSION_KEY, JSON.stringify(session));
+    else sessionStorage.removeItem(SESSION_KEY);
+  } catch {
+    /* storage blocked: sign-in just won't survive a refresh */
+  }
+}
+
 class MockAuth {
-  private session: MockSession | null = null;
+  private session: MockSession | null = loadSession();
   private listeners = new Set<AuthChangeCb>();
 
   async signInWithPassword({ email, password }: { email: string; password: string }) {
@@ -207,12 +261,14 @@ class MockAuth {
     }
     const user: AuthUser = { id: cred.userId, email };
     this.session = { user, access_token: 'mock-access-token' };
+    saveSession(this.session);
     this.listeners.forEach((cb) => cb('SIGNED_IN', this.session));
     return { data: { user, session: this.session }, error: null };
   }
 
   async signOut() {
     this.session = null;
+    saveSession(null);
     this.listeners.forEach((cb) => cb('SIGNED_OUT', null));
     return { error: null };
   }

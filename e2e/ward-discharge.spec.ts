@@ -69,6 +69,7 @@ test('advance stage -> mark for discharge -> Admin settles the balance', async (
   // Admin: the same patient should be sitting in Discharge Balance Settlement.
   await login(page, 'admin', 'raj@digiyaan.demo', 'pass1234');
   await expect(page).toHaveURL(/\/admin$/);
+  await page.getByTestId('nav-admin-billing').click();
 
   // Note: AdminView's settlement card uses the Tailwind "important" class
   // `!bg-surface-2` -- a literal `!`-prefixed class token that a plain CSS

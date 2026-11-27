@@ -41,16 +41,20 @@ fallback (mic denied, noisy room, AI budget reached), not a substitute.
 
 Staff login (`AuthContext`) requires an **active** `practitioners` row whose
 `auth_user_id` matches the Supabase auth user, and the role picked at login
-must match the DB role.
+must match the DB role (Doctor = `surgeon`, Physiotherapist = `physio`).
+
+Navigation: `src/lib/nav.ts` (`ROLE_NAV`) lists each role's sidebar pages;
+`?section=` picks the part of a workspace page to show (`useSection`).
 
 ## Architecture
 
 - **Frontend:** React 19 + TypeScript (strict) + Vite + Tailwind v4, React Router 7. PWA (`public/sw.js`, manifest).
+- **Theme:** colour tokens in `src/index.css` (light default, `[data-theme='dark']` override; `src/lib/theme.ts`). Never hard-code colours in components; minimum text size 12 px.
 - **Backend:** Supabase only — Postgres + RLS, Auth (email/password), Realtime, Storage, Edge Functions. No other server.
 - **Data access:** `src/lib/supabaseClient.ts`. `src/context/ClinicContext.tsx` loads all org data and keeps it live with one Realtime channel per table.
 - **Ambient capture:** `src/hooks/useRealAmbientCapture.ts` — `getUserMedia` → `MediaRecorder` → POST audio to edge function `transcribe-and-extract` (Deepgram nova-3 diarised STT → Claude structured extraction; logs cost to `ai_usage_log`; refuses with 402 past the hospital's monthly AI budget).
 - **Clinical Whisperer:** edge function `clinical-whisperer` — case-specific reminders; fails soft to a static checklist.
-- **Mock mode:** `VITE_USE_MOCK=1` uses the in-memory backend in `src/mock/` and scripted ambient (CI, demos). `VITE_FORCE_REAL_AMBIENT=1` drives the real capture path against a stubbed function (Playwright `real-ambient` project).
+- **Mock mode:** `VITE_USE_MOCK=1` uses the in-memory backend in `src/mock/` and scripted ambient (CI, demos). Demo dates shift to today (`VITE_FREEZE_DEMO_DATES=1` in the test builds keeps them fixed); demo recordings fill the note from `src/mock/demoExtraction.ts` (not in `--mode test`). `VITE_FORCE_REAL_AMBIENT=1` drives the real capture path against a stubbed function (Playwright `real-ambient` project).
 - **AI guardrails:** the AI never writes the diagnosis or examination; assessment/plan are tentative; a human sign-off gate precedes authorisation.
 
 ## Hosting

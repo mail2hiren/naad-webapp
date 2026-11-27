@@ -36,6 +36,7 @@ test('Pharmacy: a freshly-authorized order gets the neon-flash glow, and low-sto
   await expect(page).toHaveURL(/\/reception$/);
 
   const patientName = 'Ticker Flash Patient';
+  await page.getByTestId('nav-reception-walk-in').click();
   await page.getByTestId('intake-name').fill(patientName);
   await page.getByTestId('intake-age').fill('47');
   await page.getByTestId('intake-phone').fill('90055512399');

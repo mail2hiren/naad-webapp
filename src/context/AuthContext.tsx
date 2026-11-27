@@ -14,7 +14,7 @@ interface AuthState {
 const AuthContext = createContext<AuthState | null>(null);
 
 const ROLE_LABEL: Record<StaffRole, string> = {
-  receptionist: 'Receptionist', surgeon: 'Doctor', pharmacist: 'Pharmacist', physio: 'Doctor', admin: 'Admin',
+  receptionist: 'Receptionist', surgeon: 'Doctor', pharmacist: 'Pharmacist', physio: 'Physiotherapist', admin: 'Admin',
 };
 
 export function AuthProvider({ children }: { children: ReactNode }) {
@@ -81,9 +81,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         return { error: 'No active staff account is linked to this login.' };
       }
       // Role provisioning: the selected role must match the account's real role
-      // (surgeon covers both Doctor sub-roles: Orthopedics/Critical Care, and
-      // physio is also routed as Doctor) -- this is what restricts workspace
-      // access, not client-side trust in whatever the dropdown says.
+      // (Doctor covers both surgeon specialties; physiotherapists pick
+      // Physiotherapist) -- this is what restricts workspace access, not
+      // client-side trust in whatever the dropdown says.
       const grantedLabel = ROLE_LABEL[row.role];
       const wantedLabel = ROLE_LABEL[expectedRole];
       if (grantedLabel !== wantedLabel) {

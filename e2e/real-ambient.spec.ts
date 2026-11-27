@@ -74,7 +74,7 @@ const PHYSIO_OK = {
 
 async function login(page: Page, role: string, email: string, password: string) {
   if (!page.url().endsWith('/login')) await page.goto('/login');
-  await page.getByTestId('login-role').selectOption(role === 'physio' ? 'surgeon' : role);
+  await page.getByTestId('login-role').selectOption(role);
   await page.getByTestId('login-email').fill(email);
   await page.getByTestId('login-password').fill(password);
   await page.getByTestId('login-submit').click();
@@ -91,6 +91,7 @@ test.describe('Reception — real ambient capture', () => {
     const calls = await stubFunction(page, () => ({ status: 200, body: RECEPTION_OK }));
     await login(page, 'receptionist', 'sunita@digiyaan.demo', 'pass1234');
     await expect(page).toHaveURL(/\/reception$/);
+    await page.getByTestId('nav-reception-walk-in').click();
     await page.getByTestId('intake-name').fill('Real Capture Patient');
 
     await page.getByTestId('start-ambient-intake').click();
@@ -124,6 +125,7 @@ test.describe('Reception — real ambient capture', () => {
     });
     const calls = await stubFunction(page, () => ({ status: 200, body: RECEPTION_OK }));
     await login(page, 'receptionist', 'sunita@digiyaan.demo', 'pass1234');
+    await page.getByTestId('nav-reception-walk-in').click();
     await page.getByTestId('intake-name').fill('Pause Mic Patient');
     await page.getByTestId('start-ambient-intake').click();
     await expect(page.getByTestId('start-ambient-intake')).toContainText('Recording');
@@ -147,6 +149,7 @@ test.describe('Reception — real ambient capture', () => {
   test('typed fallback sends text/plain and applies the same extraction', async ({ page }) => {
     const calls = await stubFunction(page, () => ({ status: 200, body: RECEPTION_OK }));
     await login(page, 'receptionist', 'sunita@digiyaan.demo', 'pass1234');
+    await page.getByTestId('nav-reception-walk-in').click();
     await page.getByTestId('intake-name').fill('Typed Patient');
     await page.getByTestId('toggle-typed-intake').click();
     await page.getByTestId('typed-intake-text').fill('Patient fell yesterday and hurt the left knee.');
@@ -164,6 +167,7 @@ test.describe('Reception — real ambient capture', () => {
     test(`surfaces a clear message for HTTP ${status} and stays usable`, async ({ page }) => {
       await stubFunction(page, () => ({ status, body }));
       await login(page, 'receptionist', 'sunita@digiyaan.demo', 'pass1234');
+      await page.getByTestId('nav-reception-walk-in').click();
       await page.getByTestId('intake-name').fill('Error Case');
       await recordFor(page, 'start-ambient-intake', 'start-ambient-intake');
       await expect(page.getByText(expected).first()).toBeVisible({ timeout: 10_000 });
@@ -177,6 +181,7 @@ test.describe('Reception — real ambient capture', () => {
 async function registerFreshPatient(page: Page, name: string, complaint: string) {
   await login(page, 'receptionist', 'sunita@digiyaan.demo', 'pass1234');
   await expect(page).toHaveURL(/\/reception$/);
+  await page.getByTestId('nav-reception-walk-in').click();
   await page.getByTestId('intake-name').fill(name);
   await page.getByTestId('intake-age').fill('47');
   await page.getByTestId('intake-phone').fill('90099011224');
