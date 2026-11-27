@@ -14,6 +14,7 @@ const InpatientWardView = lazy(() => import('./routes/InpatientWardView'));
 const PharmacyView = lazy(() => import('./routes/PharmacyView'));
 const PatientPortalView = lazy(() => import('./routes/PatientPortalView'));
 const AdminView = lazy(() => import('./routes/AdminView'));
+const PlatformView = lazy(() => import('./routes/PlatformView'));
 
 export default function App() {
   return (
@@ -32,6 +33,8 @@ export default function App() {
               <Route path="/admin" element={<ProtectedRoute allow={['admin']}><AdminView /></ProtectedRoute>} />
               {/* Patient Portal has its own, separate patient-account login (not the staff role dropdown). */}
               <Route path="/patient" element={<PatientPortalView />} />
+              {/* DigiYaan Super admin console: its own sign-in, not a hospital role. */}
+              <Route path="/platform" element={<PlatformView />} />
               <Route path="*" element={<Navigate to="/login" replace />} />
             </Routes>
           </Suspense>

@@ -5,6 +5,29 @@ versions follow [SemVer](https://semver.org/) and each release is tagged `vX.Y.Z
 
 ## [Unreleased]
 
+## [0.3.0] - 2026-11-27
+
+Phase 2 of the product gap audit: the DigiYaan Super admin console and departments.
+
+### Added
+- **Super admin console** at `/platform`, with its own sign-in for DigiYaan staff:
+  - Hospitals list with seats used, patients and AI spend this month.
+  - Add a hospital together with its first admin login.
+  - Edit a hospital's profile, plan, user seats, AI budget and status (trial, active, payment overdue, suspended).
+  - Departments and staff for any hospital.
+  - Activity log of every change.
+- **Real staff logins**: add staff (doctor, physiotherapist, receptionist, pharmacist, admin) with a one-time password; reset passwords; deactivate and reactivate. Seat limits are enforced.
+- **Choose your password** screen: new or reset logins must pick their own password at first sign-in.
+- Hospital admins get **Staff** and **Departments** pages for their own hospital (same tools, limited to their hospital).
+- `platform-admin` edge function: the only place logins are created or cross-hospital changes happen; checks the caller on every request and writes an audit entry. 11 Node tests.
+- Proposed migrations `0007` (super admins, platform audit, hospital profile fields) and `0008` (departments), awaiting the owner's go.
+
+### Fixed
+- The hospital Admin "Reset Password" button only displayed a made-up password and changed nothing. It now really resets the login.
+
+### Demo mode
+- Super admin `owner@digiyaan.demo`, a second hospital (Sahyadri Ortho Care, admin `meera@digiyaan.demo`) and three departments for the demo hospital. Demo mode runs the real `platform-admin` code against the in-memory data.
+
 ## [0.2.0] - 2026-11-27
 
 Phase 1 of the product gap audit: the foundation every user sees first.
