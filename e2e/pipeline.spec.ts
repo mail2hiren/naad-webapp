@@ -38,6 +38,7 @@ test('reception -> doctor -> pharmacy -> admin: one patient all the way through'
   await expect(page).toHaveURL(/\/reception$/);
 
   const patientName = 'Pipeline Patient';
+  await page.getByTestId('nav-reception-walk-in').click();
   await page.getByTestId('intake-name').fill(patientName);
   await page.getByTestId('intake-age').fill('40');
   await page.getByTestId('intake-phone').fill('90011122233');
@@ -66,7 +67,7 @@ test('reception -> doctor -> pharmacy -> admin: one patient all the way through'
   await expect(queueRow).toBeVisible();
   await queueRow.getByTestId('open-chart').click();
 
-  await expect(page.getByText('3-Second Briefing', { exact: true })).toBeVisible();
+  await expect(page.getByText('Patient summary', { exact: true })).toBeVisible();
   await page.getByTestId('start-dictation').click();
   await expect(page.getByTestId('stop-dictation')).toBeVisible();
 
@@ -74,7 +75,7 @@ test('reception -> doctor -> pharmacy -> admin: one patient all the way through'
   // administrative flags (food-timing, follow-up imaging) -- apply the AI
   // fix to each until the gate reports all clear.
   await page.getByTestId('stop-dictation').click();
-  await expect(page.getByText('Before you route this consult')).toBeVisible();
+  await expect(page.getByText('Check the AI draft before you sign')).toBeVisible();
   while (await page.getByTestId('apply-ai-fix').count() > 0) {
     await page.getByTestId('apply-ai-fix').first().click();
   }
@@ -150,11 +151,13 @@ test('reception -> doctor -> pharmacy -> admin: one patient all the way through'
   await login(page, 'admin', 'raj@digiyaan.demo', 'pass1234');
   await expect(page).toHaveURL(/\/admin$/);
 
+  await page.getByTestId('nav-admin-fees').click();
   const feeInput = page.getByTestId('fee-input').first();
   await feeInput.fill('950');
   await feeInput.press('Tab');
   await expect(page.getByText('Consult fee updated')).toBeVisible();
 
+  await page.getByTestId('nav-admin-staff').click();
   await page.getByTestId('reset-password').first().click();
   await expect(page.getByText(/Temp password:/)).toBeVisible();
 });

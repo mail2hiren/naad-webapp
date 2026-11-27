@@ -174,7 +174,7 @@ export default function PatientPortalView() {
     return (
       <div className="min-h-screen flex items-center justify-center p-6">
         <Panel className="max-w-[440px] w-full p-8 md:p-10">
-          <div className="font-mono text-[10px] tracking-[.18em] uppercase text-ink-faint font-semibold flex items-center gap-2.5 mb-4">
+          <div className="text-base font-bold text-ink-faint flex items-center gap-2.5 mb-4">
             <span className="w-4 h-px bg-accent" />
             Naad · Patient Portal
           </div>
@@ -187,7 +187,7 @@ export default function PatientPortalView() {
 
           <form onSubmit={handleLogin}>
             <label className="block mt-2.5">
-              <span className="block font-mono text-[9.5px] tracking-wider uppercase text-ink-faint mb-1.5">Email</span>
+              <span className="block text-[13px] font-semibold text-ink-soft mb-1.5">Email</span>
               <input
                 data-testid="patient-login-email"
                 type="email"
@@ -199,7 +199,7 @@ export default function PatientPortalView() {
               />
             </label>
             <label className="block mt-2.5">
-              <span className="block font-mono text-[9.5px] tracking-wider uppercase text-ink-faint mb-1.5">Password</span>
+              <span className="block text-[13px] font-semibold text-ink-soft mb-1.5">Password</span>
               <input
                 data-testid="patient-login-password"
                 type="password"
@@ -236,7 +236,7 @@ export default function PatientPortalView() {
     <div className="min-h-screen p-4 md:p-8 max-w-3xl mx-auto">
       <header className="flex items-start justify-between gap-4 mb-6">
         <div>
-          <div className="font-mono text-[10px] tracking-[.18em] uppercase text-ink-faint font-semibold flex items-center gap-2.5 mb-2">
+          <div className="text-base font-bold text-ink-faint flex items-center gap-2.5 mb-2">
             <span className="w-4 h-px bg-accent" />
             Naad · Patient Portal
           </div>
@@ -294,7 +294,7 @@ export default function PatientPortalView() {
 
       {/* Visit timeline accordion */}
       <Card>
-        <SectionHead eyebrow="Longitudinal History" title="Your visits" desc="Newest first. Click a visit to see full clinical details." />
+        <SectionHead eyebrow="History" title="Your visits" desc="Newest first. Click a visit to see full clinical details." />
 
         {loadingHistory && <p className="text-ink-faint text-sm">Loading your history…</p>}
         {historyError && (
@@ -314,7 +314,7 @@ export default function PatientPortalView() {
                     <div className="text-sm text-ink">
                       Care stage: <span className="font-semibold">{STAGE_LABEL[item.entry.stage]}</span>
                     </div>
-                    <span className="text-[11px] text-ink-faint font-mono whitespace-nowrap">
+                    <span className="text-[13px] text-ink-faint font-mono whitespace-nowrap">
                       {formatDateTime(item.entry.enteredAt)}
                     </span>
                   </div>
@@ -332,7 +332,7 @@ export default function PatientPortalView() {
                 <button
                   type="button"
                   data-testid="visit-accordion-header"
-                  className="w-full flex items-center justify-between gap-3 px-3 py-2.5 text-left hover:bg-white/5"
+                  className="w-full flex items-center justify-between gap-3 px-3 py-2.5 text-left hover:bg-hover"
                   onClick={() => setExpandedId(isOpen ? null : item.id)}
                 >
                   <div className="min-w-0">
@@ -349,25 +349,25 @@ export default function PatientPortalView() {
                     {note ? (
                       <div className="flex flex-col gap-3 mt-2 text-sm">
                         <div>
-                          <div className="font-mono text-[9.5px] tracking-wider uppercase text-ink-faint mb-1">History</div>
+                          <div className="text-[13px] font-semibold text-ink-soft mb-1">History</div>
                           <p className="text-ink-soft">{note.soapSummary.history || '—'}</p>
                         </div>
                         <div>
-                          <div className="font-mono text-[9.5px] tracking-wider uppercase text-ink-faint mb-1">Examination</div>
+                          <div className="text-[13px] font-semibold text-ink-soft mb-1">Examination</div>
                           <BulletList items={toBullets(note.soapSummary.examination)} />
                         </div>
                         <div>
-                          <div className="font-mono text-[9.5px] tracking-wider uppercase text-ink-faint mb-1">Assessment</div>
+                          <div className="text-[13px] font-semibold text-ink-soft mb-1">Assessment</div>
                           <BulletList items={toBullets(note.soapSummary.assessment)} />
                         </div>
                         <div>
-                          <div className="font-mono text-[9.5px] tracking-wider uppercase text-ink-faint mb-1">Plan</div>
+                          <div className="text-[13px] font-semibold text-ink-soft mb-1">Plan</div>
                           <p className="text-ink-soft">{note.soapSummary.plan || '—'}</p>
                         </div>
 
                         {!!note.rehabExercises.length && (
                           <div>
-                            <div className="font-mono text-[9.5px] tracking-wider uppercase text-ink-faint mb-1">Rehab exercises</div>
+                            <div className="text-[13px] font-semibold text-ink-soft mb-1">Rehab exercises</div>
                             <ul className="list-disc list-inside text-ink-soft">
                               {note.rehabExercises.map((ex, i) => (
                                 <li key={i}>
@@ -382,7 +382,7 @@ export default function PatientPortalView() {
                                 shown here exactly as recorded. */}
                             {!!note.rehabExercises[0]?.weeklyProgress?.length && (
                               <div className="mt-2" data-testid="portal-progression-matrix">
-                                <div className="font-mono text-[9.5px] tracking-wider uppercase text-ink-faint mb-1">Weekly progress -- {note.rehabExercises[0].exerciseName || 'primary exercise'}</div>
+                                <div className="text-[13px] font-semibold text-ink-soft mb-1">Weekly progress -- {note.rehabExercises[0].exerciseName || 'primary exercise'}</div>
                                 <div className="flex flex-col gap-1">
                                   {note.rehabExercises[0].weeklyProgress!.map((w, i) => (
                                     <div key={i} className="text-ink-soft text-xs bg-surface rounded-lg px-2.5 py-1.5" data-testid="portal-progression-week">
@@ -397,7 +397,7 @@ export default function PatientPortalView() {
 
                         {!!note.precautions.length && (
                           <div>
-                            <div className="font-mono text-[9.5px] tracking-wider uppercase text-gate mb-1">Precautions</div>
+                            <div className="text-[13px] font-semibold text-gate mb-1">Precautions</div>
                             <ul className="list-disc list-inside text-ink-soft">
                               {note.precautions.map((p, i) => <li key={i}>{p}</li>)}
                             </ul>
@@ -406,7 +406,7 @@ export default function PatientPortalView() {
 
                         {!!note.dosAndDonts.length && (
                           <div>
-                            <div className="font-mono text-[9.5px] tracking-wider uppercase text-ink-faint mb-1">Do's and don'ts</div>
+                            <div className="text-[13px] font-semibold text-ink-soft mb-1">Do's and don'ts</div>
                             <ul className="list-disc list-inside text-ink-soft">
                               {note.dosAndDonts.map((d, i) => <li key={i}>{d}</li>)}
                             </ul>

@@ -5,6 +5,27 @@ versions follow [SemVer](https://semver.org/) and each release is tagged `vX.Y.Z
 
 ## [Unreleased]
 
+## [0.2.0] - 2026-11-27
+
+Phase 1 of the product gap audit: the foundation every user sees first.
+
+### Added
+- Left sidebar navigation for every role, with one page per job: Reception (Today's queue, Appointments, Walk-in registration), Pharmacy (Orders, Stock), Admin (Overview, Staff, Consultation fees, Discharge billing). On phones it becomes a slide-in menu.
+- Light theme by default, with a Dark mode switch in the sidebar (remembered per device).
+- Physiotherapist is now its own option at sign-in (previously physios had to pick "Doctor").
+- Demo mode: stopping a recording fills the note with a realistic AI draft for each specialty, instead of an empty note.
+- Demo mode: all demo dates move with the calendar, so the demo always happens today; demo sign-in survives a page refresh.
+
+### Changed
+- Readable type everywhere: no text smaller than 12 px, labels in plain sans-serif at higher contrast, 15 px inputs.
+- Naad branding: new sound-wave mark on sign-in, sidebar, favicon and app icons (replaces the placeholder lightning bolt). The hospital's name shows in the sidebar.
+- Plain clinic wording instead of developer terms (e.g. "Waiting to be seen" instead of "waiting doctor", "Sign and finish" instead of "Authorize & Route", no database field names on screen). The finish button now describes a physio session correctly.
+
+### Fixed
+- Pharmacy timers read "2h 35m" or "3 days" instead of six-figure minute counts.
+- Medicines missing from the stock list say "Not in stock list" instead of a false "Low stock".
+- Demo appointments have real times instead of "Time not set".
+
 ## [0.1.2] - 2026-11-21
 
 Repo now holds exactly what is live. No change to the live app, database or functions.

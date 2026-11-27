@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=IBM+Plex+Mono:wght@400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
 @import "tailwindcss";
 
 /*
@@ -9,34 +9,44 @@
   glowing accent-ink used for the phone-frame borders in the mobile shell.
   Do not introduce new hues here -- extend this palette, never replace it.
 */
+/*
+  Theme tokens. Light is the default (clinics are bright rooms, and the
+  dark-only theme was hard to read); dark is kept as an option, chosen in
+  the sidebar and stored per device. Every colour in the app comes from
+  these tokens -- never hard-code a hex in a component.
+
+  Contrast: --ink-faint is the lightest text colour and must stay >= 4.5:1
+  on --bg and --surface in both themes (WCAG AA). Light: #5A6372 on #fff is
+  6.0:1. Dark: 0.66 white on #070a12 is ~9:1.
+*/
 :root {
-  --bg: #070a12;
-  --surface: rgba(255, 255, 255, 0.02);
-  --surface-2: rgba(255, 255, 255, 0.04);
-  --surface-panel: rgba(255, 255, 255, 0.03);
-  --ink: #EDEFF4;
-  --ink-soft: rgba(237, 239, 244, 0.66);
-  /* Was 0.42 -- measured ~3.7:1 against --bg, below the 4.5:1 WCAG AA floor
-     for normal text, and this token is what every field label, placeholder,
-     and helper line in the app uses. Doctor feedback (Dr. Jayani,
-     2026-09-03: "statements and words... many fields are not readable
-     properly") traced back to this. 0.58 measures ~6.1:1 -- clearly legible
-     at the small mono label sizes used throughout, while staying visually
-     one step down from --ink-soft so the faint/soft/full hierarchy still
-     reads. Do not lower this again without re-checking contrast. */
-  --ink-faint: rgba(237, 239, 244, 0.58);
-  --line: rgba(255, 255, 255, 0.05);
-  --line-strong: rgba(255, 255, 255, 0.06);
-  --accent: #6EE7D8;
-  --accent-ink: #8FD9FF;
-  --accent-soft: rgba(110, 231, 216, 0.12);
-  --accent-2: #8B93FF;
-  --gate: #F0C36B;
-  --gate-soft: rgba(240, 195, 107, 0.12);
-  --ok: #6FE7A9;
-  --ok-soft: rgba(111, 231, 169, 0.12);
-  --danger: #FF8C7C;
-  --danger-soft: rgba(255, 140, 124, 0.12);
+  --bg: #F4F6F8;
+  --surface: #FFFFFF;
+  --surface-2: #F1F4F7;
+  --surface-panel: rgba(255, 255, 255, 0.92);
+  --surface-solid: #FFFFFF;
+  --sidebar: #0B1222;
+  --sidebar-ink: #E6EAF2;
+  --sidebar-faint: rgba(230, 234, 242, 0.68);
+  --sidebar-active: rgba(110, 231, 216, 0.14);
+  --hover: rgba(15, 23, 42, 0.05);
+  --ink: #111827;
+  --ink-soft: #374151;
+  --ink-faint: #5A6372;
+  --line: #E3E7EC;
+  --line-strong: #D3D9E0;
+  --accent: #0B7A70;
+  --accent-ink: #0B6FA4;
+  --accent-soft: rgba(11, 122, 112, 0.10);
+  --on-accent: #FFFFFF;
+  --accent-2: #5B5FD6;
+  --gate: #A15C07;
+  --gate-soft: rgba(217, 119, 6, 0.12);
+  --ok: #157347;
+  --ok-soft: rgba(21, 115, 71, 0.10);
+  --danger: #B42318;
+  --danger-soft: rgba(180, 35, 24, 0.08);
+  --on-danger: #FFFFFF;
   --aura-1: #6366F1;
   --aura-2: #A855F7;
   --aura-3: #EC4899;
@@ -44,6 +54,39 @@
   --radius-lg: 20px;
   --blur: 24px;
   --frame-edge: #1c2230;
+  --scroll-thumb: rgba(15, 23, 42, 0.18);
+  --card-shadow: 0 1px 2px rgba(15, 23, 42, 0.06), 0 0 0 1px var(--line);
+  color-scheme: light;
+}
+
+:root[data-theme='dark'] {
+  --bg: #070a12;
+  --surface: rgba(255, 255, 255, 0.035);
+  --surface-2: rgba(255, 255, 255, 0.06);
+  --surface-panel: rgba(12, 16, 26, 0.9);
+  --surface-solid: #0b0e17;
+  --sidebar: #0A0E18;
+  --hover: rgba(255, 255, 255, 0.06);
+  --ink: #EDEFF4;
+  --ink-soft: rgba(237, 239, 244, 0.82);
+  --ink-faint: rgba(237, 239, 244, 0.66);
+  --line: rgba(255, 255, 255, 0.08);
+  --line-strong: rgba(255, 255, 255, 0.12);
+  --accent: #6EE7D8;
+  --accent-ink: #8FD9FF;
+  --accent-soft: rgba(110, 231, 216, 0.12);
+  --on-accent: #04121c;
+  --accent-2: #8B93FF;
+  --gate: #F0C36B;
+  --gate-soft: rgba(240, 195, 107, 0.12);
+  --ok: #6FE7A9;
+  --ok-soft: rgba(111, 231, 169, 0.12);
+  --danger: #FF8C7C;
+  --danger-soft: rgba(255, 140, 124, 0.12);
+  --on-danger: #2a0a06;
+  --scroll-thumb: rgba(255, 255, 255, 0.1);
+  --card-shadow: 0 0 0 1px var(--line);
+  color-scheme: dark;
 }
 
 @theme {
@@ -51,6 +94,14 @@
   --color-surface: var(--surface);
   --color-surface-2: var(--surface-2);
   --color-surface-panel: var(--surface-panel);
+  --color-surface-solid: var(--surface-solid);
+  --color-sidebar: var(--sidebar);
+  --color-sidebar-ink: var(--sidebar-ink);
+  --color-sidebar-faint: var(--sidebar-faint);
+  --color-sidebar-active: var(--sidebar-active);
+  --color-hover: var(--hover);
+  --color-on-accent: var(--on-accent);
+  --color-on-danger: var(--on-danger);
   --color-ink: var(--ink);
   --color-ink-soft: var(--ink-soft);
   --color-ink-faint: var(--ink-faint);
@@ -71,7 +122,7 @@
   --color-aura-3: var(--aura-3);
   --color-frame-edge: var(--frame-edge);
   --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-  --font-mono: 'IBM Plex Mono', ui-monospace, monospace;
+  --font-mono: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   --radius-radius: var(--radius);
   --radius-radius-lg: var(--radius-lg);
 }
@@ -85,6 +136,8 @@
   html, body, #root { height: 100%; }
   body {
     margin: 0;
+    font-size: 15px;
+    line-height: 1.5;
     background: var(--bg);
     color: var(--ink);
     font-family: var(--font-sans);
@@ -92,7 +145,8 @@
   }
   h1, h2, h3, h4 { font-weight: 800; letter-spacing: -0.015em; line-height: 1.15; color: var(--ink); margin: 0; }
   a { color: var(--accent-ink); text-decoration: none; }
-  ::selection { background: var(--accent); color: var(--bg); }
+  ::selection { background: var(--accent); color: var(--on-accent); }
+  .font-mono { font-variant-numeric: tabular-nums; letter-spacing: 0.02em; }
   button:focus-visible, a:focus-visible, input:focus-visible, textarea:focus-visible, select:focus-visible {
     outline: 2px solid var(--accent); outline-offset: 2px;
   }
@@ -165,4 +219,4 @@
 
 ::-webkit-scrollbar { width: 10px; height: 10px; }
 ::-webkit-scrollbar-track { background: transparent; }
-::-webkit-scrollbar-thumb { background: rgba(255, 255, 255, .08); border-radius: 8px; }
+::-webkit-scrollbar-thumb { background: var(--scroll-thumb); border-radius: 8px; }

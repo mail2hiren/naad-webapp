@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react';
 import Shell from '../components/Shell';
-import { AmbientOrb, Card, Btn, Pill, SectionHead, StatTile, Field, inputCls } from '../components/ui';
+import { AmbientOrb, Card, Btn, Pill, StatTile, Field, inputCls } from '../components/ui';
 import { useAuth } from '../context/AuthContext';
 import { useClinic } from '../context/ClinicContext';
 import { supabase } from '../lib/supabaseClient';
@@ -216,15 +216,11 @@ export default function InpatientWardView() {
   }
 
   return (
-    <Shell title="Inpatient Ward">
-      <SectionHead
-        eyebrow="Ward Operations"
-        title="Inpatient Ward"
-        desc="Bed-side journey tracking, daily rounds dictation, and the discharge handoff to Admin."
-      />
+    <Shell title="Ward">
+      <p className="text-ink-soft text-[15px] -mt-3 mb-6">Admitted patients, their stage of care, daily rounds notes and discharge.</p>
 
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6">
-        <StatTile label="Total accumulated inpatient charges today" value={fmtRupees(todayTotal)} tone="accent" />
+        <StatTile label="Charges added today" value={fmtRupees(todayTotal)} tone="accent" />
         <StatTile label="Admitted beds" value={admitted.length} />
       </div>
 
@@ -292,7 +288,7 @@ export default function InpatientWardView() {
                   Doctor: <span className="text-ink">{doctorName(p)}</span>
                 </div>
                 {p.queue_status === 'pending_discharge_clearance' && (
-                  <div className="text-[11px] text-gate bg-gate-soft rounded-lg px-2.5 py-1.5">
+                  <div className="text-[13px] text-gate bg-gate-soft rounded-lg px-2.5 py-1.5">
                     Routed to Admin dashboard for balance verification
                   </div>
                 )}
@@ -370,7 +366,7 @@ function ChartDetail({
           </div>
           <div className="text-right">
             <div className="font-mono text-lg text-accent-ink font-bold">{fmtRupees(ledgerTotal)}</div>
-            <div className="text-[10px] text-ink-faint uppercase tracking-wider">Running ledger total</div>
+            <div className="text-xs text-ink-faint uppercase tracking-wider">Running ledger total</div>
           </div>
         </div>
         <div className="mt-3 flex items-center gap-2 flex-wrap">
@@ -381,10 +377,10 @@ function ChartDetail({
         </div>
         {!locked && (
           <div className="mt-3 flex items-center gap-2">
-            <span className="text-[10px] uppercase tracking-wide text-ink-faint">Bed status:</span>
+            <span className="text-xs uppercase tracking-wide text-ink-faint">Bed status:</span>
             <Btn
               variant={patient.triage?.wardStability === 'stable' ? 'primary' : 'ghost'}
-              className="!px-2.5 !py-1 !text-[11px]"
+              className="!px-2.5 !py-1 !text-[13px]"
               data-testid="mark-stable"
               disabled={stabilitySaving}
               onClick={() => onSetStability('stable')}
@@ -393,7 +389,7 @@ function ChartDetail({
             </Btn>
             <Btn
               variant={patient.triage?.wardStability === 'unstable' ? 'danger' : 'ghost'}
-              className="!px-2.5 !py-1 !text-[11px]"
+              className="!px-2.5 !py-1 !text-[13px]"
               data-testid="mark-unstable"
               disabled={stabilitySaving}
               onClick={() => onSetStability('unstable')}
@@ -422,7 +418,7 @@ function ChartDetail({
         <Card>
           <div className="flex items-center gap-2.5 mb-3">
             <AmbientOrb size="sm" active />
-            <div className="font-mono text-[10px] tracking-[.14em] uppercase text-accent-ink">
+            <div className="text-base font-bold text-ink">
               Daily Rounds Voice Dictation
             </div>
           </div>
@@ -449,7 +445,7 @@ function ChartDetail({
 
       {patient.journey_stage && !locked && canAdvance && target && (
         <Card>
-          <div className="font-mono text-[10px] tracking-[.14em] uppercase text-accent-ink mb-3">
+          <div className="text-base font-bold text-ink mb-3">
             Advance Journey Stage
           </div>
           {!advanceOpen ? (
@@ -486,7 +482,7 @@ function ChartDetail({
 
       {patient.journey_stage && !locked && canDischarge && (
         <Card>
-          <div className="font-mono text-[10px] tracking-[.14em] uppercase text-danger mb-3">
+          <div className="text-base font-bold text-danger mb-3">
             Discharge Ledger Sync Gate
           </div>
           {!dischargeOpen ? (
@@ -526,7 +522,7 @@ function ChartDetail({
       )}
 
       <Card>
-        <div className="font-mono text-[10px] tracking-[.14em] uppercase text-ink-faint mb-3">
+        <div className="text-base font-bold text-ink-faint mb-3">
           Journey Timeline (most recent first)
         </div>
         {history.length === 0 ? (
@@ -537,7 +533,7 @@ function ChartDetail({
               <div key={i} className="py-3 first:pt-0 last:pb-0">
                 <div className="flex items-center justify-between gap-2">
                   <Pill tone={stagePillTone(h.stage)}>{STAGE_LABEL[h.stage]}</Pill>
-                  <span className="text-[11px] font-mono text-ink-faint">{fmtDateTime(h.enteredAt)}</span>
+                  <span className="text-[13px] font-mono text-ink-faint">{fmtDateTime(h.enteredAt)}</span>
                 </div>
                 <div className="text-xs text-ink-soft mt-1.5">by {h.by || 'Ward staff'}</div>
                 {h.note && <div className="text-sm text-ink mt-1 leading-relaxed">{h.note}</div>}

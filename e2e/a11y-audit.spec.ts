@@ -112,7 +112,9 @@ test('phone: every primary control is at least 44px tall on each screen', async 
       await page.waitForTimeout(500);
       failures.push(...(await undersized(page)).map((f) => `chart ${f}`));
     }
-    await page.getByTestId('sign-out').click();
+    // On a phone, Sign out lives in the slide-in menu.
+    await page.getByRole('button', { name: 'Open menu' }).click();
+    await page.getByTestId('sign-out').filter({ visible: true }).click();
   }
   expect(failures).toEqual([]);
 });
@@ -122,7 +124,7 @@ test('keyboard: a skip link is the first tab stop and jumps to main content', as
   await expect(page).toHaveURL(/\/reception$/);
   // The title is set in the same effect that resets focus to the page top,
   // so it marks the moment the workspace is ready for keyboard input.
-  await expect(page).toHaveTitle('Front Desk — Naad');
+  await expect(page).toHaveTitle("Today's queue — Naad");
   await page.keyboard.press('Tab');
   const skip = page.getByRole('link', { name: 'Skip to main content' });
   await expect(skip).toBeFocused();
@@ -134,7 +136,7 @@ test('every workspace has its own page title', async ({ page }) => {
   await page.goto('/login');
   await expect(page).toHaveTitle('Staff sign-in — Naad');
   await login(page, 'receptionist', 'sunita@digiyaan.demo');
-  await expect(page).toHaveTitle('Front Desk — Naad');
+  await expect(page).toHaveTitle("Today's queue — Naad");
 });
 
 test('screen readers: notifications are announced through a persistent live region', async ({ page }) => {

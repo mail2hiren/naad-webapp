@@ -18,11 +18,7 @@ async function login(page: import('@playwright/test').Page, role: string, email:
   if (!page.url().endsWith('/login')) {
     await page.goto('/login');
   }
-  // The login dropdown only exposes a single "Doctor" option (value=surgeon)
-  // -- Jayani (role='physio' in the DB) signs in through that same option,
-  // exactly like e2e/login.spec.ts's "routes Doctor (physio)..." case.
-  const selectValue = role === 'physio' ? 'surgeon' : role;
-  await page.getByTestId('login-role').selectOption(selectValue);
+  await page.getByTestId('login-role').selectOption(role);
   await page.getByTestId('login-email').fill(email);
   await page.getByTestId('login-password').fill(password);
   await page.getByTestId('login-submit').click();
@@ -41,6 +37,7 @@ async function registerFreshOrthoPatient(page: import('@playwright/test').Page, 
   await login(page, 'receptionist', 'sunita@digiyaan.demo', 'pass1234');
   await expect(page).toHaveURL(/\/reception$/);
 
+  await page.getByTestId('nav-reception-walk-in').click();
   await page.getByTestId('intake-name').fill(name);
   await page.getByTestId('intake-age').fill('47');
   await page.getByTestId('intake-phone').fill('90099011223');
@@ -167,7 +164,7 @@ test.describe('Doctor Portal — specialty consoles (Module 2)', () => {
 
     const overlay = page.getByTestId('signoff-overlay');
     await expect(overlay).toBeVisible();
-    await expect(page.getByText('Human-in-the-Loop Sign-Off')).toBeVisible();
+    await expect(page.getByText('Your review', { exact: true })).toBeVisible();
 
     // All 4 quadrants present and editable, and edits here land in the same
     // note the Session & Note tab uses (shared onUpdateNote). History/Plan

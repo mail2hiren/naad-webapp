@@ -1,10 +1,12 @@
 import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
+import { queueStatusLabel } from '../lib/labels';
 import { useAuth } from '../context/AuthContext';
 import { useClinic } from '../context/ClinicContext';
 import { supabase, scriptedAmbient } from '../lib/supabaseClient';
+import { demoExtractionFor } from '../mock/demoExtraction';
 import { useRealAmbientCapture, type ExtractResult } from '../hooks/useRealAmbientCapture';
 import Shell from '../components/Shell';
-import { AmbientOrb, Btn, BulletList, BulletListEditor, Card, Collapsible, Field, Modal, Pill, SectionHead, Tabs, inputCls } from '../components/ui';
+import { AmbientOrb, Btn, BulletList, BulletListEditor, Card, Collapsible, Field, Modal, Pill, Tabs, inputCls } from '../components/ui';
 import { ClinicalAssistantSidebar } from './doctor/ClinicalAssistantSidebar';
 import { ConsultationQualityGate, type QualityFlag } from './doctor/ConsultationQualityGate';
 import { normalizeClinicalNote, toBullets } from '../lib/clinicalNote';
@@ -353,6 +355,9 @@ export default function DoctorView() {
     if (!scriptedAmbient && realCapture.status === 'recording') {
       const result = await realCapture.stop();
       if (result) applyExtraction(result);
+    } else if (scriptedAmbient && import.meta.env.MODE !== 'test') {
+      // Demo mode: show a realistic AI draft instead of an empty note.
+      applyExtraction(demoExtractionFor(practitioner?.specialty, patient?.triage?.complaints ?? ''));
     }
     setDictationPaused(true);
     setQualityGateOpen(true);
@@ -496,16 +501,14 @@ export default function DoctorView() {
   }
 
   return (
-    <Shell title="Doctor Portal">
-      <SectionHead
-        eyebrow={practitioner?.specialty ?? 'Doctor'}
-        title={`Welcome, ${practitioner?.name ?? 'Doctor'}`}
-        desc="Your queue, the 3-second briefing, and the ambient clinical note -- all in one chart."
-      />
+    <Shell title="My patients">
+      <p className="text-ink-soft text-[15px] -mt-3 mb-6">
+        {practitioner?.name ?? 'Doctor'}{practitioner?.specialty ? ` · ${practitioner.specialty}` : ''}. Open a chart, record the visit, then review and sign the note.
+      </p>
 
       {!activePatientId && (
         <Card>
-          <div className="font-mono text-[10px] tracking-[.14em] uppercase text-accent-ink mb-3">My Queue</div>
+          <div className="text-base font-bold text-ink mb-3">My Queue</div>
           {myQueue.length === 0 ? (
             <p className="text-ink-faint text-sm">No patients are currently assigned to you.</p>
           ) : (
@@ -519,7 +522,7 @@ export default function DoctorView() {
                       {p.urgency_level === 'critical_bypass' && <Pill tone="danger">Critical</Pill>}
                       {p.urgency_level === 'urgent' && <Pill tone="gate">Urgent</Pill>}
                     </div>
-                    <div className="text-ink-faint text-xs mt-0.5 font-mono">{p.queue_status.replace(/_/g, ' ')}</div>
+                    <div className="text-ink-faint text-xs mt-0.5 font-mono">{queueStatusLabel(p.queue_status)}</div>
                   </div>
                   <Btn variant="primary" data-testid="open-chart" onClick={() => setActivePatientId(p.id)}>
                     Open Chart
@@ -540,7 +543,7 @@ export default function DoctorView() {
               throughout the visit rather than a step in the workflow. ------ */}
           <Card>
                 <div className="flex items-center justify-between mb-3">
-                  <div className="font-mono text-[10px] tracking-[.14em] uppercase text-accent-ink">3-Second Briefing</div>
+                  <div className="text-base font-bold text-ink">Patient summary</div>
                   <div className="flex items-center gap-2">
                     {isWardPatient && <Pill tone="gate">Ward Patient</Pill>}
                     <span className="text-ink font-semibold">{patient.name}</span>
@@ -556,14 +559,14 @@ export default function DoctorView() {
                 </div>
                 {patient.triage?.complaints && (
                   <div className="text-sm text-ink-soft mb-4 bg-surface-2 rounded-lg px-3 py-2.5">
-                    <span className="font-mono text-[9.5px] uppercase text-ink-faint block mb-1">Chief Complaints</span>
+                    <span className="text-[13px] font-semibold text-ink-soft block mb-1">Chief Complaints</span>
                     {patient.triage.complaints}
                   </div>
                 )}
 
                 {(patient.intake_state?.rawTranscriptStream || patient.intake_state?.doctorQueryNote) && (
                   <div className="mb-4">
-                    <span className="font-mono text-[9.5px] uppercase text-ink-faint block mb-1.5">Front-Desk Notes</span>
+                    <span className="text-[13px] font-semibold text-ink-soft block mb-1.5">Front-Desk Notes</span>
                     {patient.intake_state?.rawTranscriptStream && (
                       <p className="text-xs text-ink-soft leading-relaxed bg-surface-2 rounded-lg px-3 py-2.5 mb-1.5">
                         {patient.intake_state.rawTranscriptStream}
@@ -579,7 +582,7 @@ export default function DoctorView() {
 
                 {documents.length > 0 && (
                   <div className="mb-4">
-                    <span className="font-mono text-[9.5px] uppercase text-ink-faint block mb-1.5">Attached Reports</span>
+                    <span className="text-[13px] font-semibold text-ink-soft block mb-1.5">Attached Reports</span>
                     <div className="flex flex-wrap gap-2">
                       {documents.map((doc) => (
                         <button
@@ -588,10 +591,10 @@ export default function DoctorView() {
                           onClick={() => setLightboxDoc(doc)}
                           className="w-24 shrink-0 bg-surface-2 border border-line rounded-lg p-2 text-left hover:border-accent transition-colors"
                         >
-                          <div className="h-12 rounded bg-white/5 flex items-center justify-center text-ink-faint text-[9px] font-mono uppercase mb-1.5">
+                          <div className="h-12 rounded bg-hover flex items-center justify-center text-ink-faint text-xs font-mono uppercase mb-1.5">
                             {doc.label}
                           </div>
-                          <div className="text-[10px] text-ink-soft truncate">{doc.file_name}</div>
+                          <div className="text-xs text-ink-soft truncate">{doc.file_name}</div>
                         </button>
                       ))}
                     </div>
@@ -607,7 +610,7 @@ export default function DoctorView() {
                 {(patient.journey_stage || journeyHistory.length > 0) && (
                   <div className="mb-4">
                     <div className="flex items-center justify-between mb-1.5">
-                      <span className="font-mono text-[9.5px] uppercase text-ink-faint">Patient Journey</span>
+                      <span className="text-[13px] font-semibold text-ink-soft">Patient Journey</span>
                       <Pill tone={stagePillTone(patient.journey_stage)}>
                         {patient.journey_stage ? STAGE_LABEL[patient.journey_stage] : 'Admission pending stage set'}
                       </Pill>
@@ -620,7 +623,7 @@ export default function DoctorView() {
                           <div key={i} className="py-2 first:pt-2.5 last:pb-2.5">
                             <div className="flex items-center justify-between gap-2">
                               <Pill tone={stagePillTone(h.stage)}>{STAGE_LABEL[h.stage]}</Pill>
-                              <span className="text-[11px] font-mono text-ink-faint">{fmtDateTime(h.enteredAt)}</span>
+                              <span className="text-[13px] font-mono text-ink-faint">{fmtDateTime(h.enteredAt)}</span>
                             </div>
                             <div className="text-xs text-ink-soft mt-1">by {h.by || 'Ward staff'}</div>
                             {h.note && <div className="text-sm text-ink mt-1 leading-relaxed">{h.note}</div>}
@@ -628,7 +631,7 @@ export default function DoctorView() {
                         ))}
                       </div>
                     )}
-                    <p className="text-ink-faint text-[10px] mt-1.5">View only — advanced and edited by Ward staff.</p>
+                    <p className="text-ink-faint text-xs mt-1.5">View only — advanced and edited by Ward staff.</p>
                   </div>
                 )}
 
@@ -640,26 +643,26 @@ export default function DoctorView() {
                     treatment, this is reference material for past visits. */}
                 {patientHistory.length > 0 && (
                   <div>
-                    <span className="font-mono text-[9.5px] uppercase text-ink-faint block mb-1.5">Encounter History</span>
+                    <span className="text-[13px] font-semibold text-ink-soft block mb-1.5">Encounter History</span>
                     <div className="flex flex-col gap-2">
                       {patientHistory.map((h) => (
                         <div key={h.id} className="text-xs bg-surface-2 rounded-lg px-3 py-2.5">
                           <div className="font-mono text-ink-faint mb-2">{h.started_at.slice(0, 10)}</div>
                           <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-2.5">
                             <div>
-                              <span className="font-mono text-[9px] uppercase text-ink-faint block mb-1">History</span>
+                              <span className="text-[13px] font-semibold text-ink-soft block mb-1">History</span>
                               <p className="text-ink-soft leading-relaxed">{h.clinical_note?.soapSummary?.history || '—'}</p>
                             </div>
                             <div>
-                              <span className="font-mono text-[9px] uppercase text-ink-faint block mb-1">Examination</span>
+                              <span className="text-[13px] font-semibold text-ink-soft block mb-1">Examination</span>
                               <BulletList items={toBullets(h.clinical_note?.soapSummary?.examination)} />
                             </div>
                             <div>
-                              <span className="font-mono text-[9px] uppercase text-ink-faint block mb-1">Assessment</span>
+                              <span className="text-[13px] font-semibold text-ink-soft block mb-1">Assessment</span>
                               <BulletList items={toBullets(h.clinical_note?.soapSummary?.assessment)} />
                             </div>
                             <div>
-                              <span className="font-mono text-[9px] uppercase text-ink-faint block mb-1">Plan</span>
+                              <span className="text-[13px] font-semibold text-ink-soft block mb-1">Plan</span>
                               <p className="text-ink-soft leading-relaxed">{h.clinical_note?.soapSummary?.plan || '—'}</p>
                             </div>
                           </div>
@@ -694,11 +697,11 @@ export default function DoctorView() {
                   {!encounter ? (
                     <Card className="flex items-center justify-between gap-4 flex-wrap">
                       <div>
-                        <div className="text-ink font-semibold text-sm mb-1">No active consultation session</div>
-                        <p className="text-ink-faint text-xs">Start dictation to open a live clinical note for this visit.</p>
+                        <div className="text-ink font-semibold text-[15px] mb-1">Ready to start the visit</div>
+                        <p className="text-ink-soft text-sm">With the patient's consent, start recording. Naad drafts the note while you talk.</p>
                       </div>
                       <Btn variant="glow" data-testid="start-dictation" disabled={startBusy} onClick={handleStartDictation}>
-                        {startBusy ? 'Starting…' : 'Start Dictation / Ambient Session'}
+                        {startBusy ? 'Starting…' : 'Start recording'}
                       </Btn>
                     </Card>
                   ) : (
@@ -710,13 +713,13 @@ export default function DoctorView() {
                             {dictationPaused ? 'Ambient Session Paused'
                               : !scriptedAmbient && realCapture.status === 'processing' ? 'Transcribing…'
                                 : !scriptedAmbient && realCapture.status !== 'recording' ? 'Ambient Session Open'
-                                  : 'AI Ambient Session Active'}
+                                  : 'Recording'}
                           </div>
                           <p className="text-ink-faint text-xs">
                             {dictationPaused ? 'Review the quality gate, then authorize.'
                               : !scriptedAmbient && realCapture.status === 'processing' ? 'Extracting the clinical note from the recording…'
                                 : !scriptedAmbient && realCapture.status !== 'recording' ? 'Microphone is off — tap Start Recording to capture this visit, or type below.'
-                                  : 'Live Dictation'}
+                                  : 'Naad is listening'}
                           </p>
                         </div>
                         {!scriptedAmbient && !dictationPaused && realCapture.status !== 'recording' && realCapture.status !== 'processing' && realCapture.supported && (
@@ -730,12 +733,12 @@ export default function DoctorView() {
                           disabled={!scriptedAmbient && realCapture.status === 'processing'}
                           onClick={handleStopDictation}
                         >
-                          {!scriptedAmbient && realCapture.status === 'processing' ? 'Transcribing…' : 'Stop Dictation'}
+                          {!scriptedAmbient && realCapture.status === 'processing' ? 'Transcribing…' : 'Stop recording'}
                         </Btn>
                       </div>
 
                       {!scriptedAmbient && !realCapture.supported && (
-                        <div className="mt-2 text-[11px] text-ink-faint">
+                        <div className="mt-2 text-[13px] text-ink-faint">
                           Voice capture isn't supported in this browser — use typed dictation below instead.
                         </div>
                       )}
@@ -746,7 +749,7 @@ export default function DoctorView() {
                             type="button"
                             data-testid="toggle-typed-dictation"
                             onClick={() => setShowTypedDictation((v) => !v)}
-                            className="min-h-11 text-[11px] text-accent-ink underline underline-offset-2"
+                            className="min-h-11 text-[13px] text-accent-ink underline underline-offset-2"
                           >
                             {showTypedDictation ? 'Hide typed dictation' : 'Or type the consultation instead'}
                           </button>
@@ -779,7 +782,7 @@ export default function DoctorView() {
                   {/* ---- Editable clinical note (Human-In-The-Loop) ------------ */}
                   {encounter && noteDraft && (
                     <Card>
-                      <div className="font-mono text-[10px] tracking-[.14em] uppercase text-accent-ink mb-3">Clinical Note</div>
+                      <div className="text-base font-bold text-ink mb-3">Clinical Note</div>
 
                       {/* Each block below is independently collapsible --
                           doctor feedback (Dr. Jayani round 2, 2026-09-03:
@@ -905,7 +908,7 @@ export default function DoctorView() {
                 ) : (
                   <Card>
                     <div className="flex items-center justify-between mb-1.5">
-                      <span className="font-mono text-[10px] tracking-[.14em] uppercase text-accent-ink">Prescription</span>
+                      <span className="text-base font-bold text-ink">Prescription</span>
                       <Btn variant="ghost" onClick={addMedicine}>+ Add Medicine</Btn>
                     </div>
                     <div className="flex flex-col gap-1.5">
@@ -945,7 +948,7 @@ export default function DoctorView() {
                   </Card>
                 ) : (
                   <Card>
-                    <div className="font-mono text-[10px] tracking-[.14em] uppercase text-accent-ink mb-3">Cross-Referral Routing</div>
+                    <div className="text-base font-bold text-ink mb-3">Cross-Referral Routing</div>
                     <div className="flex flex-col sm:flex-row gap-2">
                       <select
                         data-testid="referral-dropdown"
@@ -997,9 +1000,11 @@ export default function DoctorView() {
               covering anything, at the cost of a little scrolling.) ------- */}
           <Card className="flex items-center justify-between gap-4 flex-wrap">
             <div>
-              <div className="text-ink font-semibold text-sm mb-1">Authorize &amp; Route</div>
-              <p className="text-ink-faint text-xs">
-                Sends the prescription to pharmacy and closes out this consultation.
+              <div className="text-ink font-semibold text-[15px] mb-1">Sign and finish</div>
+              <p className="text-ink-soft text-sm">
+                {practitioner?.specialty === 'Physiotherapy'
+                  ? 'Signs this session note and closes the visit. Any medicines you added go to the pharmacy.'
+                  : 'Signs this note, sends the prescription to the pharmacy and closes the visit.'}
               </p>
             </div>
             <Btn
@@ -1008,7 +1013,7 @@ export default function DoctorView() {
               disabled={!encounter || authorizeBusy}
               onClick={handleAuthorizeAndRoute}
             >
-              {authorizeBusy ? 'Authorizing…' : 'Authorize & Route'}
+              {authorizeBusy ? 'Signing…' : 'Sign and finish'}
             </Btn>
           </Card>
         </div>
@@ -1016,8 +1021,8 @@ export default function DoctorView() {
 
       {lightboxDoc && (
         <Modal onClose={() => setLightboxDoc(null)}>
-          <div className="font-mono text-[10px] tracking-[.14em] uppercase text-accent-ink mb-3">Attached Report</div>
-          <div className="h-40 rounded-xl bg-white/5 flex items-center justify-center text-ink-faint text-xs font-mono uppercase mb-4">
+          <div className="text-base font-bold text-ink mb-3">Attached Report</div>
+          <div className="h-40 rounded-xl bg-hover flex items-center justify-center text-ink-faint text-xs font-mono uppercase mb-4">
             {lightboxDoc.label}
           </div>
           <div className="text-ink text-lg font-semibold mb-1">{lightboxDoc.file_name}</div>
@@ -1057,7 +1062,7 @@ export default function DoctorView() {
 function GridField({ label, children }: { label: string; children: ReactNode }) {
   return (
     <div>
-      <span className="sm:hidden block font-mono text-[9px] uppercase text-ink-faint mb-1">{label}</span>
+      <span className="sm:hidden block text-[13px] font-semibold text-ink-soft mb-1">{label}</span>
       {children}
     </div>
   );
@@ -1066,7 +1071,7 @@ function GridField({ label, children }: { label: string; children: ReactNode }) 
 function TriageStat({ label, value }: { label: string; value: string }) {
   return (
     <div className="bg-surface-2 rounded-lg px-2.5 py-2">
-      <div className="font-mono text-[9px] uppercase text-ink-faint mb-0.5">{label}</div>
+      <div className="text-[13px] font-semibold text-ink-soft mb-0.5">{label}</div>
       <div className="text-ink text-sm font-semibold truncate">{value}</div>
     </div>
   );

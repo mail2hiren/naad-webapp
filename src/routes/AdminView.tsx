@@ -1,6 +1,8 @@
 import { useEffect, useMemo, useState } from 'react';
+import { subscriptionStatusLabel } from '../lib/labels';
 import Shell from '../components/Shell';
-import { Card, Btn, Pill, SectionHead, StatTile, inputCls } from '../components/ui';
+import { useSection } from '../lib/nav';
+import { Card, Btn, Pill, StatTile, inputCls } from '../components/ui';
 import { useClinic } from '../context/ClinicContext';
 import { supabase } from '../lib/supabaseClient';
 import type { PatientRow, PractitionerRow } from '../types/db';
@@ -32,6 +34,7 @@ function fmtRupees(n: number): string {
  * live from useClinic().
  */
 export default function AdminView() {
+  const section = useSection<'overview' | 'staff' | 'fees' | 'billing'>('overview');
   const { patients, practitioners, encounters, wardLedger, pharmacyOrders, pushToast, logAudit } = useClinic();
 
   const doctors = useMemo(
@@ -66,13 +69,8 @@ export default function AdminView() {
   }, [encounters, wardLedger]);
 
   return (
-    <Shell title="Admin Panel">
-      <SectionHead
-        eyebrow="Administration"
-        title="Admin Control Panel"
-        desc="Fee management, staff password recovery, discharge balance settlement, and clinic-wide operational stats."
-      />
-
+    <Shell title={{ overview: 'Overview', staff: 'Staff', fees: 'Consultation fees', billing: 'Discharge billing' }[section]}>
+      {section === 'overview' && (<>
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6">
         <StatTile label="Total Walk-ins" value={walkInCount} />
         <StatTile label="Active Inpatients" value={activeInpatients} tone="ok" />
@@ -81,19 +79,20 @@ export default function AdminView() {
       </div>
 
       <PlanAndSeats practitionerCount={practitioners.length} />
+      </>)}
 
-      <FeeEditor doctors={doctors} pushToast={pushToast} />
+      {section === 'fees' && <FeeEditor doctors={doctors} pushToast={pushToast} />}
 
-      <PasswordRecovery practitioners={practitioners} logAudit={logAudit} />
+      {section === 'staff' && <PasswordRecovery practitioners={practitioners} logAudit={logAudit} />}
 
-      <DischargeSettlement
+      {section === 'billing' && <DischargeSettlement
         patients={pendingClearance}
         wardLedger={wardLedger}
         encounters={encounters}
         pharmacyOrders={pharmacyOrders}
         pushToast={pushToast}
         logAudit={logAudit}
-      />
+      />}
     </Shell>
   );
 }
@@ -145,8 +144,8 @@ function PlanAndSeats({ practitionerCount }: { practitionerCount: number }) {
   return (
     <Card className="mb-6" data-testid="plan-seats">
       <div className="flex items-start justify-between gap-3 flex-wrap mb-3">
-        <div className="font-mono text-[10px] tracking-[.14em] uppercase text-accent-ink">Plan &amp; User Seats</div>
-        <Pill tone={STATUS_TONE[usage.subscription_status]}>{usage.subscription_status.replace('_', ' ')}</Pill>
+        <div className="text-base font-bold text-ink">Plan &amp; User Seats</div>
+        <Pill tone={STATUS_TONE[usage.subscription_status]}>{subscriptionStatusLabel(usage.subscription_status)}</Pill>
       </div>
       <div className="flex items-baseline gap-2 flex-wrap">
         <span className="font-mono text-xl font-bold text-ink" data-testid="seats-used">{usage.seats_used} / {usage.seat_limit}</span>
@@ -207,8 +206,8 @@ function FeeEditor({
 
   return (
     <Card className="mb-6">
-      <div className="font-mono text-[10px] tracking-[.14em] uppercase text-accent-ink mb-3">
-        Doctor Base Fee Alteration
+      <div className="text-base font-bold text-ink mb-3">
+        Consultation fee per doctor
       </div>
       <div className="flex flex-col divide-y divide-line">
         {doctors.map((doc) => (
@@ -239,9 +238,8 @@ function FeeEditor({
         {doctors.length === 0 && <div className="text-sm text-ink-faint py-2">No doctors on record.</div>}
       </div>
       <p className="text-xs text-ink-faint mt-3 leading-relaxed">
-        Editing a fee here only changes what is charged for <span className="text-ink">future</span> consultations.
-        Past encounters snapshot their <code className="font-mono text-[11px]">consultation_fee</code> at
-        authorize-time and are never retroactively altered.
+        A new fee applies to <span className="text-ink">future</span> consultations only. Past visits keep the
+        fee that was charged at the time.
       </p>
     </Card>
   );
@@ -271,8 +269,8 @@ function PasswordRecovery({
 
   return (
     <Card className="mb-6">
-      <div className="font-mono text-[10px] tracking-[.14em] uppercase text-accent-ink mb-3">
-        Staff Password Recovery
+      <div className="text-base font-bold text-ink mb-3">
+        Staff and password resets
       </div>
       <div className="flex flex-col divide-y divide-line">
         {practitioners.map((staff) => (
@@ -303,10 +301,8 @@ function PasswordRecovery({
         {practitioners.length === 0 && <div className="text-sm text-ink-faint py-2">No staff on record.</div>}
       </div>
       <p className="text-xs text-ink-faint mt-3 leading-relaxed">
-        This client app cannot directly overwrite a login password (that requires Supabase Auth admin
-        privileges it does not hold). "Reset Password" instead issues a one-time recovery{' '}
-        <span className="text-ink">code</span> the staff member uses to re-authenticate and self-service their
-        real password — it is not a direct password overwrite.
+        Reset Password gives a one-time code. Share it with the staff member privately; they use it to sign in
+        and choose a new password.
       </p>
     </Card>
   );
@@ -366,8 +362,8 @@ function DischargeSettlement({
 
   return (
     <Card className="mb-6">
-      <div className="font-mono text-[10px] tracking-[.14em] uppercase text-danger mb-3">
-        Discharge Balance Settlement
+      <div className="text-base font-bold text-danger mb-3">
+        Patients waiting for discharge payment
       </div>
       {patients.length === 0 ? (
         <div className="text-sm text-ink-faint py-2">No patients awaiting discharge clearance.</div>
@@ -396,7 +392,7 @@ function DischargeSettlement({
                   <Pill tone="gate">Pending discharge clearance</Pill>
                 </div>
 
-                <div className="text-[10px] font-mono uppercase tracking-wider text-ink-faint mt-3 mb-1.5">
+                <div className="text-[13px] font-semibold text-ink-soft mt-3 mb-1.5">
                   Ward billing ledger
                 </div>
                 {lines.length === 0 ? (

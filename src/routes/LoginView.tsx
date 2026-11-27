@@ -2,11 +2,13 @@ import { useEffect, useState, type FormEvent } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth, routeForRole } from '../context/AuthContext';
 import { Panel, Btn, inputCls } from '../components/ui';
+import { NaadLogo } from '../components/Brand';
 import type { StaffRole } from '../types/db';
 
 const ROLE_OPTIONS: { value: StaffRole; label: string }[] = [
   { value: 'receptionist', label: 'Receptionist' },
   { value: 'surgeon', label: 'Doctor' },
+  { value: 'physio', label: 'Physiotherapist' },
   { value: 'pharmacist', label: 'Pharmacist' },
   { value: 'admin', label: 'Admin' },
 ];
@@ -31,7 +33,7 @@ export default function LoginView() {
     const { error: err } = await signIn(email.trim(), password, role);
     setSubmitting(false);
     if (err) { setError(err); return; }
-    navigate(routeForRole(role === 'physio' ? 'physio' : role));
+    navigate(routeForRole(role));
   }
 
   useEffect(() => {
@@ -48,25 +50,17 @@ export default function LoginView() {
   return (
     <div className="min-h-screen flex items-center justify-center p-6">
       <Panel className="max-w-[440px] w-full p-8 md:p-10">
-        <div className="flex items-center gap-3 mb-6">
-          <img src={`${import.meta.env.BASE_URL}favicon.svg`} alt="" className="w-10 h-10 shrink-0" />
-          <div>
-            <div className="font-extrabold text-2xl tracking-wide bg-gradient-to-r from-ink to-accent-ink bg-clip-text text-transparent leading-none">
-              NAAD
-            </div>
-            <div className="font-mono text-[10px] tracking-[.18em] uppercase text-ink-faint font-semibold mt-1">
-              Ambient AI Healthcare
-            </div>
-          </div>
+        <div className="mb-7">
+          <NaadLogo sub="Ambient AI for doctors" />
         </div>
-        <h1 className="text-2xl mb-2">Secure sign-in</h1>
-        <p className="text-ink-soft font-light leading-relaxed mb-6">
-          Sign in with your staff credentials. Your role provisions which workspace you land on and what you can see.
+        <h1 className="text-2xl mb-2">Staff sign-in</h1>
+        <p className="text-ink-soft leading-relaxed mb-6">
+          Choose your role and sign in. You'll go straight to your own workspace.
         </p>
 
         <form onSubmit={handleSubmit} data-testid="login-form">
           <label className="block mt-2.5">
-            <span className="block font-mono text-[9.5px] tracking-wider uppercase text-ink-faint mb-1.5">Role</span>
+            <span className="block text-[13px] font-semibold text-ink-soft mb-1.5">Role</span>
             <select
               data-testid="login-role"
               className={inputCls}
@@ -77,19 +71,19 @@ export default function LoginView() {
             </select>
           </label>
           <label className="block mt-2.5">
-            <span className="block font-mono text-[9.5px] tracking-wider uppercase text-ink-faint mb-1.5">Username / Email</span>
+            <span className="block text-[13px] font-semibold text-ink-soft mb-1.5">Email</span>
             <input
               data-testid="login-email"
               type="text"
               className={inputCls}
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              placeholder="you@digiyaan.demo"
+              placeholder="you@hospital.com"
               autoComplete="username"
             />
           </label>
           <label className="block mt-2.5">
-            <span className="block font-mono text-[9.5px] tracking-wider uppercase text-ink-faint mb-1.5">Password</span>
+            <span className="block text-[13px] font-semibold text-ink-soft mb-1.5">Password</span>
             <input
               data-testid="login-password"
               type="password"
