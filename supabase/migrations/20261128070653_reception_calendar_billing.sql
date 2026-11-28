@@ -11,7 +11,7 @@
 -- appointments: token number and check-in time, cancel reason, visit type,
 --   the original time when rescheduled, and who booked it.
 -- bills (new): one bill per visit or package, with line items, discount,
---   amount paid and payment method. Numbered per hospital ("R-20261128-001").
+--   amount paid and payment method. Numbered per hospital ("R-01001", "R-01002", ...).
 --
 -- Access: any staff member of the hospital can read its bills; only reception
 -- and the hospital admin can create or update them; a patient can read their

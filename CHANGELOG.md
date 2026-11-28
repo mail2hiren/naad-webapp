@@ -19,7 +19,7 @@ Phase 4 of the product gap audit: the front desk's full working day.
 - Finishing a consult (doctor) or saving a therapy session (physio) marks the visit "seen" for billing.
 - Today's queue shows token numbers, in check-in order.
 - Demo: a full Saturday for three doctors (seen, billed, checked in, no-show, cancelled, requested), Monday follow-ups, three more demo patients and three bills including a part-paid physio package.
-- Proposed migration `0011_reception_calendar_billing` (working hours and slot length, appointment token/check-in/cancel/visit type/reschedule fields, a `bills` table, and a policy letting a doctor or physio mark their own appointments seen), awaiting the owner's go.
+- Migration `20261128070653_reception_calendar_billing` (working hours and slot length, appointment token/check-in/cancel/visit type/reschedule fields, a `bills` table, and a policy letting a doctor or physio mark their own appointments seen), applied to the Naad database with the owner's go.
 - Tests: `tests/lib/schedule.test.ts` (slots, clashes, tokens, receipt numbers, totals), `e2e/reception-calendar.spec.ts` (7 flows), and the reception screens in the accessibility scan at phone and desktop width.
 
 ### Changed
