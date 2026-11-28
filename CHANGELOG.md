@@ -5,6 +5,11 @@ versions follow [SemVer](https://semver.org/) and each release is tagged `vX.Y.Z
 
 ## [Unreleased]
 
+## [0.7.1] - 2026-11-28
+
+### Added
+- Proposed data load `0016_seed_pharmacy_demo` for the demo hospital (org1): 8 more medicines so every prescribed demo medicine is stocked, 15 batches for all 12 (some expiring soon, one expired), and 9 vital-sign readings for the ward patients. Awaiting the owner's go.
+
 ## [0.7.0] - 2026-11-28
 
 Phase 5, part 2 of the product gap audit: the pharmacist's and the ward's working day.
