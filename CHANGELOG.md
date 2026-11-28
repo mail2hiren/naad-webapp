@@ -17,7 +17,7 @@ Phase 5, part 2 of the product gap audit: the pharmacist's and the ward's workin
 - **Vital signs:** record BP, pulse, temperature, SpO2, breathing rate and pain with range checks; readings that need attention (high or low BP, fast or slow pulse, fever, low oxygen, fast breathing, severe pain) are flagged on the chart and the ward card; trend charts for pulse, temperature, BP and SpO2; every reading kept.
 - Ward summary: free beds per ward and patients whose latest vitals need attention.
 - Demo: stock for every prescribed demo medicine in batches (some expiring, one expired), and vitals for the three ward patients (Suresh with a rising fever).
-- Proposed migration `0015_pharmacy_ward` (`stock_batches`, `vitals`, bill source and pharmacy order, pharmacist billing, doctors and physios may change only bed occupancy), awaiting the owner's go.
+- Migration `20261128084529_pharmacy_ward` (`stock_batches`, `vitals`, bill source and pharmacy order, pharmacist billing, doctors and physios may change only bed occupancy), applied to the Naad database with the owner's go.
 - Tests: `e2e/pharmacy-ward-phase5b.spec.ts` (4 flows), pharmacy and ward screens in the accessibility scan at phone and desktop width, unit tests for dosing, expiry, earliest-expiry picking and vital-sign flags.
 
 ### Changed
