@@ -5,6 +5,25 @@ versions follow [SemVer](https://semver.org/) and each release is tagged `vX.Y.Z
 
 ## [Unreleased]
 
+## [0.8.0] - 2026-11-28
+
+Phase 6 of the product gap audit: the patient app, built for a phone.
+
+### Added
+- **Patient app** (`/patient`) with a tab bar along the bottom on phones and along the top on larger screens: Home, Visits, Medicines, Bills, Reports.
+- **Home:** the next appointment (requested, confirmed, or checked in with token), what needs attention (medicines ready to collect, money to pay, a test result the doctor noted), home exercises and pain progress, care journey, and recent visits.
+- **Booking:** pick a doctor and a day and choose from that doctor's real free times (only working hours, nothing already taken); the request lands on the reception calendar to confirm. One tap "Request a follow-up" asks for the first free time with the patient's doctor. Patients can cancel their own request or booking.
+- **Medicines:** each prescription with how to take it and where it is at the pharmacy (sent, being prepared, ready to collect, collected).
+- **Bills:** every bill with what is still to pay, and a receipt to print or save as PDF.
+- **Reports:** test results once the doctor has seen them (flagged ones marked), latest vital signs for ward patients, and the documents the hospital holds.
+- A signed-in patient stays signed in when the page is reloaded or the app reopened.
+- Demo: test results and documents for the patients who can sign in (Ramesh, Kavita, Deepak).
+- Proposed migration `0017_patient_app` (`doctor_busy_times()` returning only busy times, and a trigger so a patient can only request or cancel their own appointments), awaiting the owner's go.
+- Tests: `e2e/patient-app-phase6.spec.ts` (4 flows), every patient tab in the accessibility scan at phone and desktop width.
+
+### Changed
+- "Request a follow-up" now asks for a real free time (it used to send a request with no date, which the reception calendar could not show).
+
 ## [0.7.1] - 2026-11-28
 
 ### Added

@@ -3,6 +3,7 @@ import * as physioSeed from './physioSeed';
 import * as receptionSeed from './receptionSeed';
 import * as adminSeed from './adminSeed';
 import * as pharmacySeed from './pharmacySeed';
+import * as patientSeed from './patientSeed';
 import { handle as platformAdminHandle } from '../../supabase/functions/platform-admin/handler';
 
 /**
@@ -82,7 +83,8 @@ const TABLES: Record<string, Row[]> = {
   inventory: [...seed.inventory, ...pharmacySeed.inventory] as unknown as Row[],
   stock_batches: pharmacySeed.batches as unknown as Row[],
   vitals: pharmacySeed.vitals as unknown as Row[],
-  documents: seed.documents as unknown as Row[],
+  lab_orders: patientSeed.labOrders as unknown as Row[],
+  documents: [...seed.documents, ...patientSeed.documents] as unknown as Row[],
   notifications: seed.notifications as unknown as Row[],
   audit_events: seed.auditEvents as unknown as Row[],
 };
@@ -402,7 +404,19 @@ export function createMockSupabaseClient() {
     removeChannel: (ch: MockChannel) => ch.unsubscribe(),
     auth,
     // Mirrors the org_seat_usage() SQL function (supabase/migrations).
-    rpc: async (fn: string) => {
+    rpc: async (fn: string, params?: Record<string, unknown>) => {
+      if (fn === 'doctor_busy_times') {
+        // Like the real function: times only, the caller's hospital only.
+        const { data: sess } = await auth.getSession();
+        const uid = sess.session?.user.id;
+        const org = TABLES.practitioners.find((p) => p.auth_user_id === uid)?.org_id ?? TABLES.patients.find((p) => p.auth_user_id === uid)?.org_id;
+        const day = Date.parse(`${String(params?.p_day)}T00:00:00Z`);
+        const rows = TABLES.appointments.filter((a) => a.org_id === org && a.practitioner_id === params?.p_practitioner
+          && ['requested', 'scheduled', 'checked_in', 'completed'].includes(a.status) && a.start_time
+          && Date.parse(a.start_time) >= day - DAY_MS && Date.parse(a.start_time) < day + 2 * DAY_MS)
+          .map((a) => ({ start_time: a.start_time, duration_minutes: a.duration_minutes }));
+        return { data: rows, error: null };
+      }
       if (fn === 'audit_chain_check') {
         // The demo has no hashes to check; report every entry as checked.
         const { data: sess } = await auth.getSession();

@@ -416,6 +416,25 @@ export interface VitalsRow {
   recorded_by: string | null;
 }
 
+export interface LabOrderRow {
+  id: string;
+  org_id: string;
+  patient_id: string;
+  encounter_id: string | null;
+  ordered_by: string | null;
+  test_name: string;
+  test_type: string;
+  urgency: string;
+  status: string;
+  notes: string | null;
+  result_document_id: string | null;
+  result_summary: string | null;
+  flagged: boolean;
+  ordered_at: string;
+  reviewed_by: string | null;
+  reviewed_at: string | null;
+}
+
 export interface AuditEventRow {
   id: string;
   org_id: string;
