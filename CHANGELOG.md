@@ -17,7 +17,7 @@ Phase 5, part 1 of the product gap audit: the hospital admin's working day.
 - **Reports** for today, the last 7 days, this month or chosen dates: visits by doctor (booked, seen, no-show rate, cancelled, billed), money (billed, discounts, collected by method), top charges, who owes money, beds and pharmacy. Visits and bills download as CSV.
 - **Audit log:** every recorded action, newest first, searchable by text, role and dates, downloadable as CSV, with a check that the log's hash chain is unbroken.
 - Demo: price list of 14 charges, 17 beds in four wards with the admitted demo patients in them, and Dr. Namrata on her own hours (10 am to 2 pm).
-- Proposed migration `0013_admin_rates_beds_audit` (`service_rates` and `beds` tables, `audit_chain_check()`), awaiting the owner's go.
+- Migration `20261128075340_admin_rates_beds_audit` (`service_rates` and `beds` tables, `audit_chain_check()`), applied to the Naad database with the owner's go.
 - Tests: `e2e/admin-phase5.spec.ts` (6 flows), the admin screens in the accessibility scan at phone and desktop width, unit tests for working-hours checks and CSV.
 
 ### Changed
