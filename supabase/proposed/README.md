@@ -25,7 +25,7 @@ Naad project (`qerqzzqmpeqeknbnvyec`) → verified live → the file is moved in
 | 0017 | Patient app: doctor_busy_times(), patients may only request or cancel appointments | Applied 2026-11-28 as `20261128091221` |
 | 0018 | Demo test results and documents for the patient app, org1 (data only) | Applied 2026-11-28 as `20261128092837` |
 | 0019 | Calendar: "with doctor" step and times, overbooking, repeat courses, blocked time, waitlist, patient's live queue | Applied 2026-11-28 as `20261128171547` |
-| 0020 | Front desk modules: follow-ups, contact log, refunds and cash closing, admissions by reception, insurance, enquiries, packages | Proposed, awaiting go |
+| 0020 | Front desk modules: follow-ups, contact log, refunds and cash closing, admissions by reception, insurance, enquiries, packages | Applied 2026-11-28 as `20261128182751` |
 | 0021 | Demo data for the front-desk modules, org1 (data only) | Proposed, awaiting go (after 0020) |
 
 They are kept outside `supabase/migrations/` on purpose, so no tool

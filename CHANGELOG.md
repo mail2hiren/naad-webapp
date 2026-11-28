@@ -17,7 +17,7 @@ The whole front desk of a clinic or nursing home, in the receptionist's sidebar.
 - **Insurance:** each pre-authorisation and claim with its stage, the next step, documents still missing, amounts asked, approved and paid, and how long it has sat (chase after 2 days); insured admissions with no pre-authorisation yet; the patient's insurer and policy saved for next time.
 - **Packages:** treatment packages (e.g. 8 physio sessions) on offer, selling one with its bill, sessions used, booked and left, expiry, and **Book next session** that counts against the package.
 - **Day-end cash:** money in by cash, UPI, card and insurance (yours or everyone's), refunds, an opening float, a **note-by-note cash count**, the difference (a note is required to close with one), a printed closing, and past closings. Nobody can change a closing afterwards. **Refunds** on any paid bill, with a reason.
-- Migration `0020_front_desk_modules` (proposed): follow_ups, patient_contacts, enquiries, cash_closings, admissions, insurance_claims, treatment_packages, patient_packages; bills refunds; patients insurance details; appointments.patient_package_id; reception may change bed occupancy and add bed-day charges.
+- Migration `20261128182751_front_desk_modules` (0020), applied to the Naad database with the owner's go: follow_ups, patient_contacts, enquiries, cash_closings, admissions, insurance_claims, treatment_packages, patient_packages; bills refunds; patients insurance details; appointments.patient_package_id; reception may change bed occupancy and add bed-day charges.
 
 ## [0.10.0] - 2026-11-28
 
