@@ -26,7 +26,7 @@ Naad project (`qerqzzqmpeqeknbnvyec`) → verified live → the file is moved in
 | 0018 | Demo test results and documents for the patient app, org1 (data only) | Applied 2026-11-28 as `20261128092837` |
 | 0019 | Calendar: "with doctor" step and times, overbooking, repeat courses, blocked time, waitlist, patient's live queue | Applied 2026-11-28 as `20261128171547` |
 | 0020 | Front desk modules: follow-ups, contact log, refunds and cash closing, admissions by reception, insurance, enquiries, packages | Applied 2026-11-28 as `20261128182751` |
-| 0021 | Demo data for the front-desk modules, org1 (data only) | Proposed, awaiting go (after 0020) |
+| 0021 | Demo data for the front-desk modules, org1 (data only) | Applied 2026-11-28 as `20261128183029` |
 
 They are kept outside `supabase/migrations/` on purpose, so no tool
 (`supabase db push`, a Supabase GitHub integration) can apply them by accident.
