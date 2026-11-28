@@ -8,7 +8,7 @@ versions follow [SemVer](https://semver.org/) and each release is tagged `vX.Y.Z
 ## [0.4.1] - 2026-11-28
 
 ### Added
-- Proposed data load `0010_seed_physio_demo` for the demo hospital (org1): 30 library exercises, 5 therapy plans and 15 session records, so the live physio screens show a working caseload. Awaiting the owner's go.
+- Data load `20261128064102_seed_physio_demo` for the demo hospital (org1): 30 library exercises, 5 therapy plans and 15 session records, so the live physio screens show a working caseload. Applied to the Naad database with the owner's go.
 
 ## [0.4.0] - 2026-11-28
 
