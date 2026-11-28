@@ -79,7 +79,16 @@ test('a patient request lands on the reception calendar', async ({ page }) => {
   await page.getByTestId('cal-date').fill('2026-08-31');
   const card = page.getByTestId('doctor-column').filter({ hasText: 'Dr. Jayani Bhatt' }).getByTestId('appt-card').filter({ hasText: 'Kavita Deshmukh' });
   await expect(card).toHaveAttribute('data-status', 'requested');
-  await expect(card).toContainText('9:30 am');
+  await expect(card).toContainText('9:30');
+});
+
+test('a checked-in patient sees their token and how many are ahead, live', async ({ page }) => {
+  await patientLogin(page, 'kavita@digiyaan.demo');
+  const live = page.getByTestId('live-queue');
+  await expect(live).toContainText('Dr. Jayani Bhatt');
+  await expect(live).toContainText('2');
+  await expect(live.getByTestId('live-queue-ahead')).toContainText('1 patient ahead of you');
+  await expect(live.getByTestId('live-queue-ahead')).toContainText('About 30 min');
 });
 
 test('bills show what is owed, with a receipt; a signed-in patient stays signed in after a reload', async ({ page }) => {

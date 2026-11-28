@@ -9,7 +9,9 @@ import { useSection } from '../lib/nav';
 import { supabase, scriptedAmbient } from '../lib/supabaseClient';
 import type { AppointmentRow, BillRow, DocumentLabel, PatientRow, TriageVitals } from '../types/db';
 import { useBills } from '../hooks/useBills';
-import { BookingModal, CalendarSection, type BookingInit } from '../components/reception/Calendar';
+import { CalendarPage } from '../components/calendar/CalendarPage';
+import { QuickBook as BookingModal, type BookingInit } from '../components/calendar/QuickBook';
+import { TokenScreen } from '../components/calendar/TokenScreen';
 import { BillModal, BillingSection, Receipt } from '../components/reception/Billing';
 import { PatientsSection } from '../components/reception/Patients';
 import { clinicNow, clinicToday, dayKey, nextToken, onDay } from '../lib/schedule';
@@ -43,7 +45,7 @@ function classifyFileName(name: string): DocumentLabel {
 
 
 export default function ReceptionView() {
-  const rawSection = useSection<'queue' | 'calendar' | 'appointments' | 'patients' | 'walk-in' | 'billing'>('queue');
+  const rawSection = useSection<'queue' | 'calendar' | 'appointments' | 'patients' | 'walk-in' | 'billing' | 'display'>('queue');
   const section = rawSection === 'appointments' ? 'calendar' : rawSection;
   const { practitioner } = useAuth();
   const { orgId, patients, practitioners, appointments, pushToast, logAudit } = useClinic();
@@ -526,8 +528,10 @@ export default function ReceptionView() {
   const showPauseGate = isAmbientRecording || selectedPatientId != null;
   const pauseTargetPatient = selectedPatientId ? patients.find((p) => p.id === selectedPatientId) ?? null : null;
 
+  if (section === 'display') return <TokenScreen />;
+
   return (
-    <Shell title={{ queue: "Today's queue", calendar: 'Calendar', patients: 'Patients', 'walk-in': 'Walk-in registration', billing: 'Billing' }[section]}>
+    <Shell wide={section === 'calendar'} title={{ queue: "Today's queue", calendar: 'Calendar', patients: 'Patients', 'walk-in': 'Walk-in registration', billing: 'Billing' }[section]}>
       <div className="mb-6 flex justify-end">
         <button
           type="button"
@@ -541,7 +545,7 @@ export default function ReceptionView() {
       </div>
 
       {section === 'calendar' && (
-        <CalendarSection bills={bills} onBill={(a) => setBillFor({ appointment: a, patient: null })} />
+        <CalendarPage bills={bills} onBill={(a) => setBillFor({ appointment: a, patient: null })} />
       )}
       {section === 'patients' && (
         <PatientsSection bills={bills}

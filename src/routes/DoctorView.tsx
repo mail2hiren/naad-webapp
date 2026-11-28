@@ -3,7 +3,8 @@ import { queueStatusLabel } from '../lib/labels';
 import { useAuth } from '../context/AuthContext';
 import { useClinic } from '../context/ClinicContext';
 import { supabase, scriptedAmbient } from '../lib/supabaseClient';
-import { markSeen } from '../lib/frontDesk';
+import { markSeen, startConsult } from '../lib/frontDesk';
+import { clinicNow, clinicToday } from '../lib/schedule';
 import { demoExtractionFor } from '../mock/demoExtraction';
 import { useRealAmbientCapture, type ExtractResult } from '../hooks/useRealAmbientCapture';
 import Shell from '../components/Shell';
@@ -433,7 +434,7 @@ export default function DoctorView() {
         status: 'completed', consultation_fee: practitioner.consult_fee ?? 0, payment_status: 'unpaid',
       }).eq('id', encounter.id);
       // The visit is now "seen": reception's billing desk picks it up.
-      await markSeen(appointments, activePatientId, practitioner.id);
+      await markSeen(appointments, activePatientId, practitioner.id, clinicNow());
       // Ward patients don't route through pharmacy pickup -- ward/reception
       // staff handle their medication, so their queue_status stays 'admitted'.
       if (!isWardPatient) {
@@ -529,7 +530,11 @@ export default function DoctorView() {
                     </div>
                     <div className="text-ink-faint text-xs mt-0.5 font-mono">{queueStatusLabel(p.queue_status)}</div>
                   </div>
-                  <Btn variant="primary" data-testid="open-chart" onClick={() => setActivePatientId(p.id)}>
+                  <Btn variant="primary" data-testid="open-chart" onClick={() => {
+                    setActivePatientId(p.id);
+                    // The front desk sees the patient move to "With doctor".
+                    if (practitioner) void startConsult(appointments, p.id, practitioner.id, clinicToday(), clinicNow());
+                  }}>
                     Open Chart
                   </Btn>
                 </div>

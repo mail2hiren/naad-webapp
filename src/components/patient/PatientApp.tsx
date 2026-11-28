@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { Btn, Card, Field, Modal, Pill, SectionHead, inputCls } from '../ui';
 import { LineChart } from '../LineChart';
@@ -100,7 +100,7 @@ export function PatientApp({ patient, onSignOut }: { patient: PatientRow; onSign
 
 function upcomingOf(data: PatientData, now: Date): AppointmentRow[] {
   return data.appointments
-    .filter((a) => ['requested', 'scheduled', 'checked_in'].includes(a.status) && (apptStart(a)?.getTime() ?? 0) > now.getTime() - 4 * 3600_000)
+    .filter((a) => ['requested', 'scheduled', 'checked_in', 'in_consultation'].includes(a.status) && (apptStart(a)?.getTime() ?? 0) > now.getTime() - 4 * 3600_000)
     .sort((a, b) => (apptStart(a)?.getTime() ?? 0) - (apptStart(b)?.getTime() ?? 0));
 }
 
@@ -115,8 +115,53 @@ function ApptLine({ a, doctors }: { a: AppointmentRow; doctors: PractitionerRow[
         {a.status === 'requested' && <span className="text-gate">Requested. The front desk will confirm.</span>}
         {a.status === 'scheduled' && <span className="text-ok">Confirmed.</span>}
         {a.status === 'checked_in' && <span className="text-ok font-semibold">You are checked in{a.token_no ? ` · Token ${a.token_no}` : ''}.</span>}
+        {a.status === 'in_consultation' && <span className="text-ok font-semibold">You are with the doctor now.</span>}
       </span>
     </span>
+  );
+}
+
+interface QueueRow { appointment_id: string; practitioner_id: string | null; start_time: string; status: string; token_no: number | null; ahead: number; est_wait_minutes: number }
+
+/** Today's visit, live: token, how many are ahead, and a wait estimate (from my_queue_status, counts only). */
+function LiveQueue({ appointments, doctors }: { appointments: AppointmentRow[]; doctors: PractitionerRow[] }) {
+  const [rows, setRows] = useState<QueueRow[]>([]);
+  const key = appointments.map((a) => `${a.id}:${a.status}`).join(',');
+  useEffect(() => {
+    let live = true;
+    const load = () => { void supabase.rpc('my_queue_status').then(({ data }) => { if (live) setRows((data as QueueRow[] | null) ?? []); }); };
+    load();
+    const t = setInterval(load, 30_000);
+    return () => { live = false; clearInterval(t); };
+  }, [key]);
+  if (!rows.length) return null;
+  return (
+    <>
+      {rows.map((r) => {
+        const doc = doctors.find((d) => d.id === r.practitioner_id);
+        return (
+          <Card key={r.appointment_id} className="mb-4 border-2 border-accent" data-testid="live-queue">
+            <SectionHead eyebrow="Today, live" title={doc ? `Your visit with ${doc.name}` : 'Your visit today'} />
+            {r.status === 'in_consultation' && <p className="text-lg font-semibold text-ok">It is your turn. You are with the doctor.</p>}
+            {r.status === 'checked_in' && (
+              <div className="flex items-center gap-5">
+                {r.token_no != null && <div className="text-center"><div className="font-mono text-5xl font-bold text-accent-ink">{r.token_no}</div><div className="text-sm text-ink-soft">Your token</div></div>}
+                <p className="text-lg text-ink" data-testid="live-queue-ahead">
+                  {r.ahead === 0 ? <span className="font-semibold text-ok">You are next.</span> : <><span className="font-semibold">{r.ahead} {r.ahead === 1 ? 'patient' : 'patients'}</span> ahead of you</>}
+                  {r.ahead > 0 && <span className="block text-base text-ink-soft">About {r.est_wait_minutes} min. Please stay near the waiting area.</span>}
+                </p>
+              </div>
+            )}
+            {r.status === 'scheduled' && (
+              <p className="text-base text-ink" data-testid="live-queue-ahead">
+                Booked for {timeLabel(new Date(r.start_time))}. Show this screen at the front desk when you arrive.
+                {r.ahead > 0 && <span className="block text-ink-soft">{r.ahead} {r.ahead === 1 ? 'patient is' : 'patients are'} waiting now.</span>}
+              </p>
+            )}
+          </Card>
+        );
+      })}
+    </>
   );
 }
 
@@ -146,6 +191,7 @@ function Home({ patient, data, timeline, onBook, onGo }: { patient: PatientRow; 
 
   return (
     <>
+      <LiveQueue appointments={data.appointments} doctors={data.doctors} />
       <Card className="mb-4" data-testid="next-visit">
         <SectionHead eyebrow="Next visit" title={next ? 'Your next appointment' : 'No appointment booked'} />
         {next ? <ApptLine a={next} doctors={data.doctors} /> : <p className="text-ink-soft">Book a visit when you need one.</p>}

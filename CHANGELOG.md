@@ -5,6 +5,30 @@ versions follow [SemVer](https://semver.org/) and each release is tagged `vX.Y.Z
 
 ## [Unreleased]
 
+## [0.9.0] - 2026-11-28
+
+The reception calendar rebuilt as a complete product (benchmark: Practo Ray), and beyond it. Spec: `docs/specs/calendar.md`.
+
+### Added
+- **Left panel:** a month calendar to jump to any day (days with bookings dotted), every doctor with a colour, tick to show, "Only" for one, today's count, who is waiting and **who is running late**; filters by patient step and visit type that double as the colour legend.
+- **Day, week and month views.** Day: a time grid with a column per doctor, working hours light and breaks shaded, blocked time hatched with its reason, a red now-line, how full each doctor is, appointments as tall as their length and coloured by step, overbooked visits side by side. Week: seven days for the ticked doctors. Month: each day's load, blocks and first patients; click a day to open it.
+- **Patient flow with times:** Booked → Waiting (check-in, token) → **With doctor** (called in) → **Done** (checked out) → Billed, plus Requested, No-show, Cancelled. Waiting time runs live and turns red after 20 minutes. A flow panel shows who is due, waiting (with the estimated wait from the doctor's own pace today), with the doctor and done-but-not-billed, each one tap from the next step. The doctor opening a chart moves the patient to With doctor; signing the note checks them out.
+- **Appointment panel:** the patient (age, sex, mobile, hospital number, allergies, last visit, money owed, no-show history) with **Open patient record** (and back to the calendar), the visit, its timeline with times, the next step as one big button, reschedule to any doctor and free time, cancel with quick reasons, no-show, undo a mis-tap, bill, book a follow-up, copy a reminder message.
+- **Booking:** free times as buttons (morning, evening), **next available across doctors** when a day is full, visit type sets the length (editable), **overbooking** on purpose, **repeat courses** (e.g. physio every 2 days × 8, Sundays skipped, busy dates shown before booking), a warning for patients who miss visits.
+- **Drag an appointment** to another time or doctor; clashes, blocked time and hours are checked first.
+- **Block time:** leave, OT lists, meetings, hospital holidays, for one doctor or everyone; existing bookings inside are flagged.
+- **Waitlist:** patients who want an earlier time; when a booking is cancelled the freed time is offered to the right patient in one tap.
+- **Find a booking** by name, mobile or hospital number; **day sheet** to print each doctor's list, with tomorrow's reminders ready to copy for SMS/WhatsApp.
+- **Waiting-room token screen** (`/reception?section=display`) for a TV: token now being seen and the next ones per doctor, with a chime.
+- **Patient app, live queue:** on the day, a patient sees their token, how many are ahead and about how long (RPC `my_queue_status`, counts only).
+- **More room for the calendar:** hide the left panel, the patient flow, or both ("Full calendar"); with the left panel hidden, doctors are picked from colour chips above the grid. The calendar now uses the full screen width.
+- **App menu shrinks to icons** (every staff page; remembered on the device) to give pages more room.
+- Keyboard: T today, ← → move, D/W/M views, N new, / search.
+- Migration `20261128171547_calendar_flow` (0019), applied to the Naad database with the owner's go: the with-doctor step and times, overbooked, repeat course id, `calendar_blocks`, `appointment_waitlist`, `my_queue_status()`.
+
+### Changed
+- Status names on screen: "Checked in" is now **Waiting**, "Seen" is **Done**.
+
 ## [0.8.3] - 2026-11-28
 
 ### Added

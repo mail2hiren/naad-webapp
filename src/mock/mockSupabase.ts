@@ -4,6 +4,7 @@ import * as receptionSeed from './receptionSeed';
 import * as adminSeed from './adminSeed';
 import * as pharmacySeed from './pharmacySeed';
 import * as patientSeed from './patientSeed';
+import { clinicNow as clinicNowMock } from '../lib/schedule';
 import { handle as platformAdminHandle } from '../../supabase/functions/platform-admin/handler';
 
 /**
@@ -73,6 +74,8 @@ const TABLES: Record<string, Row[]> = {
   patients: [...seed.patients, ...receptionSeed.patients] as unknown as Row[],
   appointments: [...seed.appointments, ...receptionSeed.appointments] as unknown as Row[],
   bills: receptionSeed.bills as unknown as Row[],
+  calendar_blocks: receptionSeed.blocks as unknown as Row[],
+  appointment_waitlist: receptionSeed.waitlist as unknown as Row[],
   service_rates: adminSeed.rates as unknown as Row[],
   beds: adminSeed.beds as unknown as Row[],
   encounters: seed.encounters as unknown as Row[],
@@ -412,9 +415,28 @@ export function createMockSupabaseClient() {
         const org = TABLES.practitioners.find((p) => p.auth_user_id === uid)?.org_id ?? TABLES.patients.find((p) => p.auth_user_id === uid)?.org_id;
         const day = Date.parse(`${String(params?.p_day)}T00:00:00Z`);
         const rows = TABLES.appointments.filter((a) => a.org_id === org && a.practitioner_id === params?.p_practitioner
-          && ['requested', 'scheduled', 'checked_in', 'completed'].includes(a.status) && a.start_time
+          && ['requested', 'scheduled', 'checked_in', 'in_consultation', 'completed'].includes(a.status) && a.start_time
           && Date.parse(a.start_time) >= day - DAY_MS && Date.parse(a.start_time) < day + 2 * DAY_MS)
           .map((a) => ({ start_time: a.start_time, duration_minutes: a.duration_minutes }));
+        return { data: rows, error: null };
+      }
+      if (fn === 'my_queue_status') {
+        // Like the real function: the signed-in patient's visits today, with counts only.
+        const { data: sess } = await auth.getSession();
+        const me = TABLES.patients.find((p) => p.auth_user_id === sess.session?.user.id);
+        if (!me) return { data: [], error: null };
+        const today = localDay(clinicNowMock());
+        const sameDay = (a: Row, b: Row) => localDay(new Date(a.start_time)) === localDay(new Date(b.start_time));
+        const rows = TABLES.appointments.filter((a) => a.patient_id === me.id && ['scheduled', 'checked_in', 'in_consultation'].includes(a.status)
+          && a.start_time && localDay(new Date(a.start_time)) === today)
+          .map((m) => {
+            const ahead = m.status === 'in_consultation' ? 0 : TABLES.appointments.filter((b) => b.org_id === m.org_id && b.practitioner_id === m.practitioner_id
+              && b.id !== m.id && b.start_time && sameDay(b, m)
+              && (b.status === 'in_consultation' || (b.status === 'checked_in' && (m.status === 'scheduled' || b.checked_in_at < m.checked_in_at)))).length;
+            const doc = TABLES.practitioners.find((p) => p.id === m.practitioner_id);
+            const slot = doc?.slot_minutes ?? (doc?.role === 'physio' ? 30 : 15);
+            return { appointment_id: m.id, practitioner_id: m.practitioner_id, start_time: m.start_time, status: m.status, token_no: m.token_no ?? null, ahead, est_wait_minutes: ahead * slot };
+          });
         return { data: rows, error: null };
       }
       if (fn === 'audit_chain_check') {

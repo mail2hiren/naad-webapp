@@ -93,7 +93,7 @@ export interface PatientRow {
   triage: TriageVitals;
 }
 
-export type AppointmentStatus = 'requested' | 'scheduled' | 'checked_in' | 'completed' | 'cancelled' | 'no_show';
+export type AppointmentStatus = 'requested' | 'scheduled' | 'checked_in' | 'in_consultation' | 'completed' | 'cancelled' | 'no_show';
 
 export interface AppointmentRow {
   id: string;
@@ -113,6 +113,45 @@ export interface AppointmentRow {
   visit_type?: VisitType;
   rescheduled_from?: string | null;
   booked_by?: string | null;
+  /** When the doctor called the patient in (status in_consultation). */
+  called_in_at?: string | null;
+  /** When the visit ended (checked out). */
+  completed_at?: string | null;
+  /** Booked on purpose over another appointment. */
+  overbooked?: boolean;
+  /** The visits of one repeat course share this id. */
+  series_id?: string | null;
+}
+
+export type BlockKind = 'leave' | 'surgery' | 'meeting' | 'holiday' | 'other';
+
+/** Time that cannot be booked: one doctor's, or the whole hospital's when practitioner_id is null. */
+export interface CalendarBlockRow {
+  id: string;
+  org_id: string;
+  practitioner_id: string | null;
+  starts_at: string;
+  ends_at: string;
+  kind: BlockKind;
+  reason: string | null;
+  created_by: string | null;
+  created_at?: string;
+}
+
+export interface WaitlistRow {
+  id: string;
+  org_id: string;
+  patient_id: string;
+  practitioner_id: string | null;
+  from_day: string;
+  to_day: string;
+  part_of_day: 'any' | 'morning' | 'evening';
+  visit_type: VisitType;
+  note: string | null;
+  status: 'waiting' | 'booked' | 'removed';
+  appointment_id: string | null;
+  created_by: string | null;
+  created_at?: string;
 }
 
 export type VisitType = 'consultation' | 'follow_up' | 'therapy' | 'procedure';

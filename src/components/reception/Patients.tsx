@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { Btn, Card, Field, Modal, Pill, inputCls } from '../ui';
 import { useClinic } from '../../context/ClinicContext';
 import { PatientLine, PatientPicker } from './PatientPicker';
@@ -12,7 +13,13 @@ export function PatientsSection({
 }: { bills: BillRow[]; onBook: (p: PatientRow) => void; onBill: (p: PatientRow) => void; onReceipt: (b: BillRow) => void }) {
   const { patients, appointments, practitioners } = useClinic();
   const [q, setQ] = useState('');
-  const [openId, setOpenId] = useState<string | null>(null);
+  const [params, setParams] = useSearchParams();
+  // The calendar opens a patient's record straight from a booking (?patient=).
+  const [openId, setOpenIdRaw] = useState<string | null>(params.get('patient'));
+  const setOpenId = (id: string | null) => {
+    setOpenIdRaw(id);
+    if (!id && params.get('patient')) { const n = new URLSearchParams(params); n.delete('patient'); n.delete('from'); setParams(n, { replace: true }); }
+  };
   const [adding, setAdding] = useState(false);
   const list = useMemo(() => (q.trim() ? searchPatients(patients, q) : [...patients].sort((a, b) => a.name.localeCompare(b.name)).slice(0, 12)), [patients, q]);
   const open = openId ? patients.find((p) => p.id === openId) ?? null : null;
@@ -102,7 +109,10 @@ export function PatientsSection({
                 </>
               );
             })()}
-            <div className="mt-4"><Btn variant="ghost" onClick={() => setOpenId(null)}>Close</Btn></div>
+            <div className="mt-4 flex gap-2">
+              {params.get('from') === 'calendar' && <Btn variant="default" data-testid="back-to-calendar" onClick={() => setParams({ section: 'calendar' })}>Back to calendar</Btn>}
+              <Btn variant="ghost" onClick={() => setOpenId(null)}>Close</Btn>
+            </div>
           </div>
         </Modal>
       )}

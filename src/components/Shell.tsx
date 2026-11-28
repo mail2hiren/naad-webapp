@@ -31,7 +31,7 @@ function Icon({ name }: { name: IconName }) {
 /** Shared page chrome for every staff route: a left sidebar with the role's
  * pages, the hospital name, the signed-in person, theme and sign-out. On a
  * phone the sidebar becomes a slide-in menu. */
-export default function Shell({ title, children }: { title: string; children: ReactNode }) {
+export default function Shell({ title, children, wide = false }: { title: string; children: ReactNode; wide?: boolean }) {
   const { practitioner, signOut } = useAuth();
   const navigate = useNavigate();
   const { pathname, search } = useLocation();
@@ -39,6 +39,9 @@ export default function Shell({ title, children }: { title: string; children: Re
   const [menuOpen, setMenuOpen] = useState(false);
   const [theme, setThemeState] = useState<Theme>(getTheme);
   const [hospital, setHospital] = useState<string | null>(null);
+  // The menu can shrink to icons to give the page more room (remembered on this device).
+  const [slim, setSlimRaw] = useState(() => { try { return localStorage.getItem('naad.nav.slim') === '1'; } catch { return false; } });
+  const setSlim = (v: boolean) => { setSlimRaw(v); try { localStorage.setItem('naad.nav.slim', v ? '1' : '0'); } catch { /* private mode */ } };
   const items = practitioner ? ROLE_NAV[practitioner.role] : [];
   const currentSection = new URLSearchParams(search).get('section');
 
@@ -78,12 +81,17 @@ export default function Shell({ title, children }: { title: string; children: Re
     navigate('/login', { replace: true });
   }
 
-  const sidebar = (
+  const renderSidebar = (compact: boolean) => (
     <div className="flex flex-col h-full">
-      <div className="px-5 pt-5 pb-4 border-b border-white/10">
-        <NaadLogo tone="light" sub={hospital ?? undefined} />
+      <div className={`${compact ? 'px-2 justify-center' : 'px-5 justify-between'} pt-5 pb-4 border-b border-white/10 flex items-start gap-2`}>
+        {!compact && <NaadLogo tone="light" sub={hospital ?? undefined} />}
+        <button type="button" data-testid="nav-collapse" onClick={() => setSlim(!compact)}
+          aria-label={compact ? 'Expand the menu' : 'Shrink the menu to icons'} title={compact ? 'Expand the menu' : 'Shrink the menu'}
+          className="hidden md:inline-flex shrink-0 items-center justify-center min-h-11 min-w-11 rounded-lg text-sidebar-faint hover:text-sidebar-ink hover:bg-white/5">
+          {compact ? '»' : '«'}
+        </button>
       </div>
-      <nav aria-label="Main" className="flex-1 overflow-y-auto px-3 py-4 flex flex-col gap-1" data-testid="workspace-nav">
+      <nav aria-label="Main" className={`flex-1 overflow-y-auto ${compact ? 'px-2' : 'px-3'} py-4 flex flex-col gap-1`} data-testid="workspace-nav">
         {items.map((item, i) => {
           const active = isActive(item, i);
           const href = item.section ? `${item.to}?section=${item.section}` : item.to;
@@ -95,31 +103,33 @@ export default function Shell({ title, children }: { title: string; children: Re
               data-testid={testId}
               aria-current={active ? 'page' : undefined}
               onClick={() => setMenuOpen(false)}
-              className={`flex items-center gap-3 min-h-11 rounded-lg px-3 text-[15px] font-medium transition-colors ${
+              title={compact ? item.label : undefined}
+              className={`flex items-center gap-3 min-h-11 rounded-lg ${compact ? 'justify-center px-0' : 'px-3'} text-[15px] font-medium transition-colors ${
                 active ? 'bg-sidebar-active text-sidebar-ink' : 'text-sidebar-faint hover:text-sidebar-ink hover:bg-white/5'
               }`}
             >
               <Icon name={item.icon} />
-              {item.label}
+              <span className={compact ? 'sr-only' : ''}>{item.label}</span>
             </Link>
           );
         })}
       </nav>
-      <div className="px-4 py-4 border-t border-white/10">
-        {practitioner && (
+      <div className={`${compact ? 'px-2' : 'px-4'} py-4 border-t border-white/10`}>
+        {practitioner && !compact && (
           <div className="mb-3">
             <div className="text-sm font-semibold text-sidebar-ink truncate">{practitioner.name}</div>
             <div className="text-xs text-sidebar-faint truncate">{practitioner.title}</div>
           </div>
         )}
-        <div className="flex gap-2">
+        <div className={`flex gap-2 ${compact ? 'flex-col' : ''}`}>
           <button
             type="button"
+            title={compact ? (theme === 'dark' ? 'Light mode' : 'Dark mode') : undefined}
             onClick={toggleTheme}
             data-testid="theme-toggle"
             className="flex-1 min-h-11 rounded-lg text-sm font-medium text-sidebar-faint hover:text-sidebar-ink hover:bg-white/5 border border-white/10"
           >
-            {theme === 'dark' ? 'Light mode' : 'Dark mode'}
+            {compact ? <><span aria-hidden="true">◐</span><span className="sr-only">{theme === 'dark' ? 'Light mode' : 'Dark mode'}</span></> : (theme === 'dark' ? 'Light mode' : 'Dark mode')}
           </button>
           <button
             type="button"
@@ -127,7 +137,7 @@ export default function Shell({ title, children }: { title: string; children: Re
             data-testid="sign-out"
             className="flex-1 min-h-11 rounded-lg text-sm font-semibold text-sidebar-ink hover:bg-white/5 border border-white/10"
           >
-            Sign out
+            {compact ? <><span aria-hidden="true">⏻</span><span className="sr-only">Sign out</span></> : 'Sign out'}
           </button>
         </div>
       </div>
@@ -147,7 +157,7 @@ export default function Shell({ title, children }: { title: string; children: Re
       </a>
 
       {/* Desktop sidebar */}
-      <aside className="hidden md:block w-64 shrink-0 bg-sidebar sticky top-0 h-screen">{sidebar}</aside>
+      <aside className={`hidden md:block ${slim ? 'w-16' : 'w-64'} shrink-0 bg-sidebar sticky top-0 h-screen`}>{renderSidebar(slim)}</aside>
 
       {/* Phone top bar + slide-in menu */}
       <header className="md:hidden sticky top-0 z-40 bg-sidebar px-4 py-3 flex items-center justify-between">
@@ -164,13 +174,13 @@ export default function Shell({ title, children }: { title: string; children: Re
       </header>
       {menuOpen && (
         <div className="md:hidden fixed inset-0 z-50 flex" role="dialog" aria-modal="true" aria-label="Menu">
-          <div className="w-72 max-w-[85%] bg-sidebar h-full">{sidebar}</div>
+          <div className="w-72 max-w-[85%] bg-sidebar h-full">{renderSidebar(false)}</div>
           <button type="button" aria-label="Close menu" className="flex-1 bg-black/40" onClick={() => setMenuOpen(false)} />
         </div>
       )}
 
       <main id="main" tabIndex={-1} className="flex-1 min-w-0 focus:outline-none">
-        <div className="max-w-6xl mx-auto px-4 md:px-8 py-6 md:py-8">
+        <div className={`${wide ? 'max-w-none' : 'max-w-6xl'} mx-auto px-4 md:px-8 py-6 md:py-8`}>
           <h1 className="text-2xl md:text-[28px] mb-6">{title}</h1>
           {children}
         </div>

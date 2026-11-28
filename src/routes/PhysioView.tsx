@@ -10,6 +10,7 @@ import { sessionsOf, usePhysio } from '../hooks/usePhysio';
 import { useSection } from '../lib/nav';
 import { scriptedAmbient, supabase } from '../lib/supabaseClient';
 import { markSeen } from '../lib/frontDesk';
+import { clinicNow } from '../lib/schedule';
 import { demoExtractionFor } from '../mock/demoExtraction';
 import type { ExerciseRow, HomeProgrammeItem, PatientRow, PhysioPlanRow, TherapySessionRow } from '../types/db';
 
@@ -358,7 +359,7 @@ function RecordSession({ plan, sessionCount, onSaved }: { plan: PhysioPlanRow; s
     });
     setSaving(false);
     if (error) { pushToast({ tone: 'critical', title: 'Could not save the session', detail: error.message }); return; }
-    if (practitioner) await markSeen(appointments, plan.patient_id, practitioner.id);
+    if (practitioner) await markSeen(appointments, plan.patient_id, practitioner.id, clinicNow());
     await logAudit('therapy-session-recorded', `${plan.condition ?? ''} session ${sessionCount + 1}`);
     pushToast({ tone: 'ok', title: `Session ${sessionCount + 1} saved` });
     setF(blank); setAiUsed(false);
