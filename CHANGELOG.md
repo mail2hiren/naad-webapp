@@ -5,6 +5,13 @@ versions follow [SemVer](https://semver.org/) and each release is tagged `vX.Y.Z
 
 ## [Unreleased]
 
+## [0.10.0] - 2026-11-28
+
+### Added
+- **Today**, the receptionist's start screen (was "Today's queue"): the day in numbers (booked, yet to arrive, waiting, with doctor, done, no-shows, to bill, collected), **Needs attention** (requests from the patient app, long waits, late arrivals with check-in or no-show, visits to bill, patients here today who owe money), **arriving in the next 90 minutes** with one-tap check-in, **every doctor's day** (hours, booked, waiting, done, free, who is with them, running late, blocked time) and quick jobs (new appointment, walk-in by voice, find a patient, new bill, calendar). The waiting list and ask-the-doctor tools stay below.
+- Patients: **Register new patient** now opens the voice (ambient) registration, so there is one way to register; **Quick add** keeps name-and-mobile for phone bookings.
+- Proposed migration `supabase/proposed/0020_front_desk_modules.sql` (needs the owner's go) for the next desk modules: follow-ups, contact log, refunds and day-end cash closing, admissions by reception, insurance, enquiries and treatment packages.
+
 ## [0.9.1] - 2026-11-28
 
 From the owner's first look at the live calendar.

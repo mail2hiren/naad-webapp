@@ -124,7 +124,7 @@ test('keyboard: a skip link is the first tab stop and jumps to main content', as
   await expect(page).toHaveURL(/\/reception$/);
   // The title is set in the same effect that resets focus to the page top,
   // so it marks the moment the workspace is ready for keyboard input.
-  await expect(page).toHaveTitle("Today's queue — Naad");
+  await expect(page).toHaveTitle('Today — Naad');
   await page.keyboard.press('Tab');
   const skip = page.getByRole('link', { name: 'Skip to main content' });
   await expect(skip).toBeFocused();
@@ -136,7 +136,7 @@ test('every workspace has its own page title', async ({ page }) => {
   await page.goto('/login');
   await expect(page).toHaveTitle('Staff sign-in — Naad');
   await login(page, 'receptionist', 'sunita@digiyaan.demo');
-  await expect(page).toHaveTitle("Today's queue — Naad");
+  await expect(page).toHaveTitle('Today — Naad');
 });
 
 test('screen readers: notifications are announced through a persistent live region', async ({ page }) => {

@@ -80,7 +80,10 @@ export function PatientsSection({
               <input data-testid="patients-search" className={inputCls} value={q} onChange={(e) => setQ(e.target.value)} autoComplete="off" />
             </Field>
           </div>
-          <div className="mb-0.5"><Btn variant="glow" data-testid="register-new" onClick={() => setAdding(true)}>+ Register new patient</Btn></div>
+          <div className="mb-0.5 flex gap-2">
+            <Btn variant="glow" data-testid="register-new" onClick={() => setParams({ section: 'walk-in' })}>+ Register new patient (voice)</Btn>
+            <Btn variant="default" data-testid="quick-add" onClick={() => setAdding(true)}>Quick add</Btn>
+          </div>
         </div>
         {!q.trim() && (
           <div className="mt-3 flex flex-wrap gap-1.5" role="group" aria-label="Show">
@@ -118,7 +121,8 @@ export function PatientsSection({
       {adding && (
         <Modal onClose={() => setAdding(false)}>
           <div role="dialog" aria-modal="true" aria-labelledby="reg-title">
-            <h2 id="reg-title" className="text-lg mb-3">Register a patient</h2>
+            <h2 id="reg-title" className="text-lg mb-1">Quick add a patient</h2>
+            <p className="mb-3 text-[13px] text-ink-soft">For phone bookings: name and mobile now, the rest when they come in.</p>
             <PatientPicker value={null} onChange={(p) => { if (p) { setAdding(false); setOpenId(p.id); } }} />
           </div>
         </Modal>

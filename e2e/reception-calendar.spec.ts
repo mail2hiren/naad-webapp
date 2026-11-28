@@ -374,6 +374,27 @@ test('a physio session marks the visit seen, and the patient card shows the pack
   await expect(page.getByTestId('pt-bills')).toContainText('Due ₹2,400');
 });
 
+test('Today: the day in numbers, what needs attention, doctors at a glance', async ({ page }) => {
+  await login(page, 'receptionist', 'sunita@digiyaan.demo');
+  await expect(page).toHaveURL(/\/reception$/);
+  const stats = page.getByTestId('today-stats');
+  await expect(stats).toContainText('Booked today');
+  await expect(stats).toContainText('Collected today');
+  const att = page.getByTestId('today-attention');
+  await expect(att).toContainText('Lata Kulkarni asked for an appointment');
+  await expect(att).toContainText('Bill Sunanda Patil');
+  await expect(att).toContainText('owes ₹2,400');
+  await expect(page.getByTestId('today-doctor').filter({ hasText: 'Dr. Namrata Rao' })).toContainText('Not available: Hospital CME talk');
+  await expect(page.getByTestId('today-doctor').filter({ hasText: 'Dr. Sagar Karvir' })).toContainText('With Meera Nair');
+  // Deepak is due at 11:30: check him in from "Arriving".
+  await page.getByTestId('today-arriving').getByTestId('today-item').filter({ hasText: 'Deepak Rane' }).getByTestId('arriving-check-in').click();
+  await expect(page.getByText('Checked in · Token 5')).toBeVisible();
+  // Register from Patients opens the voice registration.
+  await page.getByTestId('nav-reception-patients').click();
+  await page.getByTestId('register-new').click();
+  await expect(page.getByTestId('intake-name')).toBeVisible();
+});
+
 test('a walk-in gets a token in the doctor\'s day', async ({ page }) => {
   await login(page, 'receptionist', 'sunita@digiyaan.demo');
   await page.getByTestId('nav-reception-walk-in').click();

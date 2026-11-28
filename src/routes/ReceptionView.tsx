@@ -12,6 +12,7 @@ import { useBills } from '../hooks/useBills';
 import { CalendarPage } from '../components/calendar/CalendarPage';
 import { QuickBook as BookingModal, type BookingInit } from '../components/calendar/QuickBook';
 import { TokenScreen } from '../components/calendar/TokenScreen';
+import { TodaySection } from '../components/reception/Today';
 import { BillModal, BillingSection, Receipt } from '../components/reception/Billing';
 import { PatientsSection } from '../components/reception/Patients';
 import { clinicNow, clinicToday, dayKey, nextToken, onDay } from '../lib/schedule';
@@ -531,7 +532,7 @@ export default function ReceptionView() {
   if (section === 'display') return <TokenScreen />;
 
   return (
-    <Shell wide={section === 'calendar'} title={{ queue: "Today's queue", calendar: 'Calendar', patients: 'Patients', 'walk-in': 'Walk-in registration', billing: 'Billing' }[section]}>
+    <Shell wide={section === 'calendar'} title={{ queue: 'Today', calendar: 'Calendar', patients: 'Patients', 'walk-in': 'Walk-in registration', billing: 'Billing' }[section]}>
       <div className="mb-6 flex justify-end">
         <button
           type="button"
@@ -556,6 +557,10 @@ export default function ReceptionView() {
       )}
       {section === 'billing' && (
         <BillingSection bills={bills} startBill={(a) => setBillFor({ appointment: a, patient: null })} />
+      )}
+
+      {section === 'queue' && (
+        <div className="mb-6"><TodaySection bills={bills} onNewBooking={() => setBooking({ day: clinicToday() })} onBill={(a) => setBillFor({ appointment: a, patient: null })} /></div>
       )}
 
       {/* 3. Live "In Queue" board */}
