@@ -20,7 +20,7 @@ Phase 3 of the product gap audit: a real physiotherapy module.
 - **Exercise library**: searchable by name and body region; add and edit exercises with instructions.
 - **Patient app**: "Your home exercises" and "Your progress" (pain chart) for patients with an active plan.
 - Physio sidebar: Today's patients, Caseload, Exercise library, Ward. A physio's patient chart links to that patient's therapy plan.
-- Proposed migration `0009_physio_plan_details` (plan details, home programme, exercise instructions, editable sessions), awaiting the owner's go.
+- Migration `20261128062138_physio_plan_details` (plan details, home programme, exercise instructions, editable sessions), applied to the Naad database with the owner's go.
 
 ### Demo mode
 - 30 exercises, 5 therapy plans (4 active, 1 completed) with 15 sessions where pain falls and range of motion improves. Demo recordings draft a session that matches the patient's condition (knee, back, hip) and their own programme.
