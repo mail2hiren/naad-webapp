@@ -18,7 +18,7 @@ Phase 6 of the product gap audit: the patient app, built for a phone.
 - **Reports:** test results once the doctor has seen them (flagged ones marked), latest vital signs for ward patients, and the documents the hospital holds.
 - A signed-in patient stays signed in when the page is reloaded or the app reopened.
 - Demo: test results and documents for the patients who can sign in (Ramesh, Kavita, Deepak).
-- Proposed migration `0017_patient_app` (`doctor_busy_times()` returning only busy times, and a trigger so a patient can only request or cancel their own appointments), awaiting the owner's go.
+- Migration `20261128091221_patient_app` (`doctor_busy_times()` returning only busy times, and a trigger so a patient can only request or cancel their own appointments), applied to the Naad database with the owner's go.
 - Tests: `e2e/patient-app-phase6.spec.ts` (4 flows), every patient tab in the accessibility scan at phone and desktop width.
 
 ### Changed
