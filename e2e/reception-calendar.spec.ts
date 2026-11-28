@@ -191,10 +191,45 @@ test('open the patient record straight from a booking', async ({ page }) => {
   await expect(page.getByTestId('drawer-patient')).toContainText('Owes ₹2,400');
   await page.getByTestId('open-record').click();
   await expect(page).toHaveURL(/section=patients&patient=p-kavita/);
-  await expect(page.getByTestId('patient-detail')).toContainText('Kavita Deshmukh');
+  const record = page.getByTestId('patient-record');
+  await expect(record.getByTestId('record-name')).toHaveText('Kavita Deshmukh');
+  await expect(record.getByTestId('record-alerts')).toContainText('Owes ₹2,400');
+  await expect(record.getByTestId('record-today')).toContainText('Dr. Jayani Bhatt');
+  await page.getByTestId('tab-bills').click();
   await expect(page.getByTestId('pt-bills')).toContainText('R-01002');
-  await page.getByTestId('back-to-calendar').click();
+  await page.getByTestId('record-back').click();
   await expect(page.getByTestId('doctor-column')).toHaveCount(3);
+});
+
+test('patient list: today\'s patients with one-tap check-in; the full record; edit details', async ({ page }) => {
+  await reception(page, 'patients');
+  await expect(page.getByTestId('pt-filter-today')).toHaveAttribute('aria-pressed', 'true');
+  const deepak = page.getByTestId('patient-item').filter({ hasText: 'Deepak Rane' });
+  await expect(deepak).toContainText('11:30 am');
+  await deepak.getByTestId('list-check-in').click();
+  await expect(page.getByText('Checked in · Token 5')).toBeVisible();
+  await expect(deepak).toContainText('Token 5');
+  await expect(deepak.getByTestId('list-check-in')).toHaveCount(0);
+
+  await page.getByTestId('pt-filter-owes').click();
+  await expect(page.getByTestId('patient-item').filter({ hasText: 'Kavita Deshmukh' })).toContainText('Due ₹2,400');
+
+  await page.getByTestId('patients-search').fill('Ramesh');
+  await page.getByTestId('patient-row').first().click();
+  await expect(page).toHaveURL(/patient=/);
+  await page.getByTestId('tab-tests').click();
+  await expect(page.getByTestId('record-tests')).toContainText('Complete blood count');
+  await expect(page.getByTestId('record-docs')).not.toBeEmpty();
+  await page.getByTestId('tab-medicines').click();
+  await page.getByTestId('tab-visits').click();
+  await expect(page.getByTestId('record-visits')).toContainText('Hip review');
+
+  await page.getByTestId('record-edit').click();
+  await page.getByTestId('ed-allergies').fill('Penicillin, Sulfa');
+  await page.getByTestId('ed-save').click();
+  await expect(page.getByTestId('record-alerts')).toContainText('Allergies: Penicillin, Sulfa');
+  await page.getByTestId('record-back').click();
+  await expect(page.getByTestId('patients-search')).toBeVisible();
 });
 
 test('overbook on purpose, and book a physio course that repeats', async ({ page }) => {
@@ -334,6 +369,7 @@ test('a physio session marks the visit seen, and the patient card shows the pack
   await page.getByTestId('nav-reception-patients').click();
   await page.getByTestId('patients-search').fill('Kavita');
   await page.getByTestId('patient-row').first().click();
+  await page.getByTestId('tab-bills').click();
   await expect(page.getByTestId('pt-bills')).toContainText('R-01002');
   await expect(page.getByTestId('pt-bills')).toContainText('Due ₹2,400');
 });

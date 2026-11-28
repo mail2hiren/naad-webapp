@@ -5,6 +5,17 @@ versions follow [SemVer](https://semver.org/) and each release is tagged `vX.Y.Z
 
 ## [Unreleased]
 
+## [0.9.1] - 2026-11-28
+
+From the owner's first look at the live calendar.
+
+### Added
+- **Full patient record for the front desk** (Patients, or "Open patient record" from any booking): who the patient is, what needs attention (allergies, money owed, missed visits, on the ward, medicines ready, a flagged test), today's visit with one-tap check-in, and tabs for every visit (calendar bookings, walk-ins and ward rounds, with arrival, with-doctor and out times), bills with receipts, medicines and pharmacy status, tests and documents, and therapy courses. The desk can correct contact details and record allergies, conditions and regular medicines. Doctors' notes stay with clinicians.
+- **Patient list starts with today's patients**, each with their booking time, doctor, token and step, and a **Check in** button on the row; filters for all patients and those who owe money.
+
+### Changed
+- The patient-flow panel (check-in, call in, check-out) now sits beside the calendar on screens from 1280 px wide, in every view, instead of below it. It can still be hidden.
+
 ## [0.9.0] - 2026-11-28
 
 The reception calendar rebuilt as a complete product (benchmark: Practo Ray), and beyond it. Spec: `docs/specs/calendar.md`.

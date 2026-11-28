@@ -44,7 +44,7 @@ export function CalendarPage({ bills, onBill }: { bills: BillRow[]; onBill: (a: 
   const [sheet, setSheet] = useState(false);
   const [waitOpen, setWaitOpen] = useState(false);
   const [side, setSide] = useState(false);
-  const wide = useMedia('(min-width: 1536px)');
+  const wide = useMedia('(min-width: 1280px)');
   const large = useMedia('(min-width: 1024px)');
   // The receptionist chooses how much room the calendar gets: hide the left panel, the flow panel, or both.
   const [showLeft, setShowLeftRaw] = useState(() => remember('left', true));
@@ -52,7 +52,7 @@ export function CalendarPage({ bills, onBill }: { bills: BillRow[]; onBill: (a: 
   const setShowLeft = (v: boolean) => { setShowLeftRaw(v); store('left', v); };
   const setShowFlow = (v: boolean) => { setShowFlowRaw(v); store('flow', v); };
   const focus = !showLeft && !showFlow;
-  const flowBeside = showFlow && view === 'day' && wide;
+  const flowBeside = showFlow && wide;
   const [q, setQ] = useState('');
   const [busyId, setBusyId] = useState<string | null>(null);
   const [now, setNow] = useState(clinicNow());
@@ -188,7 +188,7 @@ export function CalendarPage({ bills, onBill }: { bills: BillRow[]; onBill: (a: 
   );
 
   return (
-    <div className="grid gap-4" style={{ gridTemplateColumns: `${showLeft && large ? '15rem ' : ''}minmax(0,1fr)${flowBeside ? ' 21rem' : ''}` }}>
+    <div className="grid gap-4" style={{ gridTemplateColumns: `${showLeft && large ? '15rem ' : ''}minmax(0,1fr)${flowBeside ? ' 19rem' : ''}` }}>
       {showLeft && large && <aside className="rounded-2xl bg-surface shadow-[var(--card-shadow)] p-3 self-start" aria-label="Calendar options" data-testid="cal-left">{sidebar}</aside>}
 
       <div className="min-w-0 space-y-3">
