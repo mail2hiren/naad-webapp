@@ -5,6 +5,11 @@ versions follow [SemVer](https://semver.org/) and each release is tagged `vX.Y.Z
 
 ## [Unreleased]
 
+## [0.8.3] - 2026-11-28
+
+### Added
+- **E-brochure** at https://naad.digiyaan.com/brochure/ for hospital owners, CEOs and doctors: a live sound-wave opening, a Hindi-English consultation that turns into a signed note as you scroll, an owners/doctors switch, the patient's path through the hospital (tap any stop), safety promises, and the founding-partner pilot with the demo link and phone number. A static page in `public/brochure/` (served as is; the app is unchanged), with link-preview tags for WhatsApp and email. Respects reduced motion; works from 360 px wide.
+
 ## [0.8.2] - 2026-11-28
 
 ### Changed
