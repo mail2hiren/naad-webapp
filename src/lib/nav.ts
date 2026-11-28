@@ -1,7 +1,7 @@
 import { useSearchParams } from 'react-router-dom';
 import type { StaffRole } from '../types/db';
 
-export type IconName = 'queue' | 'calendar' | 'userPlus' | 'stethoscope' | 'bed' | 'pill' | 'box' | 'chart' | 'users' | 'rupee' | 'receipt';
+export type IconName = 'queue' | 'calendar' | 'userPlus' | 'stethoscope' | 'bed' | 'pill' | 'box' | 'chart' | 'users' | 'rupee' | 'receipt' | 'phone' | 'flask' | 'shield' | 'inbox' | 'package';
 
 export type NavItem = { to: string; section?: string; label: string; icon: IconName };
 
@@ -15,7 +15,14 @@ export const ROLE_NAV: Record<StaffRole, NavItem[]> = {
     { to: '/reception', section: 'calendar', label: 'Calendar', icon: 'calendar' },
     { to: '/reception', section: 'patients', label: 'Patients', icon: 'users' },
     { to: '/reception', section: 'walk-in', label: 'Walk-in registration', icon: 'userPlus' },
+    { to: '/reception', section: 'follow-ups', label: 'Follow-ups and calls', icon: 'phone' },
+    { to: '/reception', section: 'enquiries', label: 'Enquiries', icon: 'inbox' },
+    { to: '/reception', section: 'admissions', label: 'Admissions and beds', icon: 'bed' },
+    { to: '/reception', section: 'tests', label: 'Tests and reports', icon: 'flask' },
     { to: '/reception', section: 'billing', label: 'Billing', icon: 'receipt' },
+    { to: '/reception', section: 'packages', label: 'Packages', icon: 'package' },
+    { to: '/reception', section: 'insurance', label: 'Insurance', icon: 'shield' },
+    { to: '/reception', section: 'cash', label: 'Day-end cash', icon: 'rupee' },
   ],
   surgeon: [
     { to: '/doctor', label: 'My patients', icon: 'stethoscope' },

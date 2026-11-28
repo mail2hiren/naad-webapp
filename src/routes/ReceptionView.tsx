@@ -13,6 +13,15 @@ import { CalendarPage } from '../components/calendar/CalendarPage';
 import { QuickBook as BookingModal, type BookingInit } from '../components/calendar/QuickBook';
 import { TokenScreen } from '../components/calendar/TokenScreen';
 import { TodaySection } from '../components/reception/Today';
+import { FollowUpsSection } from '../components/desk/FollowUps';
+import { CashClosingSection } from '../components/desk/CashClosing';
+import { AdmissionsSection } from '../components/desk/Admissions';
+import { TestsDeskSection } from '../components/desk/TestsDesk';
+import { InsuranceSection } from '../components/desk/Insurance';
+import { EnquiriesSection } from '../components/desk/Enquiries';
+import { PackagesSection } from '../components/desk/Packages';
+import { useOrgName } from '../hooks/useCalendarData';
+import { useSearchParams } from 'react-router-dom';
 import { BillModal, BillingSection, Receipt } from '../components/reception/Billing';
 import { PatientsSection } from '../components/reception/Patients';
 import { clinicNow, clinicToday, dayKey, nextToken, onDay } from '../lib/schedule';
@@ -46,7 +55,7 @@ function classifyFileName(name: string): DocumentLabel {
 
 
 export default function ReceptionView() {
-  const rawSection = useSection<'queue' | 'calendar' | 'appointments' | 'patients' | 'walk-in' | 'billing' | 'display'>('queue');
+  const rawSection = useSection<'queue' | 'calendar' | 'appointments' | 'patients' | 'walk-in' | 'billing' | 'display' | 'follow-ups' | 'cash' | 'admissions' | 'tests' | 'insurance' | 'enquiries' | 'packages'>('queue');
   const section = rawSection === 'appointments' ? 'calendar' : rawSection;
   const { practitioner } = useAuth();
   const { orgId, patients, practitioners, appointments, pushToast, logAudit } = useClinic();
@@ -54,6 +63,15 @@ export default function ReceptionView() {
 
   // Modals shared by the calendar, patients and billing sections.
   const [booking, setBooking] = useState<BookingInit | null>(null);
+  // A booking started from a follow-up, enquiry or package links back to it once made.
+  const afterBooking = useRef<((a: AppointmentRow | null) => void) | null>(null);
+  const bookFor = (p: PatientRow, doctorId: string | null, after: (a: AppointmentRow | null) => void) => {
+    afterBooking.current = after;
+    setBooking({ day: clinicToday(), patient: p, practitionerId: doctorId ?? undefined });
+  };
+  const orgName = useOrgName(orgId);
+  const [, setNavParams] = useSearchParams();
+  const openPatient = (id: string) => setNavParams({ section: 'patients', patient: id });
   const [billFor, setBillFor] = useState<{ appointment: AppointmentRow | null; patient: PatientRow | null } | null>(null);
   const [receipt, setReceipt] = useState<BillRow | null>(null);
 
@@ -532,7 +550,9 @@ export default function ReceptionView() {
   if (section === 'display') return <TokenScreen />;
 
   return (
-    <Shell wide={section === 'calendar'} title={{ queue: 'Today', calendar: 'Calendar', patients: 'Patients', 'walk-in': 'Walk-in registration', billing: 'Billing' }[section]}>
+    <Shell wide={section === 'calendar'} title={{ queue: 'Today', calendar: 'Calendar', patients: 'Patients', 'walk-in': 'Walk-in registration', billing: 'Billing',
+      'follow-ups': 'Follow-ups and calls', cash: 'Day-end cash', admissions: 'Admissions and beds', tests: 'Tests and reports',
+      insurance: 'Insurance', enquiries: 'Enquiries', packages: 'Packages' }[section]}>
       <div className="mb-6 flex justify-end">
         <button
           type="button"
@@ -555,6 +575,13 @@ export default function ReceptionView() {
           onBillAppt={(a) => setBillFor({ appointment: a, patient: null })}
           onReceipt={setReceipt} />
       )}
+      {section === 'follow-ups' && <FollowUpsSection onBook={bookFor} orgName={orgName} />}
+      {section === 'cash' && <CashClosingSection bills={bills} />}
+      {section === 'admissions' && <AdmissionsSection bills={bills} onReceipt={setReceipt} onOpenPatient={openPatient} />}
+      {section === 'tests' && <TestsDeskSection onOpenPatient={openPatient} />}
+      {section === 'insurance' && <InsuranceSection onOpenPatient={openPatient} />}
+      {section === 'enquiries' && <EnquiriesSection onBook={(p, d, after) => bookFor(p, d, () => after())} />}
+      {section === 'packages' && <PackagesSection bills={bills} onBook={bookFor} onReceipt={setReceipt} />}
       {section === 'billing' && (
         <BillingSection bills={bills} startBill={(a) => setBillFor({ appointment: a, patient: null })} />
       )}
@@ -920,7 +947,13 @@ export default function ReceptionView() {
         </Modal>
       )}
 
-      {booking && <BookingModal init={booking} onClose={() => setBooking(null)} onBooked={() => setBooking(null)} />}
+      {booking && <BookingModal init={booking} onClose={() => { afterBooking.current = null; setBooking(null); }}
+        onBooked={(_d, id) => {
+          const after = afterBooking.current;
+          afterBooking.current = null;
+          setBooking(null);
+          if (after) after(id ? ({ id } as AppointmentRow) : null);
+        }} />}
       {billFor && (
         <BillModal appointment={billFor.appointment} patient={billFor.patient} bills={bills}
           onClose={() => setBillFor(null)} onCreated={(b) => { setBillFor(null); setReceipt(b); }} />

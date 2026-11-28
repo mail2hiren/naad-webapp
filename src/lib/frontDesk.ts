@@ -56,6 +56,8 @@ export interface Booking {
   visitType: VisitType; reason: string; bookedBy: string | null;
   /** Book over another appointment on purpose. */
   overbook?: boolean; seriesId?: string | null;
+  /** Use this id for the new appointment (so the caller can link to it). */
+  id?: string;
 }
 
 /** Why a time cannot be booked, or null. Clashes are allowed only when overbooking. */
@@ -73,7 +75,7 @@ export function bookingProblem(
 function apptRow(orgId: string, b: Booking, overbooked: boolean) {
   const iso = b.start.toISOString();
   return {
-    id: newId('ap'), org_id: orgId, patient_id: b.patientId, practitioner_id: b.practitioner.id, specialty: b.practitioner.specialty,
+    id: b.id ?? newId('ap'), org_id: orgId, patient_id: b.patientId, practitioner_id: b.practitioner.id, specialty: b.practitioner.specialty,
     date: iso, start_time: iso, duration_minutes: b.minutes, status: 'scheduled', reason: b.reason.trim() || null,
     requested_by_patient: false, token_no: null, checked_in_at: null, cancel_reason: null, visit_type: b.visitType,
     rescheduled_from: null, booked_by: b.bookedBy, overbooked, series_id: b.seriesId ?? null, called_in_at: null, completed_at: null,
@@ -98,7 +100,7 @@ export async function bookSeries(
   for (const start of starts) {
     const why = bookingProblem(appts, blocks, b.practitioner, start, b.minutes, { overbook: b.overbook });
     if (why) { skipped.push({ start, why }); continue; }
-    rows.push(apptRow(orgId, { ...b, start, seriesId }, clashes(appts, b.practitioner.id, start, b.minutes).length > 0));
+    rows.push(apptRow(orgId, { ...b, start, seriesId, id: undefined }, clashes(appts, b.practitioner.id, start, b.minutes).length > 0));
     booked.push(start);
   }
   if (!rows.length) return { booked, skipped, error: null };

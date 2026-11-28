@@ -5,6 +5,20 @@ versions follow [SemVer](https://semver.org/) and each release is tagged `vX.Y.Z
 
 ## [Unreleased]
 
+## [0.11.0] - 2026-11-28
+
+The whole front desk of a clinic or nursing home, in the receptionist's sidebar. Needs migration 0020.
+
+### Added
+- **Follow-ups and calls:** patients due back (overdue, today, this week, later), each with Book (the follow-up links to the booking), Call, Log call (no answer, call later, not coming, wrong number), +1 week and Close; **tomorrow's reminders** to call or message, ticked off as done; **not seen lately** (last visit 2 to 12 months ago, nothing booked) to win patients back; the waitlist; a call log of every call and its outcome. Doctors and physiotherapists can add follow-ups too.
+- **Enquiries:** every caller or walk-in who asks about fees, timings, a doctor or a surgery, with a call-back day; log calls; **Book appointment** registers the caller (or finds them by mobile) and books them; how many enquiries became patients this month.
+- **Admissions and beds:** the bed board by ward (free, or who and which day), admit from any free bed with the admitting doctor, reason, expected stay, who pays, and a **deposit receipt**; each stay's ward charges against its deposit ("ask for ₹X more"); patients the doctor discharged, waiting for final billing. Settling the discharge closes the stay.
+- **Tests and reports:** tests the doctor ordered (urgent first) → sample collected / sent → result entered → handed over, with who was told and when; results the doctor flagged stand out.
+- **Insurance:** each pre-authorisation and claim with its stage, the next step, documents still missing, amounts asked, approved and paid, and how long it has sat (chase after 2 days); insured admissions with no pre-authorisation yet; the patient's insurer and policy saved for next time.
+- **Packages:** treatment packages (e.g. 8 physio sessions) on offer, selling one with its bill, sessions used, booked and left, expiry, and **Book next session** that counts against the package.
+- **Day-end cash:** money in by cash, UPI, card and insurance (yours or everyone's), refunds, an opening float, a **note-by-note cash count**, the difference (a note is required to close with one), a printed closing, and past closings. Nobody can change a closing afterwards. **Refunds** on any paid bill, with a reason.
+- Migration `0020_front_desk_modules` (proposed): follow_ups, patient_contacts, enquiries, cash_closings, admissions, insurance_claims, treatment_packages, patient_packages; bills refunds; patients insurance details; appointments.patient_package_id; reception may change bed occupancy and add bed-day charges.
+
 ## [0.10.0] - 2026-11-28
 
 ### Added

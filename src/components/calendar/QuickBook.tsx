@@ -7,7 +7,7 @@ import { useClinicians } from '../../hooks/useClinicians';
 import { useCalendarBlocks } from '../../hooks/useCalendarData';
 import { VISIT_LABEL, addDays, apptStart, at, clinicNow, dayKey, dayLabel, freeSlots, onDay, timeLabel } from '../../lib/schedule';
 import { blockAt, doctorTone, expandRepeat, nextFree, noShowRisk, visitMinutes } from '../../lib/calendar';
-import { addToWaitlist, bookAppointment, bookSeries, bookingProblem } from '../../lib/frontDesk';
+import { addToWaitlist, bookAppointment, bookSeries, bookingProblem, newId } from '../../lib/frontDesk';
 import type { PatientRow, VisitType, WaitlistRow } from '../../types/db';
 import { shortTime } from './shared';
 
@@ -16,7 +16,7 @@ export interface BookingInit { practitionerId?: string; day: string; start?: Dat
 const LENGTHS = [10, 15, 20, 30, 45, 60];
 
 /** Book an appointment: patient, doctor, a free time (or the next free across doctors), repeat courses, overbooking, waitlist. */
-export function QuickBook({ init, onClose, onBooked }: { init: BookingInit; onClose: () => void; onBooked: (day: string) => void }) {
+export function QuickBook({ init, onClose, onBooked }: { init: BookingInit; onClose: () => void; onBooked: (day: string, appointmentId?: string) => void }) {
   const { orgId, appointments, pushToast, logAudit } = useClinic();
   const { practitioner: me } = useAuth();
   const clinicians = useClinicians();
@@ -65,6 +65,7 @@ export function QuickBook({ init, onClose, onBooked }: { init: BookingInit; onCl
     setSaving(true);
     const base = { patientId: patient.id, practitioner: doc, start, minutes, visitType: visit, reason, bookedBy: me?.name ?? null, overbook };
     let detail = `${patient.name} · ${doc.name} · ${timeLabel(start)}`;
+    const apptId = newId('ap');
     if (repeat) {
       const r = await bookSeries(orgId, appointments, blocks, base, starts);
       setSaving(false);
@@ -74,13 +75,13 @@ export function QuickBook({ init, onClose, onBooked }: { init: BookingInit; onCl
       await logAudit('reception-book-course', `${patient.name} with ${doc.name}, ${r.booked.length} visits from ${dayLabel(day)}`);
       pushToast({ tone: r.skipped.length ? 'warning' : 'ok', title: 'Course booked', detail });
     } else {
-      const error = await bookAppointment(orgId, appointments, base, blocks);
+      const error = await bookAppointment(orgId, appointments, { ...base, id: apptId }, blocks);
       setSaving(false);
       if (error) { pushToast({ tone: 'critical', title: 'Could not book', detail: error }); return; }
       await logAudit('reception-book-appointment', `${patient.name} with ${doc.name}, ${dayLabel(day)} ${timeLabel(start)}${overbook ? ' (overbooked)' : ''}`);
       pushToast({ tone: 'ok', title: overbook ? 'Appointment booked (overbooked)' : 'Appointment booked', detail });
     }
-    onBooked(day);
+    onBooked(day, repeat ? undefined : apptId);
   }
 
   const morning = free.filter((s) => s.start.getHours() < 14);
