@@ -3,6 +3,7 @@ import { queueStatusLabel } from '../lib/labels';
 import { useAuth } from '../context/AuthContext';
 import { useClinic } from '../context/ClinicContext';
 import { supabase, scriptedAmbient } from '../lib/supabaseClient';
+import { markSeen } from '../lib/frontDesk';
 import { demoExtractionFor } from '../mock/demoExtraction';
 import { useRealAmbientCapture, type ExtractResult } from '../hooks/useRealAmbientCapture';
 import Shell from '../components/Shell';
@@ -45,7 +46,7 @@ function emptyRxItem(): PrescriptionItem {
 export default function DoctorView() {
   const { practitioner } = useAuth();
   const {
-    orgId, patients, practitioners, encounters, prescriptions, pushToast, logAudit,
+    orgId, patients, practitioners, appointments, encounters, prescriptions, pushToast, logAudit,
   } = useClinic();
 
   const [activePatientId, setActivePatientId] = useState<string | null>(null);
@@ -431,6 +432,8 @@ export default function DoctorView() {
       await supabase.from('encounters').update({
         status: 'completed', consultation_fee: practitioner.consult_fee ?? 0, payment_status: 'unpaid',
       }).eq('id', encounter.id);
+      // The visit is now "seen": reception's billing desk picks it up.
+      await markSeen(appointments, activePatientId, practitioner.id);
       // Ward patients don't route through pharmacy pickup -- ward/reception
       // staff handle their medication, so their queue_status stays 'admitted'.
       if (!isWardPatient) {

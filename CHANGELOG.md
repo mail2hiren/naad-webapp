@@ -5,6 +5,27 @@ versions follow [SemVer](https://semver.org/) and each release is tagged `vX.Y.Z
 
 ## [Unreleased]
 
+## [0.5.0] - 2026-11-28
+
+Phase 4 of the product gap audit: the front desk's full working day.
+
+### Added
+- **Calendar** (Reception): one column per doctor and physio for any day, built from working hours (default Mon-Sat 09:30-13:30 and 16:00-19:00; 15-min slots, 30 for physios). Free slots are tap-to-book; booked slots show the patient, visit type, token and status. Day totals: booked, checked in, seen, no-shows, free slots left.
+- **Booking** with patient search (name, mobile, hospital number) or new-patient registration (next `DGY-` number, duplicate-mobile warning); only free, future slots are offered.
+- **Appointment actions:** check in (next token for that doctor's day, patient joins the doctor's queue), reschedule (keeps the original time), cancel with a reason, no-show, book again, and confirm, move or decline a request a patient made in the app.
+- **Billing:** visits waiting to be billed (seen first), bills with line items, quick items (registration, X-ray, dressing, physio session, 8-session physio package), discount, full or part payment by cash, UPI, card or insurance, later payments, void with a reason (never delete), and a printable receipt. Day totals: collected today by method, bills today, waiting, balance due.
+- **Patients** (Reception): search everyone, register, see upcoming and recent visits, bills and balance due, and book or bill from there.
+- Walk-ins get a token and a visit in the doctor's day, so they can be billed too.
+- Finishing a consult (doctor) or saving a therapy session (physio) marks the visit "seen" for billing.
+- Today's queue shows token numbers, in check-in order.
+- Demo: a full Saturday for three doctors (seen, billed, checked in, no-show, cancelled, requested), Monday follow-ups, three more demo patients and three bills including a part-paid physio package.
+- Proposed migration `0011_reception_calendar_billing` (working hours and slot length, appointment token/check-in/cancel/visit type/reschedule fields, a `bills` table, and a policy letting a doctor or physio mark their own appointments seen), awaiting the owner's go.
+- Tests: `tests/lib/schedule.test.ts` (slots, clashes, tokens, receipt numbers, totals), `e2e/reception-calendar.spec.ts` (7 flows), and the reception screens in the accessibility scan at phone and desktop width.
+
+### Changed
+- Reception sidebar: Today's queue, Calendar, Patients, Walk-in registration, Billing. The old single "Appointments" form is replaced by the calendar (`?section=appointments` still opens it).
+- Notifications now sit above open dialogs.
+
 ## [0.4.1] - 2026-11-28
 
 ### Added

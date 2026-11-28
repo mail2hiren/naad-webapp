@@ -173,7 +173,7 @@ export default function ToastHost() {
       role="status"
       aria-live="polite"
       aria-atomic="false"
-      className="fixed inset-x-4 z-50 flex flex-col items-center gap-2 pointer-events-none"
+      className="fixed inset-x-4 z-[60] flex flex-col items-center gap-2 pointer-events-none"
       style={isNarrow ? { bottom: 'max(1rem, env(safe-area-inset-bottom))' } : { top }}
     >
       {toasts.map((t) => (

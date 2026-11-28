@@ -12,8 +12,10 @@ export type NavItem = { to: string; section?: string; label: string; icon: IconN
 export const ROLE_NAV: Record<StaffRole, NavItem[]> = {
   receptionist: [
     { to: '/reception', section: 'queue', label: "Today's queue", icon: 'queue' },
-    { to: '/reception', section: 'appointments', label: 'Appointments', icon: 'calendar' },
+    { to: '/reception', section: 'calendar', label: 'Calendar', icon: 'calendar' },
+    { to: '/reception', section: 'patients', label: 'Patients', icon: 'users' },
     { to: '/reception', section: 'walk-in', label: 'Walk-in registration', icon: 'userPlus' },
+    { to: '/reception', section: 'billing', label: 'Billing', icon: 'receipt' },
   ],
   surgeon: [
     { to: '/doctor', label: 'My patients', icon: 'stethoscope' },

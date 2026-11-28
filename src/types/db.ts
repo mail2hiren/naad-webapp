@@ -19,7 +19,13 @@ export interface PractitionerRow {
   consult_fee: number | null;
   preferred_language: 'en' | 'hi';
   active: boolean;
+  /** {"mon": [["09:30","13:30"],["16:00","19:00"]], ...}; null = hospital default. */
+  working_hours?: WorkingHours | null;
+  slot_minutes?: number;
 }
+
+export type Weekday = 'mon' | 'tue' | 'wed' | 'thu' | 'fri' | 'sat' | 'sun';
+export type WorkingHours = Partial<Record<Weekday, [string, string][]>>;
 
 export type QueueStatus =
   | 'new' | 'checking_in' | 'awaiting_verification' | 'waiting_doctor' | 'with_doctor'
@@ -101,6 +107,38 @@ export interface AppointmentRow {
   start_time: string | null;
   duration_minutes: number;
   requested_by_patient: boolean;
+  token_no?: number | null;
+  checked_in_at?: string | null;
+  cancel_reason?: string | null;
+  visit_type?: VisitType;
+  rescheduled_from?: string | null;
+  booked_by?: string | null;
+}
+
+export type VisitType = 'consultation' | 'follow_up' | 'therapy' | 'procedure';
+
+export interface BillItem { description: string; qty: number; rate: number }
+export type BillStatus = 'unpaid' | 'part_paid' | 'paid' | 'void';
+export type PaymentMethod = 'cash' | 'upi' | 'card' | 'insurance';
+
+export interface BillRow {
+  id: string;
+  org_id: string;
+  number: string;
+  patient_id: string;
+  appointment_id: string | null;
+  encounter_id: string | null;
+  items: BillItem[];
+  subtotal: number;
+  discount: number;
+  total: number;
+  paid: number;
+  payment_method: PaymentMethod | null;
+  status: BillStatus;
+  void_reason: string | null;
+  created_by: string | null;
+  created_at: string;
+  paid_at: string | null;
 }
 
 export type EncounterSetting = 'clinic' | 'ward';

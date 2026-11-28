@@ -1,7 +1,7 @@
 {
   "name": "webapp",
   "private": true,
-  "version": "0.4.1",
+  "version": "0.5.0",
   "type": "module",
   "scripts": {
     "dev": "vite",
@@ -11,7 +11,7 @@
     "preview": "vite preview",
     "test:e2e": "playwright test",
     "build:realambient": "tsc -b && vite build --mode realambient --outDir dist-realambient",
-    "test:functions": "node --test 'tests/functions/**/*.test.ts'"
+    "test:functions": "node --test 'tests/functions/**/*.test.ts' 'tests/lib/**/*.test.ts'"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.112.4",

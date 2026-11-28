@@ -220,3 +220,11 @@
 ::-webkit-scrollbar { width: 10px; height: 10px; }
 ::-webkit-scrollbar-track { background: transparent; }
 ::-webkit-scrollbar-thumb { background: var(--scroll-thumb); border-radius: 8px; }
+
+/* Printing a receipt prints only the receipt (Reception > Billing). */
+@media print {
+  body * { visibility: hidden !important; }
+  .print-receipt, .print-receipt * { visibility: visible !important; }
+  .print-receipt { position: absolute; inset: 0 auto auto 0; width: 100%; padding: 16px; background: var(--surface-solid); }
+  .no-print { display: none !important; }
+}
