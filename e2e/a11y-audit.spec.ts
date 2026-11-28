@@ -204,8 +204,15 @@ for (const vp of [{ n: 'phone', w: 390, h: 844 }, { n: 'desktop', w: 1280, h: 80
     await page.getByTestId('close-receipt').click();
     await nav('patients');
     await page.getByTestId('patient-row').first().click();
-    await expect(page.getByTestId('patient-detail')).toBeVisible();
+    await expect(page.getByTestId('patient-record')).toBeVisible();
     found.push(...await scan(page, `patients-${vp.n}`)); await overflow('patients');
+    for (const t of ['visits', 'bills', 'tests']) {
+      await page.getByTestId(`tab-${t}`).click();
+      found.push(...await scan(page, `record-${t}-${vp.n}`)); await overflow(`record-${t}`);
+    }
+    await page.getByTestId('record-back').click();
+    await expect(page.getByTestId('patient-item').first()).toBeVisible();
+    found.push(...await scan(page, `patient-list-${vp.n}`)); await overflow('patient-list');
     const serious = found.filter((x) => x.impact === 'serious' || x.impact === 'critical');
     expect(serious.map((v) => `${v.id}: ${v.nodes[0]?.target}`)).toEqual([]);
   });

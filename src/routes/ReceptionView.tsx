@@ -551,6 +551,7 @@ export default function ReceptionView() {
         <PatientsSection bills={bills}
           onBook={(p) => setBooking({ day: clinicToday(), patient: p })}
           onBill={(p) => setBillFor({ appointment: null, patient: p })}
+          onBillAppt={(a) => setBillFor({ appointment: a, patient: null })}
           onReceipt={setReceipt} />
       )}
       {section === 'billing' && (
