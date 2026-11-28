@@ -257,3 +257,25 @@ for (const vp of [{ n: 'phone', w: 390, h: 844 }, { n: 'desktop', w: 1280, h: 80
     expect(serious.map((v) => `${v.id}: ${v.nodes[0]?.target}`)).toEqual([]);
   });
 }
+
+for (const vp of [{ n: 'phone', w: 390, h: 844 }, { n: 'desktop', w: 1280, h: 800 }]) {
+  test(`patient app: every tab and the booking form pass the scan (${vp.n})`, async ({ page }) => {
+    await page.setViewportSize({ width: vp.w, height: vp.h });
+    await page.goto('/patient');
+    await page.getByTestId('patient-login-email').fill('kavita@digiyaan.demo');
+    await page.getByTestId('patient-login-password').fill('pass1234');
+    await page.getByTestId('patient-login-submit').click();
+    await expect(page.getByRole('heading', { name: 'Kavita Deshmukh' })).toBeVisible();
+    const found: Awaited<ReturnType<typeof scan>> = [];
+    for (const t of ['home', 'visits', 'medicines', 'bills', 'reports']) {
+      await page.getByTestId(vp.n === 'phone' ? `pt-tab-${t}-m` : `pt-tab-${t}`).click();
+      if (t === 'visits') { await page.getByTestId('visits-book').click(); await page.getByTestId('pt-book-day').fill('2026-08-31'); }
+      await page.waitForTimeout(400);
+      found.push(...await scan(page, `patient-${t}-${vp.n}`));
+      const o = await page.evaluate(() => document.documentElement.scrollWidth - window.innerWidth);
+      expect(o, `patient ${t} scrolls sideways`).toBeLessThanOrEqual(0);
+    }
+    const serious = found.filter((x) => x.impact === 'serious' || x.impact === 'critical');
+    expect(serious.map((v) => `${v.id}: ${v.nodes[0]?.target}`)).toEqual([]);
+  });
+}

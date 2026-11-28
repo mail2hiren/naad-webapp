@@ -29,7 +29,9 @@ test('patient signs in, reviews their history, and requests a rebook', async ({ 
 
   // One-Click Rebook Follow-up pipes straight back into the reception booking pool.
   await page.getByTestId('rebook-followup').click();
-  await expect(page.getByText(/Requested|Requesting/)).toBeVisible();
+  await expect(page.getByTestId('rebook-followup')).toHaveText('Requested');
+  // It asks for the first free time with his doctor; reception confirms it.
+  await expect(page.getByRole('status').filter({ hasText: 'The front desk will confirm.' })).toContainText('Dr. Sagar Karvir');
 
   await page.getByTestId('patient-sign-out').click();
   await expect(page.getByText('Your care history')).toBeVisible();
