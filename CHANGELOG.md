@@ -24,7 +24,7 @@ The reception calendar rebuilt as a complete product (benchmark: Practo Ray), an
 - **More room for the calendar:** hide the left panel, the patient flow, or both ("Full calendar"); with the left panel hidden, doctors are picked from colour chips above the grid. The calendar now uses the full screen width.
 - **App menu shrinks to icons** (every staff page; remembered on the device) to give pages more room.
 - Keyboard: T today, ← → move, D/W/M views, N new, / search.
-- Proposed migration `supabase/proposed/0019_calendar_flow.sql` (needs the owner's go): the with-doctor step and times, overbooked, repeat course id, `calendar_blocks`, `appointment_waitlist`, `my_queue_status()`.
+- Migration `20261128171547_calendar_flow` (0019), applied to the Naad database with the owner's go: the with-doctor step and times, overbooked, repeat course id, `calendar_blocks`, `appointment_waitlist`, `my_queue_status()`.
 
 ### Changed
 - Status names on screen: "Checked in" is now **Waiting**, "Seen" is **Done**.
