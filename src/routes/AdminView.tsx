@@ -288,6 +288,8 @@ function DischargeSettlement({
       return;
     }
 
+    // The patient has left: free any bed still held for them.
+    await supabase.from('beds').update({ patient_id: null, occupied_since: null }).eq('patient_id', patient.id);
     await logAudit('discharge-balance-cleared', patient.name);
     pushToast({ tone: 'ok', title: 'Balance cleared', detail: `${patient.name} moved to active follow-up.` });
   }

@@ -373,7 +373,7 @@ function OrderCard({
                   {matched.alternates.map((alt) => (
                     <span
                       key={alt}
-                      className="font-mono text-xs px-1.5 py-0.5 rounded-full bg-accent-soft text-accent-ink"
+                      className="font-mono text-xs px-1.5 py-0.5 rounded-full border border-line-strong bg-surface-solid text-ink"
                     >
                       {alt}
                     </span>

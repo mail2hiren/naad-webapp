@@ -180,10 +180,10 @@ export function VitalsPanel({ patient, vitals, locked }: { patient: PatientRow; 
       )}
       {mine.length > 1 && (
         <div className="grid md:grid-cols-2 gap-3 mb-3">
-          <div><div className="text-[13px] font-semibold text-ink-soft">Pulse</div><LineChart points={series((v) => v.pulse)} yMax={160} title="Pulse over time" /></div>
-          <div><div className="text-[13px] font-semibold text-ink-soft">Temperature (°C)</div><LineChart points={series((v) => v.temp_c)} yMax={42} title="Temperature over time" /></div>
-          <div><div className="text-[13px] font-semibold text-ink-soft">BP, top number</div><LineChart points={series((v) => v.bp_systolic)} yMax={220} title="Systolic blood pressure over time" /></div>
-          <div><div className="text-[13px] font-semibold text-ink-soft">SpO2 (%)</div><LineChart points={series((v) => v.spo2)} yMax={100} unit="%" title="Oxygen saturation over time" /></div>
+          <div><div className="text-[13px] font-semibold text-ink-soft">Pulse</div><LineChart points={series((v) => v.pulse)} yMin={40} yMax={160} title="Pulse over time" /></div>
+          <div><div className="text-[13px] font-semibold text-ink-soft">Temperature (°C)</div><LineChart points={series((v) => v.temp_c)} yMin={34} yMax={42} title="Temperature over time" /></div>
+          <div><div className="text-[13px] font-semibold text-ink-soft">BP, top number</div><LineChart points={series((v) => v.bp_systolic)} yMin={80} yMax={200} title="Systolic blood pressure over time" /></div>
+          <div><div className="text-[13px] font-semibold text-ink-soft">SpO2 (%)</div><LineChart points={series((v) => v.spo2)} yMin={80} yMax={100} unit="%" title="Oxygen saturation over time" /></div>
         </div>
       )}
       {!locked && (
