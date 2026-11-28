@@ -48,6 +48,7 @@ export default function Shell({ title, children }: { title: string; children: Re
   useEffect(() => {
     document.title = `${title} — Naad`;
     pageStart.current?.focus({ preventScroll: true });
+    window.scrollTo(0, 0);
   }, [pathname, search, title]);
 
   useEffect(() => {

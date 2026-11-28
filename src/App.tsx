@@ -16,6 +16,7 @@ const PharmacyView = lazy(() => import('./routes/PharmacyView'));
 const PatientPortalView = lazy(() => import('./routes/PatientPortalView'));
 const AdminView = lazy(() => import('./routes/AdminView'));
 const PlatformView = lazy(() => import('./routes/PlatformView'));
+const PhysioView = lazy(() => import('./routes/PhysioView'));
 
 export default function App() {
   return (
@@ -30,6 +31,7 @@ export default function App() {
               <Route path="/login" element={<LoginView />} />
               <Route path="/reception" element={<ProtectedRoute allow={['receptionist']}><ReceptionView /></ProtectedRoute>} />
               <Route path="/doctor" element={<ProtectedRoute allow={['surgeon', 'physio']}><DoctorView /></ProtectedRoute>} />
+              <Route path="/physio" element={<ProtectedRoute allow={['physio']}><PhysioView /></ProtectedRoute>} />
               <Route path="/inpatient" element={<ProtectedRoute allow={['surgeon', 'physio', 'admin']}><InpatientWardView /></ProtectedRoute>} />
               <Route path="/pharmacy" element={<ProtectedRoute allow={['pharmacist']}><PharmacyView /></ProtectedRoute>} />
               <Route path="/admin" element={<ProtectedRoute allow={['admin']}><AdminView /></ProtectedRoute>} />

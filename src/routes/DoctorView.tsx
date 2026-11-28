@@ -6,6 +6,8 @@ import { supabase, scriptedAmbient } from '../lib/supabaseClient';
 import { demoExtractionFor } from '../mock/demoExtraction';
 import { useRealAmbientCapture, type ExtractResult } from '../hooks/useRealAmbientCapture';
 import Shell from '../components/Shell';
+import { Link } from 'react-router-dom';
+import { usePhysio } from '../hooks/usePhysio';
 import { AmbientOrb, Btn, BulletList, BulletListEditor, Card, Collapsible, Field, Modal, Pill, Tabs, inputCls } from '../components/ui';
 import { ClinicalAssistantSidebar } from './doctor/ClinicalAssistantSidebar';
 import { ConsultationQualityGate, type QualityFlag } from './doctor/ConsultationQualityGate';
@@ -537,6 +539,7 @@ export default function DoctorView() {
       {activePatientId && patient && (
         <div className="flex flex-col gap-4">
           <Btn variant="ghost" className="self-start" onClick={() => setActivePatientId(null)}>&larr; Back to queue</Btn>
+          {practitioner?.role === 'physio' && <TherapyPlanLink patientId={patient.id} orgId={orgId} />}
 
           {/* ---- 3-Second Context Briefing Panel -- always visible above the
               tabs below, since it's read-only reference the doctor glances at
@@ -1074,5 +1077,20 @@ function TriageStat({ label, value }: { label: string; value: string }) {
       <div className="text-[13px] font-semibold text-ink-soft mb-0.5">{label}</div>
       <div className="text-ink text-sm font-semibold truncate">{value}</div>
     </div>
+  );
+}
+
+/** Physio chart shortcut: this patient's active therapy plan, if any. */
+function TherapyPlanLink({ patientId, orgId }: { patientId: string; orgId: string }) {
+  const { plans, sessions } = usePhysio(orgId);
+  const plan = plans.find((p) => p.patient_id === patientId && p.status === 'active');
+  if (!plan) return null;
+  const done = sessions.filter((s) => s.plan_id === plan.id).length;
+  return (
+    <Link to={`/physio?plan=${plan.id}`} data-testid="open-therapy-plan"
+      className="block bg-accent-soft rounded-[var(--radius)] px-4 py-3 text-ink hover:ring-2 hover:ring-accent">
+      <span className="font-semibold">Therapy plan: {plan.condition}</span>
+      <span className="text-ink-soft"> · {done}{plan.planned_sessions ? ` of ${plan.planned_sessions}` : ''} sessions · Open plan, progress and home programme →</span>
+    </Link>
   );
 }

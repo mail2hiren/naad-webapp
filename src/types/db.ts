@@ -329,3 +329,60 @@ export interface AuditEventRow {
   action: string | null;
   detail: string | null;
 }
+
+// ---- Physiotherapy (Phase 3) ------------------------------------------------
+
+/** One exercise in a patient's home exercise programme (stored on the plan). */
+export interface HomeProgrammeItem {
+  exerciseId: string | null;
+  name: string;
+  sets: number | null;
+  reps: string;
+  timesPerWeek: number | null;
+  notes: string;
+}
+
+export type PhysioPlanStatus = 'active' | 'completed';
+export interface PhysioPlanRow {
+  id: string;
+  org_id: string;
+  referral_id: string | null;
+  patient_id: string;
+  practitioner_id: string | null;
+  condition: string | null;
+  goals: string | null;
+  status: PhysioPlanStatus;
+  start_date: string;
+  planned_sessions: number | null;
+  sessions_per_week: number | null;
+  review_date: string | null;
+  home_programme: HomeProgrammeItem[];
+  created_at: string;
+}
+
+export interface TherapySessionRow {
+  id: string;
+  org_id: string;
+  plan_id: string;
+  patient_id: string;
+  date: string;
+  pain_score: number | null;
+  rom: string | null;
+  strength: string | null;
+  mobility: string | null;
+  exercises_done: string[];
+  tolerance: string | null;
+  progress_note: string | null;
+  provenance: string | null;
+  created_by: string | null;
+}
+
+export interface ExerciseRow {
+  id: number;
+  org_id: string;
+  name: string;
+  region: string | null;
+  sets: number | null;
+  reps: string | null;
+  instructions: string | null;
+}

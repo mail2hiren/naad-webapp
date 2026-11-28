@@ -16,17 +16,40 @@ function result(extracted: Record<string, unknown>, minutes: number): ExtractRes
   } as ExtractResult;
 }
 
-export function demoExtractionFor(specialty: string | null | undefined, complaint: string): ExtractResult {
+export function demoExtractionFor(specialty: string | null | undefined, complaint: string, programme: string[] = []): ExtractResult {
   const c = complaint.toLowerCase();
 
   if (specialty === 'Physiotherapy') {
+    const done = programme.length > 0 ? programme.slice(0, 4) : null;
+    if (c.includes('back') || c.includes('spine') || c.includes('lumbar')) {
+      return result({
+        painScore: '2/10 (was 3/10 last session)',
+        rom: 'Full lumbar flexion and extension, slight end-range tightness',
+        strength: 'Core endurance improving, plank 55 s',
+        mobility: 'Sits through the work day with short breaks; lifted a 5 kg bag without pain',
+        tolerance: 'Tolerated all exercises well',
+        exercisesDone: done ?? ['Bird dog', 'Prone press-up', 'Dead bug'],
+        progressNote: 'Pain now only after long sitting. Started lifting practice with a light bag; progress to 10 kg next session if pain stays low.',
+      }, 6.1);
+    }
+    if (c.includes('hip')) {
+      return result({
+        painScore: '3/10 (was 4/10 last session)',
+        rom: 'Hip flexion 0-85 deg, within precautions',
+        strength: 'Hip abductors 4-/5',
+        mobility: 'Walker, 50 m independently; 5 steps with a rail',
+        tolerance: 'Good; tired after the stairs',
+        exercisesDone: done ?? ['Glute bridge', 'Sit to stand', 'Ankle pumps'],
+        progressNote: 'Walking and stairs goals met with the walker. Practise stairs daily; plan to try a stick next session.',
+      }, 5.4);
+    }
     return result({
-      painScore: '3/10 (was 5/10 last session)',
-      rom: 'Knee flexion 0–115°, up from 0–100°',
+      painScore: '3/10 (was 4/10 last session)',
+      rom: 'Knee flexion 0-115 deg, up from 0-110 deg',
       strength: 'Quadriceps 4/5',
       mobility: 'Walking without a limp on level ground; slight hesitation on stairs',
       tolerance: 'Tolerated all exercises; mild ache after step-ups, settled in 10 minutes',
-      exercisesDone: ['Quadriceps sets', 'Straight leg raise', 'Mini squats', 'Step-ups', 'Stationary cycling'],
+      exercisesDone: done ?? ['Quadriceps sets', 'Straight leg raise', 'Mini squats', 'Step-ups', 'Stationary cycling'],
       progressNote:
         'Steady progress since last session: less pain and better knee bend. Ready to add balance work and progress step-up height next week.',
     }, 6.5);

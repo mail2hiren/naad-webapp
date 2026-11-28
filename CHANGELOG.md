@@ -5,6 +5,26 @@ versions follow [SemVer](https://semver.org/) and each release is tagged `vX.Y.Z
 
 ## [Unreleased]
 
+## [0.4.0] - 2026-11-28
+
+Phase 3 of the product gap audit: a real physiotherapy module.
+
+### Added
+- **Caseload** (`/physio`): every active therapy plan with sessions done, current pain and its trend, and review date (flagged when due). New referrals from doctors appear on top; **Accept and plan** starts a therapy plan.
+- **Therapy plan page**:
+  - Condition, goals, planned sessions, sessions per week and review date; mark complete or reopen.
+  - Pain-over-sessions chart and the latest range of motion and strength.
+  - Full session record, newest first.
+- **Record a session**: pain (0-10), range of motion, strength, mobility, tolerance, exercises done and a progress note. **Start recording** lets Naad draft the session from the conversation (real recordings now carry the therapy plan); the physio checks it and signs by saving. Drafts are marked "drafted by Naad, approved by the physio".
+- **Home exercise programme** per plan, built from the library with sets, reps, days a week and a note.
+- **Exercise library**: searchable by name and body region; add and edit exercises with instructions.
+- **Patient app**: "Your home exercises" and "Your progress" (pain chart) for patients with an active plan.
+- Physio sidebar: Today's patients, Caseload, Exercise library, Ward. A physio's patient chart links to that patient's therapy plan.
+- Migration `20261128062138_physio_plan_details` (plan details, home programme, exercise instructions, editable sessions), applied to the Naad database with the owner's go.
+
+### Demo mode
+- 30 exercises, 5 therapy plans (4 active, 1 completed) with 15 sessions where pain falls and range of motion improves. Demo recordings draft a session that matches the patient's condition (knee, back, hip) and their own programme.
+
 ## [0.3.0] - 2026-11-27
 
 Phase 2 of the product gap audit: the DigiYaan Super admin console and departments.

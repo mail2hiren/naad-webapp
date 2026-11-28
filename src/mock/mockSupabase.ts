@@ -1,4 +1,5 @@
 import * as seed from './seed';
+import * as physioSeed from './physioSeed';
 import { handle as platformAdminHandle } from '../../supabase/functions/platform-admin/handler';
 
 /**
@@ -23,13 +24,18 @@ type Row = Record<string, any>;
  */
 const SEED_DAY = '2026-08-29';
 const ISO_TS = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}/;
+const ISO_DAY = /^\d{4}-\d{2}-\d{2}$/;
 
 function localDay(d: Date): string {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
 }
 
 function shiftDates(value: any, ms: number): any {
-  if (typeof value === 'string') return ISO_TS.test(value) ? new Date(Date.parse(value) + ms).toISOString() : value;
+  if (typeof value === 'string') {
+    if (ISO_TS.test(value)) return new Date(Date.parse(value) + ms).toISOString();
+    if (ISO_DAY.test(value)) return new Date(Date.parse(value) + ms).toISOString().slice(0, 10);
+    return value;
+  }
   if (Array.isArray(value)) {
     value.forEach((v, i) => { value[i] = shiftDates(v, ms); });
     return value;
@@ -57,6 +63,9 @@ const TABLES: Record<string, Row[]> = {
   platform_audit: seed.platformAudit as unknown as Row[],
   departments: seed.departments as unknown as Row[],
   ai_usage_log: [],
+  physiotherapy_plans: physioSeed.plans as unknown as Row[],
+  therapy_sessions: physioSeed.sessions as unknown as Row[],
+  exercise_library: physioSeed.exercises as unknown as Row[],
   patients: seed.patients as unknown as Row[],
   appointments: seed.appointments as unknown as Row[],
   encounters: seed.encounters as unknown as Row[],
