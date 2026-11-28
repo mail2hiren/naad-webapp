@@ -1,6 +1,7 @@
 import * as seed from './seed';
 import * as physioSeed from './physioSeed';
 import * as receptionSeed from './receptionSeed';
+import * as adminSeed from './adminSeed';
 import { handle as platformAdminHandle } from '../../supabase/functions/platform-admin/handler';
 
 /**
@@ -70,6 +71,8 @@ const TABLES: Record<string, Row[]> = {
   patients: [...seed.patients, ...receptionSeed.patients] as unknown as Row[],
   appointments: [...seed.appointments, ...receptionSeed.appointments] as unknown as Row[],
   bills: receptionSeed.bills as unknown as Row[],
+  service_rates: adminSeed.rates as unknown as Row[],
+  beds: adminSeed.beds as unknown as Row[],
   encounters: seed.encounters as unknown as Row[],
   prescriptions: seed.prescriptions as unknown as Row[],
   pharmacy_orders: seed.pharmacyOrders as unknown as Row[],
@@ -184,6 +187,8 @@ class MockBuilder {
       }
       const inserted: Row[] = rowsIn.map((r) => {
         const row = { id: r.id ?? genId(this.table.slice(0, 4)), ...r };
+        // Like the real column default (ts timestamptz default now()).
+        if (this.table === 'audit_events' && !row.ts) row.ts = new Date().toISOString();
         table.push(row);
         notify(this.table, { eventType: 'INSERT', new: { ...row }, old: null });
         return row;
@@ -392,6 +397,13 @@ export function createMockSupabaseClient() {
     auth,
     // Mirrors the org_seat_usage() SQL function (supabase/migrations).
     rpc: async (fn: string) => {
+      if (fn === 'audit_chain_check') {
+        // The demo has no hashes to check; report every entry as checked.
+        const { data: sess } = await auth.getSession();
+        const me = TABLES.practitioners.find((p) => p.auth_user_id === sess.session?.user.id);
+        if (me?.role !== 'admin') return { data: null, error: { message: 'admins_only' } };
+        return { data: [{ checked: TABLES.audit_events.filter((a) => a.org_id === me.org_id).length, broken_id: null }], error: null };
+      }
       if (fn !== 'org_seat_usage') return { data: null, error: { message: `mock: unknown rpc "${fn}"` } };
       // Like the real function: the signed-in staff member's own hospital.
       const { data: sess } = await auth.getSession();

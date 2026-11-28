@@ -9,22 +9,35 @@ import { Card, Btn, Pill, StatTile, inputCls } from '../components/ui';
 import { useClinic } from '../context/ClinicContext';
 import { supabase } from '../lib/supabaseClient';
 import type { PatientRow, PractitionerRow } from '../types/db';
+import { useBills } from '../hooks/useBills';
+import { useBeds } from '../hooks/useHospitalSetup';
+import { WorkingHoursSection } from '../components/admin/WorkingHours';
+import { RatesSection } from '../components/admin/Rates';
+import { BedsSection } from '../components/admin/Beds';
+import { ReportsSection } from '../components/admin/Reports';
+import { AuditLogSection } from '../components/admin/AuditLog';
+import { balance, clinicToday, dayKey, holdsSlot, money, onDay } from '../lib/schedule';
 
 function fmtRupees(n: number): string {
   return `₹${n.toLocaleString('en-IN')}`;
 }
 
 /**
- * Admin Control Panel (/admin). Four tools over the shared clinic pool:
- * doctor consult-fee editing, a client-side staff password recovery-code
- * issuer, the discharge balance settlement queue fed by InpatientWardView's
- * queue_status:'pending_discharge_clearance' handoff, and a high-level
- * operational stat strip. No parallel state -- every number here is derived
- * live from useClinic().
+ * Hospital admin (/admin): today's numbers, staff and departments, working
+ * hours, fees and the price list, wards and beds, reports, the audit log
+ * and discharge billing. Each sidebar item is one section (?section=).
  */
+type AdminSection = 'overview' | 'staff' | 'departments' | 'hours' | 'fees' | 'beds' | 'reports' | 'audit' | 'billing';
+const TITLES: Record<AdminSection, string> = {
+  overview: 'Overview', staff: 'Staff', departments: 'Departments', hours: 'Working hours', fees: 'Fees and price list',
+  beds: 'Wards and beds', reports: 'Reports', audit: 'Audit log', billing: 'Discharge billing',
+};
+
 export default function AdminView() {
-  const section = useSection<'overview' | 'staff' | 'departments' | 'fees' | 'billing'>('overview');
-  const { patients, practitioners, encounters, wardLedger, pharmacyOrders, pushToast, logAudit } = useClinic();
+  const section = useSection<AdminSection>('overview');
+  const { orgId, patients, practitioners, appointments, encounters, wardLedger, pharmacyOrders, pushToast, logAudit } = useClinic();
+  const { bills } = useBills(orgId);
+  const { beds } = useBeds(orgId);
 
   const doctors = useMemo(
     () => practitioners.filter((p) => p.role === 'surgeon' || p.role === 'physio'),
@@ -36,41 +49,34 @@ export default function AdminView() {
     [patients],
   );
 
-  // "Total Walk-ins" = patients who never entered the ward journey at all
-  // (journey_stage is still null and they're not currently admitted) --
-  // the simplest correct approximation available from PatientRow alone,
-  // since there's no direct encounter-setting-per-patient lookup here.
-  const walkInCount = useMemo(
-    () => patients.filter((p) => p.queue_status !== 'admitted' && p.journey_stage === null).length,
-    [patients],
-  );
-  const activeInpatients = useMemo(() => patients.filter((p) => p.queue_status === 'admitted').length, [patients]);
-  const pendingPharmacy = useMemo(
-    () => pharmacyOrders.filter((o) => o.status === 'received' || o.status === 'preparing' || o.status === 'ready').length,
-    [pharmacyOrders],
-  );
-  const totalRevenue = useMemo(() => {
-    const encounterRevenue = encounters
-      .filter((e) => e.payment_status === 'paid')
-      .reduce((sum, e) => sum + (e.consultation_fee || 0), 0);
-    const ledgerRevenue = wardLedger.reduce((sum, l) => sum + l.amount, 0);
-    return encounterRevenue + ledgerRevenue;
-  }, [encounters, wardLedger]);
+  const today = clinicToday();
+  const visitsToday = appointments.filter((a) => onDay(a, today) && holdsSlot(a.status)).length;
+  const seenToday = appointments.filter((a) => onDay(a, today) && a.status === 'completed').length;
+  const collectedToday = bills.filter((b) => b.status !== 'void' && b.paid_at && dayKey(new Date(b.paid_at)) === today).reduce((s, b) => s + b.paid, 0);
+  const owed = bills.reduce((s, b) => s + balance(b), 0);
+  const activeBeds = beds.filter((b) => b.active);
+  const pendingPharmacy = pharmacyOrders.filter((o) => o.status === 'received' || o.status === 'preparing' || o.status === 'ready').length;
 
   return (
-    <Shell title={{ overview: 'Overview', staff: 'Staff', departments: 'Departments', fees: 'Consultation fees', billing: 'Discharge billing' }[section]}>
+    <Shell title={TITLES[section]}>
       {section === 'overview' && (<>
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6">
-        <StatTile label="Total Walk-ins" value={walkInCount} />
-        <StatTile label="Active Inpatients" value={activeInpatients} tone="ok" />
-        <StatTile label="Pending Pharmacy Orders" value={pendingPharmacy} tone="gate" />
-        <StatTile label="Total Revenue Collected" value={fmtRupees(totalRevenue)} tone="accent" />
+      <div className="grid grid-cols-2 md:grid-cols-3 gap-3 mb-6" data-testid="admin-overview">
+        <StatTile label="Visits booked today" value={visitsToday} />
+        <StatTile label="Seen today" value={seenToday} tone="ok" />
+        <StatTile label="Collected today" value={money(collectedToday)} tone="accent" />
+        <StatTile label="Balance due (all bills)" value={money(owed)} tone="danger" />
+        <StatTile label="Beds occupied" value={`${activeBeds.filter((b) => b.patient_id).length} of ${activeBeds.length}`} tone="gate" />
+        <StatTile label="Pharmacy orders waiting" value={pendingPharmacy} />
       </div>
 
       <PlanAndSeats practitionerCount={practitioners.length} />
       </>)}
 
-      {section === 'fees' && <FeeEditor doctors={doctors} pushToast={pushToast} />}
+      {section === 'fees' && <><FeeEditor doctors={doctors} pushToast={pushToast} /><RatesSection /></>}
+      {section === 'hours' && <WorkingHoursSection />}
+      {section === 'beds' && <BedsSection />}
+      {section === 'reports' && <ReportsSection bills={bills} />}
+      {section === 'audit' && <AuditLogSection />}
 
       {(section === 'staff' || section === 'departments') && <HospitalTeam section={section} />}
 

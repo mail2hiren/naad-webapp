@@ -18,6 +18,7 @@ Naad project (`qerqzzqmpeqeknbnvyec`) → verified live → the file is moved in
 | 0010 | Demo physio data for org1: 30 exercises, 5 plans, 15 sessions (data only) | Applied 2026-11-28 as `20261128064102` |
 | 0011 | Reception: working hours, tokens, reschedule/cancel fields, bills, clinician may mark own visits seen | Applied 2026-11-28 as `20261128070653` |
 | 0012 | Demo front-desk day for org1: 3 patients, 14 appointments, 3 bills, receipt address (data only) | Applied 2026-11-28 as `20261128072327` |
+| 0013 | Admin: service_rates and beds tables, audit_chain_check() | Waiting for owner's go (Phase 5) |
 
 They are kept outside `supabase/migrations/` on purpose, so no tool
 (`supabase db push`, a Supabase GitHub integration) can apply them by accident.

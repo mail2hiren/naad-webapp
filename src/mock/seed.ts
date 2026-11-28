@@ -29,7 +29,7 @@ export const practitioners: PractitionerRow[] = [
   { id: 'pr-physio', org_id: ORG_ID, auth_user_id: 'auth-physio', name: 'Dr. Jayani Bhatt', role: 'physio', title: 'Physiotherapist (MPT)', specialty: 'Physiotherapy', consult_fee: 600, preferred_language: 'en', active: true },
   { id: 'pr-recep', org_id: ORG_ID, auth_user_id: 'auth-recep', name: 'Sunita Kulkarni', role: 'receptionist', title: 'Front Desk', specialty: null, consult_fee: null, preferred_language: 'en', active: true },
   { id: 'pr-surgeon', org_id: ORG_ID, auth_user_id: 'auth-surgeon', name: 'Dr. Sagar Karvir', role: 'surgeon', title: 'Orthopedic Surgeon', specialty: 'Orthopedics', consult_fee: 800, preferred_language: 'en', active: true },
-  { id: 'pr-namrata', org_id: ORG_ID, auth_user_id: 'auth-namrata', name: 'Dr. Namrata Rao', role: 'surgeon', title: 'Critical Care Physician', specialty: 'Critical Care', consult_fee: 1200, preferred_language: 'en', active: true },
+  { id: 'pr-namrata', org_id: ORG_ID, auth_user_id: 'auth-namrata', name: 'Dr. Namrata Rao', role: 'surgeon', title: 'Critical Care Physician', specialty: 'Critical Care', consult_fee: 1200, preferred_language: 'en', working_hours: { mon: [['10:00', '14:00']], tue: [['10:00', '14:00']], wed: [['10:00', '14:00']], thu: [['10:00', '14:00']], fri: [['10:00', '14:00']], sat: [['10:00', '14:00']] }, active: true },
 ];
 
 export const patients: PatientRow[] = [

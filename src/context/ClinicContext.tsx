@@ -169,6 +169,7 @@ export function ClinicProvider({ children }: { children: ReactNode }) {
 
     const channels = [
       supabase.channel('rt-patients').on('postgres_changes', { event: '*', schema: 'public', table: 'patients' }, upsert(setPatients)).subscribe(),
+      supabase.channel('rt-practitioners').on('postgres_changes', { event: '*', schema: 'public', table: 'practitioners' }, upsert(setPractitioners)).subscribe(),
       supabase.channel('rt-appointments').on('postgres_changes', { event: '*', schema: 'public', table: 'appointments' }, upsert(setAppointments)).subscribe(),
       supabase.channel('rt-encounters').on('postgres_changes', { event: '*', schema: 'public', table: 'encounters' }, upsert(setEncounters)).subscribe(),
       supabase.channel('rt-prescriptions').on('postgres_changes', { event: '*', schema: 'public', table: 'prescriptions' }, upsert(setPrescriptions)).subscribe(),

@@ -358,6 +358,31 @@ export interface NotificationRow {
   channel: 'inapp' | 'push';
 }
 
+export type RateCategory = 'consultation' | 'procedure' | 'investigation' | 'therapy' | 'ward' | 'pharmacy' | 'other';
+export interface ServiceRateRow {
+  id: string;
+  org_id: string;
+  name: string;
+  category: RateCategory;
+  amount: number;
+  active: boolean;
+  created_at: string;
+}
+
+export type BedKind = 'general' | 'semi_private' | 'private' | 'icu' | 'day_care';
+export interface BedRow {
+  id: string;
+  org_id: string;
+  ward: string;
+  label: string;
+  kind: BedKind;
+  daily_rate: number;
+  active: boolean;
+  patient_id: string | null;
+  occupied_since: string | null;
+  created_at: string;
+}
+
 export interface AuditEventRow {
   id: string;
   org_id: string;
@@ -366,6 +391,8 @@ export interface AuditEventRow {
   role: string | null;
   action: string | null;
   detail: string | null;
+  prev_hash?: string | null;
+  hash?: string | null;
 }
 
 // ---- Physiotherapy (Phase 3) ------------------------------------------------
