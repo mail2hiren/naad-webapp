@@ -5,6 +5,11 @@ versions follow [SemVer](https://semver.org/) and each release is tagged `vX.Y.Z
 
 ## [Unreleased]
 
+## [0.8.2] - 2026-11-28
+
+### Changed
+- The demo now lives at **https://naad.digiyaan.com/** (GoDaddy CNAME to GitHub Pages, HTTPS enforced, built for the domain root). The old github.io address redirects there. Supabase sign-in emails and password resets now point to the new address; the old address stays allowed.
+
 ## [0.8.1] - 2026-11-28
 
 ### Added

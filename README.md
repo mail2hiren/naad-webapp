@@ -40,7 +40,7 @@ CI (`.github/workflows/ci.yml`) runs all of the above on every push and pull req
 
 ## Deploy
 
-**GitHub Pages (primary, free).** `.github/workflows/deploy-pages.yml` builds and publishes on every push to `main`. One-time setup: repo **Settings → Pages → Source: GitHub Actions**. The app is then live at `https://<user>.github.io/naad-webapp/`. For a custom domain (recommended before hospitals use it), add it under Settings → Pages and set the repository variable `PAGES_BASE_PATH` to `/`.
+**GitHub Pages (primary, free).** `.github/workflows/deploy-pages.yml` builds and publishes on every push to `main`. One-time setup: repo **Settings → Pages → Source: GitHub Actions**. The demo is live at **https://naad.digiyaan.com/** (custom domain; the `https://<user>.github.io/naad-webapp/` address redirects there). To use another custom domain: add a CNAME record pointing to `<user>.github.io`, add the domain under Settings → Pages, set the repository variable `PAGES_BASE_PATH` to `/`, and add the address to Supabase Auth → URL Configuration (Site URL and redirect URLs).
 
 Netlify still works with the same code (`netlify.toml`), but it is no longer required.
 
