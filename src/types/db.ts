@@ -423,9 +423,9 @@ export interface LabOrderRow {
   encounter_id: string | null;
   ordered_by: string | null;
   test_name: string;
-  test_type: string;
-  urgency: string;
-  status: string;
+  test_type: 'xray' | 'mri' | 'ct' | 'blood' | 'urine' | 'other';
+  urgency: 'routine' | 'urgent';
+  status: 'ordered' | 'in_progress' | 'completed' | 'reviewed';
   notes: string | null;
   result_document_id: string | null;
   result_summary: string | null;
