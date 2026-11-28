@@ -19,7 +19,7 @@ const BILL_STATUS: Record<BillStatus, { label: string; tone: 'default' | 'gate' 
 
 const when = (iso: string) => new Date(iso).toLocaleString('en-IN', { day: 'numeric', month: 'short', hour: 'numeric', minute: '2-digit' });
 
-function MethodPicker({ value, onChange }: { value: PaymentMethod; onChange: (m: PaymentMethod) => void }) {
+export function MethodPicker({ value, onChange }: { value: PaymentMethod; onChange: (m: PaymentMethod) => void }) {
   return (
     <fieldset className="mb-3">
       <legend className="text-[13px] font-semibold text-ink-soft mb-1.5">Paid by</legend>
@@ -151,7 +151,7 @@ export function BillModal({
   );
 }
 
-function PaymentModal({ bill, onClose }: { bill: BillRow; onClose: () => void }) {
+export function PaymentModal({ bill, onClose }: { bill: BillRow; onClose: () => void }) {
   const { patients, pushToast, logAudit } = useClinic();
   const due = balance(bill);
   const [amount, setAmount] = useState(String(due));

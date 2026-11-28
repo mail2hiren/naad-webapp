@@ -139,6 +139,8 @@ export interface BillRow {
   created_by: string | null;
   created_at: string;
   paid_at: string | null;
+  source?: 'front_desk' | 'pharmacy' | 'ward';
+  pharmacy_order_id?: string | null;
 }
 
 export type EncounterSetting = 'clinic' | 'ward';
@@ -381,6 +383,37 @@ export interface BedRow {
   patient_id: string | null;
   occupied_since: string | null;
   created_at: string;
+}
+
+export interface StockBatchRow {
+  id: string;
+  org_id: string;
+  inventory_id: number;
+  batch_no: string;
+  expiry: string;
+  qty: number;
+  mrp: number;
+  supplier: string | null;
+  received_at: string;
+  received_by: string | null;
+  written_off_at: string | null;
+  write_off_reason: string | null;
+}
+
+export interface VitalsRow {
+  id: string;
+  org_id: string;
+  patient_id: string;
+  taken_at: string;
+  bp_systolic: number | null;
+  bp_diastolic: number | null;
+  pulse: number | null;
+  temp_c: number | null;
+  spo2: number | null;
+  resp_rate: number | null;
+  pain: number | null;
+  note: string | null;
+  recorded_by: string | null;
 }
 
 export interface AuditEventRow {
