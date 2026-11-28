@@ -65,6 +65,8 @@ export function useRealAmbientCapture(opts: {
   stage: CaptureStage;
   patientId: string | null;
   encounterId?: string | null;
+  /** Physio sessions: the therapy plan this recording belongs to. */
+  planId?: string | null;
 }) {
   const [status, setStatus] = useState<CaptureStatus>('idle');
   const [error, setError] = useState<CaptureError | null>(null);
@@ -106,6 +108,7 @@ export function useRealAmbientCapture(opts: {
       'x-patient-id': patientId,
     };
     if (encounterId) headers['x-encounter-id'] = encounterId;
+    if (cur.planId) headers['x-plan-id'] = cur.planId;
 
     let res: Response;
     try {

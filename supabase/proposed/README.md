@@ -14,6 +14,7 @@ Naad project (`qerqzzqmpeqeknbnvyec`) → verified live → the file is moved in
 | 0006 | Seed template for a first real hospital | Superseded by the Super admin console (Phase 2) |
 | 0007 | Platform layer: super admins, platform audit, hospital profile fields | Applied 2026-11-27 as `20261127054343` |
 | 0008 | Departments per hospital | Applied 2026-11-27 as `20261127054404` |
+| 0009 | Physio plan details, home programme, exercise instructions, editable sessions | Waiting for owner's go (Phase 3) |
 
 They are kept outside `supabase/migrations/` on purpose, so no tool
 (`supabase db push`, a Supabase GitHub integration) can apply them by accident.

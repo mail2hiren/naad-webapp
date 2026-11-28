@@ -143,3 +143,18 @@ test('screen readers: notifications are announced through a persistent live regi
   await login(page, 'receptionist', 'sunita@digiyaan.demo');
   await expect(page.locator('[role=status][aria-live=polite]')).toHaveCount(1);
 });
+
+test('physio caseload, therapy plan and exercise library pass the accessibility scan', async ({ page }) => {
+  await login(page, 'physio', 'jayani@digiyaan.demo');
+  await page.getByTestId('nav-physio-caseload').click();
+  await expect(page.getByTestId('plan-card').first()).toBeVisible();
+  const caseload = await scan(page, 'physio-caseload');
+  await page.getByTestId('plan-card').first().click();
+  await expect(page.getByTestId('record-session')).toBeVisible();
+  const planPage = await scan(page, 'physio-plan');
+  await page.getByTestId('nav-physio-library').click();
+  await expect(page.getByTestId('exercise-card').first()).toBeVisible();
+  const library = await scan(page, 'physio-library');
+  const serious = [...caseload, ...planPage, ...library].filter((x) => x.impact === 'serious' || x.impact === 'critical');
+  expect(serious.map((v) => `${v.id}: ${v.nodes[0]?.target}`)).toEqual([]);
+});

@@ -1,8 +1,9 @@
 import { useEffect, useMemo, useState, type FormEvent } from 'react';
 import { supabase } from '../lib/supabaseClient';
 import { Card, Panel, Btn, BulletList, Pill, SectionHead, inputCls } from '../components/ui';
+import { LineChart } from '../components/LineChart';
 import { toBullets } from '../lib/clinicalNote';
-import type { EncounterRow, JourneyHistoryEntry, JourneyStage, PatientRow } from '../types/db';
+import type { EncounterRow, JourneyHistoryEntry, JourneyStage, PatientRow, PhysioPlanRow, TherapySessionRow } from '../types/db';
 
 /**
  * Patient Portal (/patient) -- a self-contained route for patients, NOT staff.
@@ -49,6 +50,7 @@ export default function PatientPortalView() {
 
   // -- portal data --------------------------------------------------------
   const [encounters, setEncounters] = useState<EncounterRow[]>([]);
+  const [therapy, setTherapy] = useState<{ plans: PhysioPlanRow[]; sessions: TherapySessionRow[] }>({ plans: [], sessions: [] });
   const [loadingHistory, setLoadingHistory] = useState(false);
   const [historyError, setHistoryError] = useState<string | null>(null);
   const [expandedId, setExpandedId] = useState<string | null>(null);
@@ -71,6 +73,12 @@ export default function PatientPortalView() {
     } else {
       setEncounters((data ?? []) as EncounterRow[]);
     }
+    // Physiotherapy: the patient's own plans and sessions (RLS: own rows only).
+    const [pl, ss] = await Promise.all([
+      supabase.from('physiotherapy_plans').select('*').eq('patient_id', p.id),
+      supabase.from('therapy_sessions').select('*').eq('patient_id', p.id).order('date'),
+    ]);
+    setTherapy({ plans: (pl.data as PhysioPlanRow[]) ?? [], sessions: (ss.data as TherapySessionRow[]) ?? [] });
     setLoadingHistory(false);
   }
 
@@ -250,6 +258,8 @@ export default function PatientPortalView() {
         </Btn>
       </header>
 
+      <MyTherapy plans={therapy.plans} sessions={therapy.sessions} />
+
       {/* Rebook widget */}
       <Card className="mb-6">
         <SectionHead eyebrow="Follow-up" title="One-click rebook" desc="Request a follow-up appointment -- our front desk will confirm a time." />
@@ -424,5 +434,36 @@ export default function PatientPortalView() {
         </div>
       </Card>
     </div>
+  );
+}
+
+/** The patient's active physiotherapy: home exercises and pain over sessions. */
+function MyTherapy({ plans, sessions }: { plans: PhysioPlanRow[]; sessions: TherapySessionRow[] }) {
+  const plan = plans.find((p) => p.status === 'active');
+  if (!plan) return null;
+  const own = sessions.filter((s) => s.plan_id === plan.id && s.pain_score != null);
+  const day = (iso: string) => new Date(iso).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' });
+  return (
+    <>
+      <Card className="mb-6" data-testid="my-exercises">
+        <SectionHead eyebrow="Physiotherapy" title="Your home exercises" desc={`For: ${plan.condition ?? 'your therapy plan'}. Do these on the days shown; stop and tell your physio if anything causes sharp pain.`} />
+        <ul className="flex flex-col divide-y divide-line">
+          {(plan.home_programme ?? []).map((h, i) => (
+            <li key={`${h.name}-${i}`} className="py-3">
+              <div className="font-semibold text-[16px]">{h.name}</div>
+              <div className="text-ink-soft">{h.sets ? `${h.sets} sets of ` : ''}{h.reps}{h.timesPerWeek ? ` · ${h.timesPerWeek} days a week` : ''}</div>
+              {h.notes && <div className="text-sm mt-0.5">{h.notes}</div>}
+            </li>
+          ))}
+          {(plan.home_programme ?? []).length === 0 && <li className="py-2 text-ink-soft">Your physio hasn't added home exercises yet.</li>}
+        </ul>
+      </Card>
+      {own.length > 0 && (
+        <Card className="mb-6" data-testid="my-progress">
+          <SectionHead eyebrow="Physiotherapy" title="Your progress" desc={`Pain score after each session (0 = no pain, 10 = worst). ${own.length} session${own.length === 1 ? '' : 's'} so far.`} />
+          <LineChart points={own.map((s, i) => ({ label: `S${i + 1} · ${day(s.date)}`, value: s.pain_score as number }))} yMax={10} title="Your pain score by session" />
+        </Card>
+      )}
+    </>
   );
 }

@@ -20,7 +20,9 @@ export const ROLE_NAV: Record<StaffRole, NavItem[]> = {
     { to: '/inpatient', label: 'Ward', icon: 'bed' },
   ],
   physio: [
-    { to: '/doctor', label: 'My patients', icon: 'stethoscope' },
+    { to: '/doctor', label: "Today's patients", icon: 'stethoscope' },
+    { to: '/physio', section: 'caseload', label: 'Caseload', icon: 'users' },
+    { to: '/physio', section: 'library', label: 'Exercise library', icon: 'box' },
     { to: '/inpatient', label: 'Ward', icon: 'bed' },
   ],
   pharmacist: [
