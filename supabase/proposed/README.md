@@ -21,7 +21,7 @@ Naad project (`qerqzzqmpeqeknbnvyec`) → verified live → the file is moved in
 | 0013 | Admin: service_rates and beds tables, audit_chain_check() | Applied 2026-11-28 as `20261128075340` |
 | 0014 | Demo price list and wards/beds for org1, admitted patients in beds (data only) | Applied 2026-11-28 as `20261128080055` |
 | 0015 | Pharmacy stock batches, vitals, pharmacy billing, clinician bed occupancy | Applied 2026-11-28 as `20261128084529` |
-| 0016 | Demo pharmacy stock (8 medicines, 15 batches) and ward vitals for org1 (data only) | Waiting for owner's go |
+| 0016 | Demo pharmacy stock (8 medicines, 15 batches) and ward vitals for org1 (data only) | Applied 2026-11-28 as `20261128085409` |
 
 They are kept outside `supabase/migrations/` on purpose, so no tool
 (`supabase db push`, a Supabase GitHub integration) can apply them by accident.
