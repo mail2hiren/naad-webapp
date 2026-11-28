@@ -435,7 +435,7 @@ function Reports({ data }: { data: PatientData }) {
                 <span className="font-semibold text-ink">{l.test_name}</span>
                 {l.result_summary ? <Pill tone={l.flagged ? 'danger' : 'ok'}>{l.flagged ? 'Doctor noted' : 'Normal'}</Pill> : <Pill tone="gate">Awaiting result</Pill>}
               </div>
-              <div className="text-sm text-ink-soft">Ordered {d(l.ordered_at)}{l.ordered_by ? ` by ${l.ordered_by}` : ''}</div>
+              <div className="text-sm text-ink-soft">Ordered {d(l.ordered_at)}{l.ordered_by ? ` by ${data.doctors.find((x) => x.id === l.ordered_by)?.name ?? 'your doctor'}` : ''}</div>
               {l.result_summary && <p className="text-sm text-ink mt-1">{l.result_summary}</p>}
             </li>
           ))}
