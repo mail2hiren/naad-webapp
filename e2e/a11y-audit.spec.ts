@@ -158,3 +158,44 @@ test('physio caseload, therapy plan and exercise library pass the accessibility 
   const serious = [...caseload, ...planPage, ...library].filter((x) => x.impact === 'serious' || x.impact === 'critical');
   expect(serious.map((v) => `${v.id}: ${v.nodes[0]?.target}`)).toEqual([]);
 });
+
+for (const vp of [{ n: 'phone', w: 390, h: 844 }, { n: 'desktop', w: 1280, h: 800 }]) {
+  test(`reception calendar, booking, billing, receipt and patients pass the scan (${vp.n})`, async ({ page }) => {
+    await page.setViewportSize({ width: vp.w, height: vp.h });
+    await login(page, 'receptionist', 'sunita@digiyaan.demo');
+    await expect(page).toHaveURL(/\/reception$/);
+    const nav = async (s: string) => {
+      if (vp.n === 'phone') await page.getByRole('button', { name: 'Open menu' }).click();
+      await page.getByTestId(`nav-reception-${s}`).filter({ visible: true }).click();
+    };
+    const found: Awaited<ReturnType<typeof scan>> = [];
+    const overflow = async (label: string) => {
+      const o = await page.evaluate(() => document.documentElement.scrollWidth - window.innerWidth);
+      expect(o, `${label} scrolls sideways`).toBeLessThanOrEqual(0);
+    };
+    await nav('calendar');
+    await expect(page.getByTestId('doctor-column').first()).toBeVisible();
+    found.push(...await scan(page, `calendar-${vp.n}`)); await overflow('calendar');
+    await page.getByTestId('book-new').click();
+    await expect(page.getByTestId('booking-modal')).toBeVisible();
+    found.push(...await scan(page, `booking-${vp.n}`));
+    await page.getByTestId('booking-modal').getByRole('button', { name: 'Cancel' }).click();
+    await nav('billing');
+    await expect(page.getByTestId('bill-row').first()).toBeVisible();
+    found.push(...await scan(page, `billing-${vp.n}`)); await overflow('billing');
+    await page.getByTestId('bill-visit').first().click();
+    await expect(page.getByTestId('bill-modal')).toBeVisible();
+    found.push(...await scan(page, `bill-${vp.n}`));
+    await page.getByTestId('bill-save').click();
+    await expect(page.getByTestId('receipt')).toBeVisible();
+    await page.waitForTimeout(600); // let the "bill saved" notification finish fading in before measuring contrast
+    found.push(...await scan(page, `receipt-${vp.n}`));
+    await page.getByTestId('close-receipt').click();
+    await nav('patients');
+    await page.getByTestId('patient-row').first().click();
+    await expect(page.getByTestId('patient-detail')).toBeVisible();
+    found.push(...await scan(page, `patients-${vp.n}`)); await overflow('patients');
+    const serious = found.filter((x) => x.impact === 'serious' || x.impact === 'critical');
+    expect(serious.map((v) => `${v.id}: ${v.nodes[0]?.target}`)).toEqual([]);
+  });
+}

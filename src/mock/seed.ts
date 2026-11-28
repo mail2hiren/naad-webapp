@@ -180,8 +180,8 @@ export const patients: PatientRow[] = [
 ];
 
 export const appointments: AppointmentRow[] = [
-  { id: 'ap-1', org_id: ORG_ID, patient_id: 'p-priya', specialty: 'Orthopedics', date: '2026-08-29T08:30:00Z', reason: 'Right shoulder pain, 2 days', practitioner_id: 'pr-surgeon', status: 'scheduled', start_time: '2026-08-29T08:30:00Z', duration_minutes: 20, requested_by_patient: false },
-  { id: 'ap-2', org_id: ORG_ID, patient_id: 'p-priya', specialty: 'Physiotherapy', date: '2026-08-30T05:30:00Z', reason: 'Knee stiffness follow-up (telephonic booking)', practitioner_id: 'pr-physio', status: 'scheduled', start_time: '2026-08-30T05:30:00Z', duration_minutes: 20, requested_by_patient: false },
+  { id: 'ap-1', org_id: ORG_ID, patient_id: 'p-priya', specialty: 'Orthopedics', date: '2026-08-29T06:30:00Z', reason: 'Right shoulder pain, 2 days', practitioner_id: 'pr-surgeon', status: 'scheduled', start_time: '2026-08-29T06:30:00Z', duration_minutes: 15, requested_by_patient: false, token_no: null, checked_in_at: null, cancel_reason: null, visit_type: 'consultation', rescheduled_from: null, booked_by: 'Sunita Kulkarni' },
+  { id: 'ap-2', org_id: ORG_ID, patient_id: 'p-priya', specialty: 'Physiotherapy', date: '2026-08-31T05:30:00Z', reason: 'Knee stiffness follow-up (telephonic booking)', practitioner_id: 'pr-physio', status: 'scheduled', start_time: '2026-08-31T05:30:00Z', duration_minutes: 30, requested_by_patient: false, token_no: null, checked_in_at: null, cancel_reason: null, visit_type: 'therapy', rescheduled_from: null, booked_by: 'Sunita Kulkarni' },
 ];
 
 export const encounters: EncounterRow[] = [

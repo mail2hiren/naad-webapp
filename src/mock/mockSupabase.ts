@@ -1,5 +1,6 @@
 import * as seed from './seed';
 import * as physioSeed from './physioSeed';
+import * as receptionSeed from './receptionSeed';
 import { handle as platformAdminHandle } from '../../supabase/functions/platform-admin/handler';
 
 /**
@@ -66,8 +67,9 @@ const TABLES: Record<string, Row[]> = {
   physiotherapy_plans: physioSeed.plans as unknown as Row[],
   therapy_sessions: physioSeed.sessions as unknown as Row[],
   exercise_library: physioSeed.exercises as unknown as Row[],
-  patients: seed.patients as unknown as Row[],
-  appointments: seed.appointments as unknown as Row[],
+  patients: [...seed.patients, ...receptionSeed.patients] as unknown as Row[],
+  appointments: [...seed.appointments, ...receptionSeed.appointments] as unknown as Row[],
+  bills: receptionSeed.bills as unknown as Row[],
   encounters: seed.encounters as unknown as Row[],
   prescriptions: seed.prescriptions as unknown as Row[],
   pharmacy_orders: seed.pharmacyOrders as unknown as Row[],
@@ -175,6 +177,10 @@ class MockBuilder {
       // Mirrors the real unique (org_id, name) constraint on departments.
       if (this.table === 'departments' && rowsIn.some((r) => table.some((d) => d.org_id === r.org_id && d.name === r.name))) {
         return { data: null, error: { message: 'duplicate key value violates unique constraint' } };
+      }
+      // Mirrors the real unique (org_id, number) constraint on bills.
+      if (this.table === 'bills' && rowsIn.some((r) => table.some((b) => b.org_id === r.org_id && b.number === r.number))) {
+        return { data: null, error: { message: 'duplicate key value violates unique constraint "bills_org_id_number_key"' } };
       }
       const inserted: Row[] = rowsIn.map((r) => {
         const row = { id: r.id ?? genId(this.table.slice(0, 4)), ...r };

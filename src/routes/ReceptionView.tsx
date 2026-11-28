@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState, type DragEvent, type FormEvent, type MouseEvent } from 'react';
+import { useEffect, useMemo, useRef, useState, type DragEvent, type MouseEvent } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { useClinic } from '../context/ClinicContext';
 import { useAmbientIntake } from '../hooks/useAmbientIntake';
@@ -7,7 +7,12 @@ import { AmbientOrb, Card, Btn, Pill, SectionHead, Field, inputCls, Modal } from
 import Shell from '../components/Shell';
 import { useSection } from '../lib/nav';
 import { supabase, scriptedAmbient } from '../lib/supabaseClient';
-import type { DocumentLabel, TriageVitals } from '../types/db';
+import type { AppointmentRow, BillRow, DocumentLabel, PatientRow, TriageVitals } from '../types/db';
+import { useBills } from '../hooks/useBills';
+import { BookingModal, CalendarSection, type BookingInit } from '../components/reception/Calendar';
+import { BillModal, BillingSection, Receipt } from '../components/reception/Billing';
+import { PatientsSection } from '../components/reception/Patients';
+import { clinicNow, clinicToday, dayKey, nextToken, onDay } from '../lib/schedule';
 
 /** Local, not-yet-registered doc attached to the in-progress walk-in draft.
  * The real `documents` row is inserted the instant a file is attached (see
@@ -36,97 +41,34 @@ function classifyFileName(name: string): DocumentLabel {
 }
 
 
-/** "7 Nov, 4:30 pm" for an ISO time; passes anything unparseable through. */
-function formatWhen(value: string | null): string {
-  if (!value) return 'Time not set';
-  const d = new Date(value);
-  if (Number.isNaN(d.getTime())) return value;
-  return d.toLocaleString('en-IN', { day: 'numeric', month: 'short', hour: 'numeric', minute: '2-digit' });
-}
 
 export default function ReceptionView() {
-  const section = useSection<'queue' | 'appointments' | 'walk-in'>('queue');
+  const rawSection = useSection<'queue' | 'calendar' | 'appointments' | 'patients' | 'walk-in' | 'billing'>('queue');
+  const section = rawSection === 'appointments' ? 'calendar' : rawSection;
   const { practitioner } = useAuth();
   const { orgId, patients, practitioners, appointments, pushToast, logAudit } = useClinic();
+  const { bills } = useBills(orgId);
 
-  // ---- Telephonic appointment form -------------------------------------
-  const [apName, setApName] = useState('');
-  const [apPhone, setApPhone] = useState('');
-  const [apPractitionerId, setApPractitionerId] = useState('');
-  const [apWhen, setApWhen] = useState('');
-  const [apSaving, setApSaving] = useState(false);
-  const [leavingIds, setLeavingIds] = useState<Set<string>>(new Set());
+  // Modals shared by the calendar, patients and billing sections.
+  const [booking, setBooking] = useState<BookingInit | null>(null);
+  const [billFor, setBillFor] = useState<{ appointment: AppointmentRow | null; patient: PatientRow | null } | null>(null);
+  const [receipt, setReceipt] = useState<BillRow | null>(null);
 
-  const bookablePractitioners = useMemo(
-    () => practitioners.filter((p) => p.role === 'surgeon' || p.role === 'physio'),
-    [practitioners],
-  );
-  const scheduledAppointments = useMemo(
-    () => appointments.filter((a) => a.status === 'scheduled'),
-    [appointments],
-  );
-
-  async function handleBookAppointment(e: FormEvent) {
-    e.preventDefault();
-    if (!apName.trim() || !apPhone.trim() || !apPractitionerId || !apWhen.trim()) return;
-    setApSaving(true);
-    try {
-      let patientId: string;
-      const existing = patients.find((p) => p.phone === apPhone.trim());
-      if (existing) {
-        patientId = existing.id;
-      } else {
-        patientId = newId('p');
-        await supabase.from('patients').insert({
-          id: patientId, org_id: orgId, auth_user_id: null, mrn: null, name: apName.trim(), age: null,
-          gender: null, phone: apPhone.trim(), conditions: [], allergies: [], medications: [],
-          queue_status: 'new', urgency_level: 'routine', draft_summary: null, assigned_practitioner_id: null,
-          preferred_language: 'en', phone_verified: false, journey_stage: null, journey_stage_history: [],
-          discharged_at: null, discharge_summary: null, intake_state: {}, triage: {},
-        });
-      }
-      const chosen = bookablePractitioners.find((p) => p.id === apPractitionerId);
-      // The picker gives local time ("2026-11-07T16:30"); the DB column is
-      // timestamptz, so store a real instant, never free text.
-      const whenIso = new Date(apWhen).toISOString();
-      const { error: apErr } = await supabase.from('appointments').insert({
-        id: newId('ap'), org_id: orgId, patient_id: patientId, specialty: chosen?.specialty ?? null,
-        date: whenIso, reason: null, practitioner_id: apPractitionerId, status: 'scheduled',
-        start_time: whenIso, duration_minutes: 20, requested_by_patient: false,
-      });
-      if (apErr) {
-        pushToast({ tone: 'critical', title: 'Could not schedule appointment', detail: apErr.message });
-        return;
-      }
-      await logAudit('reception-book-appointment', `${apName.trim()} with ${chosen?.name ?? apPractitionerId}`);
-      pushToast({ tone: 'ok', title: 'Appointment scheduled', detail: `${apName.trim()} · ${formatWhen(whenIso)}` });
-      setApName(''); setApPhone(''); setApPractitionerId(''); setApWhen('');
-    } finally {
-      setApSaving(false);
-    }
-  }
-
-  async function handleCheckIn(appointmentId: string, patientId: string) {
-    setLeavingIds((prev) => new Set(prev).add(appointmentId));
-    await supabase.from('appointments').update({ status: 'checked_in' }).eq('id', appointmentId);
-    // Straight to 'waiting_doctor' -- this is what actually lands the patient
-    // in the assigned doctor's queue (DoctorView filters on QUEUE_STATUSES,
-    // which does not include 'checking_in'). 'checking_in' is reserved for a
-    // future in-progress-paperwork state; a checked-in phone appointment has
-    // no further front-desk step before the doctor, so it should be visible
-    // to the doctor immediately -- that's the zero-refresh sync this button
-    // exists for.
-    await supabase.from('patients').update({ queue_status: 'waiting_doctor' }).eq('id', patientId);
-    setTimeout(() => {
-      setLeavingIds((prev) => { const n = new Set(prev); n.delete(appointmentId); return n; });
-    }, 250);
+  /** Today's appointment that put this patient in the queue (for the token). */
+  function queueVisit(patientId: string): AppointmentRow | undefined {
+    const today = clinicToday();
+    return appointments.find((a) => a.patient_id === patientId && a.status === 'checked_in' && onDay(a, today));
   }
 
   // ---- Live "In Queue" board --------------------------------------------
   const inQueuePatients = useMemo(
     () => patients.filter((p) =>
-      p.queue_status === 'checking_in' || p.queue_status === 'waiting_doctor' || p.queue_status === 'awaiting_verification'),
-    [patients],
+      p.queue_status === 'checking_in' || p.queue_status === 'waiting_doctor' || p.queue_status === 'awaiting_verification')
+      .map((p) => ({ p, visit: queueVisit(p.id) }))
+      .sort((a, b) => (a.visit?.checked_in_at ?? '9').localeCompare(b.visit?.checked_in_at ?? '9'))
+      .map((x) => x.p),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [patients, appointments],
   );
 
   function practitionerName(id: string | null): string {
@@ -390,6 +332,20 @@ export default function ReceptionView() {
       // attached/dropped (see attachDoc/attachDocFromFile) -- nothing left
       // to flush here.
 
+      // A walk-in is a visit too: it gets a token in the doctor's day and can
+      // be billed like a booked appointment.
+      if (assignedId && !queueVisit(patientId)) {
+        const now = clinicNow();
+        const token = nextToken(appointments, assignedId, dayKey(now));
+        await supabase.from('appointments').insert({
+          id: newId('ap'), org_id: orgId, patient_id: patientId, practitioner_id: assignedId, specialty: autoSpecialty,
+          date: now.toISOString(), start_time: now.toISOString(), duration_minutes: 15, status: 'checked_in',
+          reason: inComplaint.trim() || null, requested_by_patient: false, token_no: token, checked_in_at: now.toISOString(),
+          cancel_reason: null, visit_type: 'consultation', rescheduled_from: null, booked_by: practitioner?.name ?? null,
+        });
+        pushToast({ tone: 'info', title: `Token ${token}`, detail: `${inName.trim()} · ${autoAssignedDoctor?.name ?? ''}` });
+      }
+
       clearScriptedTimeouts();
       intake.reset();
       setInName(''); setInAge(''); setInPhone(''); setInComplaint(''); setInHeight(''); setInWeight('');
@@ -571,7 +527,7 @@ export default function ReceptionView() {
   const pauseTargetPatient = selectedPatientId ? patients.find((p) => p.id === selectedPatientId) ?? null : null;
 
   return (
-    <Shell title={section === 'appointments' ? 'Appointments' : section === 'walk-in' ? 'Walk-in registration' : "Today's queue"}>
+    <Shell title={{ queue: "Today's queue", calendar: 'Calendar', patients: 'Patients', 'walk-in': 'Walk-in registration', billing: 'Billing' }[section]}>
       <div className="mb-6 flex justify-end">
         <button
           type="button"
@@ -584,71 +540,23 @@ export default function ReceptionView() {
         </button>
       </div>
 
-      {/* 1. Telephonic Appointment Form + Scheduled list */}
-      {section === 'appointments' && (
-      <Card className="mb-6">
-        <SectionHead title="Book an appointment" desc="For phone calls and follow-ups. Pick the doctor, date and time." />
-        <form onSubmit={handleBookAppointment} className="grid md:grid-cols-2 gap-x-4">
-          <Field label="Patient Name">
-            <input data-testid="ap-name" className={inputCls} value={apName} onChange={(e) => setApName(e.target.value)} placeholder="Full name" />
-          </Field>
-          <Field label="Phone">
-            <input data-testid="ap-phone" className={inputCls} value={apPhone} onChange={(e) => setApPhone(e.target.value)} placeholder="Phone number" />
-          </Field>
-          <Field label="Selected Specialist">
-            <select data-testid="ap-practitioner" className={inputCls} value={apPractitionerId} onChange={(e) => setApPractitionerId(e.target.value)}>
-              <option value="">Select specialist…</option>
-              {bookablePractitioners.map((p) => (
-                <option key={p.id} value={p.id}>{p.name} — {p.specialty ?? p.title}</option>
-              ))}
-            </select>
-          </Field>
-          <Field label="Date / Time">
-            <input data-testid="ap-when" type="datetime-local" aria-label="Appointment date and time" className={inputCls} value={apWhen} onChange={(e) => setApWhen(e.target.value)} />
-          </Field>
-          <div className="md:col-span-2 mt-4">
-            <Btn type="submit" variant="glow" disabled={apSaving} data-testid="save-appointment">
-              {apSaving ? 'Scheduling…' : 'Schedule Appointment'}
-            </Btn>
-          </div>
-        </form>
-
-        <div className="mt-6">
-          <div className="text-[13px] font-semibold text-ink-soft mb-2">Scheduled Appointments</div>
-          {scheduledAppointments.length === 0 && <div className="text-sm text-ink-faint">No scheduled appointments.</div>}
-          <div className="space-y-2">
-            {scheduledAppointments.map((a) => {
-              const p = patients.find((x) => x.id === a.patient_id);
-              const doc = practitioners.find((x) => x.id === a.practitioner_id);
-              const leaving = leavingIds.has(a.id);
-              return (
-                <div
-                  key={a.id}
-                  className={`flex items-center justify-between bg-surface-2 rounded-lg px-3 py-2 transition-all duration-250 ${leaving ? 'opacity-0 -translate-x-2' : 'opacity-100 translate-x-0'}`}
-                >
-                  <div>
-                    <div className="text-sm text-ink font-semibold">{p?.name ?? 'Unknown patient'}</div>
-                    <div className="text-[13px] text-ink-faint">{doc?.name ?? 'Unassigned'} · {formatWhen(a.start_time ?? a.date)}</div>
-                  </div>
-                  <Btn
-                    variant="glow"
-                    data-testid="check-in-btn"
-                    onClick={() => handleCheckIn(a.id, a.patient_id)}
-                  >
-                    Check-In
-                  </Btn>
-                </div>
-              );
-            })}
-          </div>
-        </div>
-      </Card>
+      {section === 'calendar' && (
+        <CalendarSection bills={bills} onBill={(a) => setBillFor({ appointment: a, patient: null })} />
+      )}
+      {section === 'patients' && (
+        <PatientsSection bills={bills}
+          onBook={(p) => setBooking({ day: clinicToday(), patient: p })}
+          onBill={(p) => setBillFor({ appointment: null, patient: p })}
+          onReceipt={setReceipt} />
+      )}
+      {section === 'billing' && (
+        <BillingSection bills={bills} startBill={(a) => setBillFor({ appointment: a, patient: null })} />
       )}
 
       {/* 3. Live "In Queue" board */}
       {section === 'queue' && (
       <Card className="mb-6">
-        <SectionHead title="Waiting now" desc="Patients who have checked in, in the order they arrived." />
+        <SectionHead title="Waiting now" desc="Patients who have checked in, in the order they arrived, with their token number." />
         {inQueuePatients.length === 0 && <div className="text-sm text-ink-faint">Queue is empty.</div>}
         <div className="space-y-2">
           {inQueuePatients.map((p) => {
@@ -660,7 +568,10 @@ export default function ReceptionView() {
                 className={`flex items-center justify-between bg-surface-2 rounded-lg px-3 py-2 cursor-pointer transition-colors ${selected ? 'ring-2 ring-accent' : ''}`}
               >
                 <div>
-                  <div className="text-sm text-ink font-semibold">{p.name}</div>
+                  <div className="text-sm text-ink font-semibold" data-testid="queue-name">
+                    {queueVisit(p.id)?.token_no != null && <span className="mr-2 inline-block rounded-md bg-accent px-2 py-0.5 text-on-accent" data-testid="queue-token">Token {queueVisit(p.id)?.token_no}</span>}
+                    {p.name}
+                  </div>
                   <div className="text-[13px] text-ink-faint">{p.triage?.complaints || 'No chief complaint recorded'} · {practitionerName(p.assigned_practitioner_id)}</div>
                   {p.intake_state?.doctorResponseClearance && (
                     <div className="mt-1.5 text-[13px] text-ok bg-ok-soft rounded px-2 py-1 inline-flex items-center gap-2">
@@ -692,7 +603,7 @@ export default function ReceptionView() {
       {/* 6. Intake Pause Gate (already-queued patient) -- visible while
           ambient intake is running for the walk-in draft below, or while a
           queued patient is selected above. */}
-      {showPauseGate && section !== 'appointments' && (
+      {showPauseGate && (section === 'queue' || section === 'walk-in') && (
         <Card className="mb-6">
           <SectionHead title="Ask the doctor" desc="Pause registration and send a quick question to the patient's doctor." />
           <Btn variant="gate" data-testid="pause-intake-btn" onClick={openPauseGate}>
@@ -998,6 +909,13 @@ export default function ReceptionView() {
           </div>
         </Modal>
       )}
+
+      {booking && <BookingModal init={booking} onClose={() => setBooking(null)} onBooked={() => setBooking(null)} />}
+      {billFor && (
+        <BillModal appointment={billFor.appointment} patient={billFor.patient} bills={bills}
+          onClose={() => setBillFor(null)} onCreated={(b) => { setBillFor(null); setReceipt(b); }} />
+      )}
+      {receipt && <Receipt bill={bills.find((b) => b.id === receipt.id) ?? receipt} onClose={() => setReceipt(null)} />}
     </Shell>
   );
 }
