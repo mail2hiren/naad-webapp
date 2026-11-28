@@ -5,6 +5,11 @@ versions follow [SemVer](https://semver.org/) and each release is tagged `vX.Y.Z
 
 ## [Unreleased]
 
+## [0.6.1] - 2026-11-28
+
+### Added
+- Proposed data load `0014_seed_admin_demo` for the demo hospital (org1): the demo build's price list (14 charges, 1 retired) and 17 beds in four wards, with the admitted demo patients in their beds. Awaiting the owner's go.
+
 ## [0.6.0] - 2026-11-28
 
 Phase 5, part 1 of the product gap audit: the hospital admin's working day.
