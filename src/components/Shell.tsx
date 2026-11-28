@@ -18,6 +18,11 @@ const ICON_PATH: Record<IconName, string> = {
   users: 'M16 19a4 4 0 0 0-8 0M12 11a3 3 0 1 0 0-6 3 3 0 0 0 0 6zm8 8a3 3 0 0 0-3-3m-1-5a3 3 0 1 0 0-6M4 19a3 3 0 0 1 3-3m1-5a3 3 0 1 1 0-6',
   rupee: 'M7 4h10M7 9h10M7 4c4 0 6 2 6 5s-2 5-6 5l7 6',
   receipt: 'M6 3h12v18l-3-2-3 2-3-2-3 2V3zm3 5h6m-6 4h6m-6 4h3',
+  phone: 'M5 4h4l2 5-2.5 1.5a11 11 0 0 0 5 5L15 13l5 2v4a2 2 0 0 1-2 2A16 16 0 0 1 3 6a2 2 0 0 1 2-2z',
+  flask: 'M9 3h6M10 3v6L4 19a1.5 1.5 0 0 0 1.3 2h13.4a1.5 1.5 0 0 0 1.3-2L14 9V3M7 15h10',
+  shield: 'M12 3l8 3v6c0 5-3.5 8-8 9-4.5-1-8-4-8-9V6l8-3zm-3 9 2 2 4-4',
+  inbox: 'M4 13h4l2 3h4l2-3h4M4 13l2-8h12l2 8v6H4v-6z',
+  package: 'M12 3 4 7v10l8 4 8-4V7l-8-4zm0 8 8-4M12 11 4 7m8 4v10',
 };
 
 function Icon({ name }: { name: IconName }) {

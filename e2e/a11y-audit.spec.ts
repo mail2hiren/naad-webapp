@@ -297,3 +297,23 @@ for (const vp of [{ n: 'phone', w: 390, h: 844 }, { n: 'desktop', w: 1280, h: 80
     expect(serious.map((v) => `${v.id}: ${v.nodes[0]?.target}`)).toEqual([]);
   });
 }
+
+for (const vp of [{ n: 'phone', w: 390, h: 844 }, { n: 'desktop', w: 1280, h: 800 }]) {
+  test(`front-desk modules pass the scan (${vp.n})`, async ({ page }) => {
+    test.setTimeout(120_000);
+    await page.setViewportSize({ width: vp.w, height: vp.h });
+    await login(page, 'receptionist', 'sunita@digiyaan.demo');
+    await expect(page).toHaveURL(/\/reception$/);
+    const found: Awaited<ReturnType<typeof scan>> = [];
+    for (const s of ['queue', 'follow-ups', 'enquiries', 'admissions', 'tests', 'packages', 'insurance', 'cash']) {
+      if (vp.n === 'phone') await page.getByRole('button', { name: 'Open menu' }).click();
+      await page.getByTestId(`nav-reception-${s}`).filter({ visible: true }).click();
+      await page.waitForTimeout(400);
+      found.push(...await scan(page, `${s}-${vp.n}`));
+      const o = await page.evaluate(() => document.documentElement.scrollWidth - window.innerWidth);
+      expect(o, `${s} scrolls sideways`).toBeLessThanOrEqual(0);
+    }
+    const serious = found.filter((x) => x.impact === 'serious' || x.impact === 'critical');
+    expect(serious.map((v) => `${v.id}: ${v.nodes[0]?.target}`)).toEqual([]);
+  });
+}

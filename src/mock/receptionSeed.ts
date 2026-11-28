@@ -51,7 +51,7 @@ export const appointments: AppointmentRow[] = [
   ap('ap-n2', 'p-farah', 'pr-namrata', '2026-08-29T04:45:00Z', 'checked_in', { token_no: 2, checked_in_at: '2026-08-29T04:41:00Z', reason: 'Breathlessness, diabetic' }),
   // Dr. Jayani Bhatt, Physiotherapy
   ap('ap-p1', 'p-rohan', 'pr-physio', '2026-08-29T04:00:00Z', 'checked_in', { token_no: 1, checked_in_at: '2026-08-29T03:58:00Z', reason: 'ACL rehab session' }),
-  ap('ap-p2', 'p-kavita', 'pr-physio', '2026-08-29T04:30:00Z', 'checked_in', { token_no: 2, checked_in_at: '2026-08-29T04:26:00Z', reason: 'Low back pain session' }),
+  ap('ap-p2', 'p-kavita', 'pr-physio', '2026-08-29T04:30:00Z', 'checked_in', { patient_package_id: 'pp-kavita', token_no: 2, checked_in_at: '2026-08-29T04:26:00Z', reason: 'Low back pain session' }),
   // Monday
   ap('ap-m1', 'p-suresh', 'pr-surgeon', '2026-08-31T04:30:00Z', 'scheduled', { visit_type: 'follow_up', reason: 'Post-discharge review' }),
   ap('ap-m2', 'p-anil', 'pr-surgeon', '2026-08-31T05:00:00Z', 'scheduled', { visit_type: 'follow_up', reason: 'Back pain review' }),

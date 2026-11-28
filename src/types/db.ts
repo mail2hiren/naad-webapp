@@ -121,6 +121,8 @@ export interface AppointmentRow {
   overbooked?: boolean;
   /** The visits of one repeat course share this id. */
   series_id?: string | null;
+  /** The treatment package this visit is a session of. */
+  patient_package_id?: string | null;
 }
 
 export type BlockKind = 'leave' | 'surgery' | 'meeting' | 'holiday' | 'other';

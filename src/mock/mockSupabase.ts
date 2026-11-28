@@ -4,6 +4,7 @@ import * as receptionSeed from './receptionSeed';
 import * as adminSeed from './adminSeed';
 import * as pharmacySeed from './pharmacySeed';
 import * as patientSeed from './patientSeed';
+import * as deskSeed from './deskSeed';
 import { clinicNow as clinicNowMock } from '../lib/schedule';
 import { handle as platformAdminHandle } from '../../supabase/functions/platform-admin/handler';
 
@@ -76,6 +77,14 @@ const TABLES: Record<string, Row[]> = {
   bills: receptionSeed.bills as unknown as Row[],
   calendar_blocks: receptionSeed.blocks as unknown as Row[],
   appointment_waitlist: receptionSeed.waitlist as unknown as Row[],
+  follow_ups: deskSeed.followUps as unknown as Row[],
+  enquiries: deskSeed.enquiries as unknown as Row[],
+  patient_contacts: deskSeed.contacts as unknown as Row[],
+  cash_closings: [],
+  admissions: deskSeed.admissions as unknown as Row[],
+  insurance_claims: deskSeed.claims as unknown as Row[],
+  treatment_packages: deskSeed.packageTypes as unknown as Row[],
+  patient_packages: deskSeed.patientPackages as unknown as Row[],
   service_rates: adminSeed.rates as unknown as Row[],
   beds: adminSeed.beds as unknown as Row[],
   encounters: seed.encounters as unknown as Row[],
