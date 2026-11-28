@@ -8,7 +8,7 @@ versions follow [SemVer](https://semver.org/) and each release is tagged `vX.Y.Z
 ## [0.5.1] - 2026-11-28
 
 ### Added
-- Proposed data load `0012_seed_reception_demo` for the demo hospital (org1): the demo build's front-desk day (3 demo patients, 14 appointments with tokens and every status, 3 bills incl. a part-paid physio package) and the hospital's address and phone for receipts where empty. Awaiting the owner's go.
+- Data load `20261128072327_seed_reception_demo` for the demo hospital (org1): the demo build's front-desk day (3 demo patients, 14 appointments with tokens and every status, 3 bills incl. a part-paid physio package) and the hospital's address and phone for receipts where empty. Applied to the Naad database with the owner's go.
 
 ## [0.5.0] - 2026-11-28
 
