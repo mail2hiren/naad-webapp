@@ -5,6 +5,11 @@ versions follow [SemVer](https://semver.org/) and each release is tagged `vX.Y.Z
 
 ## [Unreleased]
 
+## [0.5.1] - 2026-11-28
+
+### Added
+- Data load `20261128072327_seed_reception_demo` for the demo hospital (org1): the demo build's front-desk day (3 demo patients, 14 appointments with tokens and every status, 3 bills incl. a part-paid physio package) and the hospital's address and phone for receipts where empty. Applied to the Naad database with the owner's go.
+
 ## [0.5.0] - 2026-11-28
 
 Phase 4 of the product gap audit: the front desk's full working day.
