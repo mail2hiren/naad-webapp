@@ -1,4 +1,4 @@
-import type { AppointmentRow, BillRow, PatientRow } from '../types/db';
+import type { AppointmentRow, BillRow, CalendarBlockRow, PatientRow, WaitlistRow } from '../types/db';
 import { ORG_ID } from './seed';
 
 /**
@@ -38,9 +38,9 @@ const ap = (
 
 export const appointments: AppointmentRow[] = [
   // Dr. Sagar Karvir, Orthopedics
-  ap('ap-s1', 'p-anil', 'pr-surgeon', '2026-08-29T04:00:00Z', 'completed', { token_no: 1, checked_in_at: '2026-08-29T03:52:00Z', reason: 'Low back pain after lifting' }),
-  ap('ap-s2', 'p-sunanda', 'pr-surgeon', '2026-08-29T04:15:00Z', 'completed', { token_no: 2, checked_in_at: '2026-08-29T04:10:00Z', visit_type: 'follow_up', reason: 'Frozen shoulder review' }),
-  ap('ap-s3', 'p-meera', 'pr-surgeon', '2026-08-29T04:30:00Z', 'checked_in', { token_no: 3, checked_in_at: '2026-08-29T04:22:00Z', reason: 'Pre-operative assessment' }),
+  ap('ap-s1', 'p-anil', 'pr-surgeon', '2026-08-29T04:00:00Z', 'completed', { token_no: 1, checked_in_at: '2026-08-29T03:52:00Z', called_in_at: '2026-08-29T04:01:00Z', completed_at: '2026-08-29T04:13:00Z', reason: 'Low back pain after lifting' }),
+  ap('ap-s2', 'p-sunanda', 'pr-surgeon', '2026-08-29T04:15:00Z', 'completed', { token_no: 2, checked_in_at: '2026-08-29T04:10:00Z', called_in_at: '2026-08-29T04:16:00Z', completed_at: '2026-08-29T04:26:00Z', visit_type: 'follow_up', reason: 'Frozen shoulder review' }),
+  ap('ap-s3', 'p-meera', 'pr-surgeon', '2026-08-29T04:30:00Z', 'in_consultation', { token_no: 3, checked_in_at: '2026-08-29T04:22:00Z', called_in_at: '2026-08-29T05:27:00Z', reason: 'Pre-operative assessment' }),
   ap('ap-s4', 'p-neha', 'pr-surgeon', '2026-08-29T04:45:00Z', 'checked_in', { token_no: 4, checked_in_at: '2026-08-29T04:40:00Z', reason: 'Wrist pain' }),
   ap('ap-s5', 'p-imran', 'pr-surgeon', '2026-08-29T05:15:00Z', 'no_show', { reason: 'Ankle sprain' }),
   ap('ap-s6', 'p-deepak', 'pr-surgeon', '2026-08-29T06:00:00Z', 'scheduled', { visit_type: 'follow_up', reason: 'Knee replacement review, 10 weeks' }),
@@ -55,6 +55,19 @@ export const appointments: AppointmentRow[] = [
   // Monday
   ap('ap-m1', 'p-suresh', 'pr-surgeon', '2026-08-31T04:30:00Z', 'scheduled', { visit_type: 'follow_up', reason: 'Post-discharge review' }),
   ap('ap-m2', 'p-anil', 'pr-surgeon', '2026-08-31T05:00:00Z', 'scheduled', { visit_type: 'follow_up', reason: 'Back pain review' }),
+  // Imran has missed a visit before: his no-show risk shows on the calendar.
+  ap('ap-old1', 'p-imran', 'pr-surgeon', '2026-08-12T05:00:00Z', 'no_show', { reason: 'Ankle sprain' }),
+];
+
+/** Time that cannot be booked: a hospital meeting and an operating list. */
+export const blocks: CalendarBlockRow[] = [
+  { id: 'blk-cme', org_id: ORG_ID, practitioner_id: 'pr-namrata', starts_at: '2026-08-29T06:30:00Z', ends_at: '2026-08-29T07:30:00Z', kind: 'meeting', reason: 'Hospital CME talk', created_by: 'Sunita Kulkarni' },
+  { id: 'blk-ot', org_id: ORG_ID, practitioner_id: 'pr-surgeon', starts_at: '2026-08-31T10:30:00Z', ends_at: '2026-08-31T13:30:00Z', kind: 'surgery', reason: 'Operating list: knee replacement', created_by: 'Sunita Kulkarni' },
+];
+
+/** Patients waiting for an earlier or a particular time. */
+export const waitlist: WaitlistRow[] = [
+  { id: 'wl-imran', org_id: ORG_ID, patient_id: 'p-imran', practitioner_id: 'pr-surgeon', from_day: '2026-08-29', to_day: '2026-09-05', part_of_day: 'any', visit_type: 'consultation', note: 'Missed today; wants the first free time', status: 'waiting', appointment_id: null, created_by: 'Sunita Kulkarni', created_at: '2026-08-29T05:20:00Z' },
 ];
 
 const bill = (b: Omit<BillRow, 'org_id' | 'appointment_id' | 'encounter_id' | 'void_reason' | 'created_by'> & Partial<BillRow>): BillRow => ({

@@ -18,10 +18,10 @@ export const VISIT_LABEL: Record<VisitType, string> = {
   consultation: 'New consultation', follow_up: 'Follow-up', therapy: 'Therapy session', procedure: 'Procedure',
 };
 export const STATUS_TONE: Record<AppointmentStatus, 'default' | 'gate' | 'ok' | 'danger' | 'accent'> = {
-  requested: 'gate', scheduled: 'accent', checked_in: 'ok', completed: 'default', cancelled: 'danger', no_show: 'danger',
+  requested: 'gate', scheduled: 'accent', checked_in: 'ok', in_consultation: 'accent', completed: 'default', cancelled: 'danger', no_show: 'danger',
 };
 export const STATUS_LABEL: Record<AppointmentStatus, string> = {
-  requested: 'Requested', scheduled: 'Booked', checked_in: 'Checked in', completed: 'Seen', cancelled: 'Cancelled', no_show: 'No-show',
+  requested: 'Requested', scheduled: 'Booked', checked_in: 'Waiting', in_consultation: 'With doctor', completed: 'Done', cancelled: 'Cancelled', no_show: 'No-show',
 };
 
 /** "2026-11-28" for a local date. */
@@ -87,7 +87,7 @@ export function onDay(a: Pick<AppointmentRow, 'start_time' | 'date'>, day: strin
 
 /** Statuses that hold a slot. Cancelled and no-show free it again. */
 export function holdsSlot(status: AppointmentStatus): boolean {
-  return status === 'requested' || status === 'scheduled' || status === 'checked_in' || status === 'completed';
+  return status === 'requested' || status === 'scheduled' || status === 'checked_in' || status === 'in_consultation' || status === 'completed';
 }
 
 /** Appointments of a practitioner that clash with [start, start+minutes). */

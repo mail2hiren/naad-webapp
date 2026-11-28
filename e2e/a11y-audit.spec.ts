@@ -180,6 +180,17 @@ for (const vp of [{ n: 'phone', w: 390, h: 844 }, { n: 'desktop', w: 1280, h: 80
     await expect(page.getByTestId('booking-modal')).toBeVisible();
     found.push(...await scan(page, `booking-${vp.n}`));
     await page.getByTestId('booking-modal').getByRole('button', { name: 'Cancel' }).click();
+    await page.getByTestId('appt-card').filter({ hasText: 'Kavita Deshmukh' }).click();
+    await expect(page.getByTestId('appt-drawer')).toBeVisible();
+    found.push(...await scan(page, `appt-drawer-${vp.n}`));
+    await page.getByTestId('drawer-close').click();
+    await page.getByTestId('view-week').click();
+    await expect(page.getByTestId('doctor-column')).toHaveCount(7);
+    found.push(...await scan(page, `week-${vp.n}`)); await overflow('week');
+    await page.getByTestId('view-month').click();
+    await expect(page.getByTestId('month-grid')).toBeVisible();
+    found.push(...await scan(page, `month-${vp.n}`)); await overflow('month');
+    await page.getByTestId('view-day').click();
     await nav('billing');
     await expect(page.getByTestId('bill-row').first()).toBeVisible();
     found.push(...await scan(page, `billing-${vp.n}`)); await overflow('billing');

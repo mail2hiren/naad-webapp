@@ -56,6 +56,19 @@
   --frame-edge: #1c2230;
   --scroll-thumb: rgba(15, 23, 42, 0.18);
   --card-shadow: 0 1px 2px rgba(15, 23, 42, 0.06), 0 0 0 1px var(--line);
+  /* Calendar: one colour per doctor (stripes and dots, never text), and the
+     patient-flow step fills behind ink text. */
+  --doc-1: #0B7A70; --doc-2: #5B5FD6; --doc-3: #C2410C; --doc-4: #0369A1;
+  --doc-5: #A21CAF; --doc-6: #4D7C0F; --doc-7: #B45309; --doc-8: #BE123C;
+  --flow-requested: rgba(217, 119, 6, 0.14);
+  --flow-booked: rgba(11, 111, 164, 0.10);
+  --flow-waiting: rgba(21, 115, 71, 0.14);
+  --flow-with: rgba(91, 95, 214, 0.16);
+  --flow-done: rgba(15, 23, 42, 0.05);
+  --flow-gone: rgba(180, 35, 24, 0.06);
+  --block-fill: rgba(15, 23, 42, 0.06);
+  --off-hours: rgba(15, 23, 42, 0.035);
+  --now-line: #B42318;
   color-scheme: light;
 }
 
@@ -86,6 +99,17 @@
   --on-danger: #2a0a06;
   --scroll-thumb: rgba(255, 255, 255, 0.1);
   --card-shadow: 0 0 0 1px var(--line);
+  --doc-1: #6EE7D8; --doc-2: #8B93FF; --doc-3: #FDBA74; --doc-4: #7DD3FC;
+  --doc-5: #F0ABFC; --doc-6: #BEF264; --doc-7: #FCD34D; --doc-8: #FDA4AF;
+  --flow-requested: rgba(240, 195, 107, 0.14);
+  --flow-booked: rgba(143, 217, 255, 0.10);
+  --flow-waiting: rgba(111, 231, 169, 0.14);
+  --flow-with: rgba(139, 147, 255, 0.18);
+  --flow-done: rgba(255, 255, 255, 0.04);
+  --flow-gone: rgba(255, 140, 124, 0.07);
+  --block-fill: rgba(255, 255, 255, 0.06);
+  --off-hours: rgba(255, 255, 255, 0.025);
+  --now-line: #FF8C7C;
   color-scheme: dark;
 }
 
@@ -227,4 +251,9 @@
   .print-receipt, .print-receipt * { visibility: visible !important; }
   .print-receipt { position: absolute; inset: 0 auto auto 0; width: 100%; padding: 16px; background: var(--surface-solid); }
   .no-print { display: none !important; }
+  .print-sheet, .print-sheet * { visibility: visible !important; }
+  .print-sheet { position: absolute; inset: 0 auto auto 0; width: 100%; padding: 16px; background: var(--surface-solid); }
 }
+
+/* Calendar blocked time: diagonal hatching from theme tokens. */
+.cal-hatch { background-image: repeating-linear-gradient(135deg, var(--block-fill) 0 8px, transparent 8px 16px); }

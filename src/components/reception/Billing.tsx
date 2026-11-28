@@ -280,7 +280,7 @@ export function BillingSection({ bills, startBill }: { bills: BillRow[]; startBi
 
   const toBill = useMemo(() => appointments.filter((a) => {
     const s = apptStart(a);
-    if (!s || (a.status !== 'completed' && a.status !== 'checked_in')) return false;
+    if (!s || (a.status !== 'completed' && a.status !== 'checked_in' && a.status !== 'in_consultation')) return false;
     const d = dayKey(s);
     return d >= weekAgo && d <= today && !bills.some((b) => b.appointment_id === a.id && b.status !== 'void');
   }).sort((a, b) => (a.status === b.status ? 0 : a.status === 'completed' ? -1 : 1)), [appointments, bills, today, weekAgo]);
