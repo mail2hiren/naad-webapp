@@ -5,6 +5,25 @@ versions follow [SemVer](https://semver.org/) and each release is tagged `vX.Y.Z
 
 ## [Unreleased]
 
+## [0.6.0] - 2026-11-28
+
+Phase 5, part 1 of the product gap audit: the hospital admin's working day.
+
+### Added
+- **Overview** with today's numbers: visits booked, seen, collected today, balance due, beds occupied, pharmacy orders waiting.
+- **Working hours** per doctor and physio: working days, morning and evening sessions, slot length; checked before saving (times, order, overlaps) and shown as bookable slots a week. The reception calendar uses them straight away; "Use hospital hours" goes back to the default.
+- **Price list** (Fees and price list): add charges by kind, reprice, retire and bring back (no deletes), duplicate names refused. Reception's bill now adds charges from this list.
+- **Wards and beds:** occupancy totals, each ward's beds with type, daily rate and patient, add a bed (new or existing ward, duplicate labels refused), reprice, close and reopen (an occupied bed cannot be closed).
+- **Reports** for today, the last 7 days, this month or chosen dates: visits by doctor (booked, seen, no-show rate, cancelled, billed), money (billed, discounts, collected by method), top charges, who owes money, beds and pharmacy. Visits and bills download as CSV.
+- **Audit log:** every recorded action, newest first, searchable by text, role and dates, downloadable as CSV, with a check that the log's hash chain is unbroken.
+- Demo: price list of 14 charges, 17 beds in four wards with the admitted demo patients in them, and Dr. Namrata on her own hours (10 am to 2 pm).
+- Migration `20261128075340_admin_rates_beds_audit` (`service_rates` and `beds` tables, `audit_chain_check()`), applied to the Naad database with the owner's go.
+- Tests: `e2e/admin-phase5.spec.ts` (6 flows), the admin screens in the accessibility scan at phone and desktop width, unit tests for working-hours checks and CSV.
+
+### Changed
+- Staff changes (fees, working hours) now reach every open screen live.
+- Admin sidebar: Overview, Staff, Departments, Working hours, Fees and price list, Wards and beds, Reports, Audit log, Discharge billing, Ward.
+
 ## [0.5.1] - 2026-11-28
 
 ### Added

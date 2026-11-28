@@ -72,3 +72,12 @@ test('bill totals, discount cap and payment status', () => {
   assert.equal(balance({ total: 1600, paid: 600, status: 'part_paid' }), 1000);
   assert.equal(balance({ total: 1600, paid: 0, status: 'void' }), 0);
 });
+
+test('working hours are checked before saving', async () => {
+  const { validateHours, weeklySlots, DEFAULT_HOURS } = await import('../../src/lib/schedule.ts');
+  assert.equal(validateHours(DEFAULT_HOURS), null);
+  assert.equal(weeklySlots(DEFAULT_HOURS, 15), 28 * 6);
+  assert.match(validateHours({ mon: [['10:00', '09:00']] }) ?? '', /Monday: a session must end after it starts/);
+  assert.match(validateHours({ tue: [['09:00', '13:00'], ['12:00', '15:00']] }) ?? '', /Tuesday: sessions overlap/);
+  assert.match(validateHours({ wed: [['9:00', '13:00']] }) ?? '', /HH:MM/);
+});

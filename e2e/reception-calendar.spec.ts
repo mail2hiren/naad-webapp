@@ -115,7 +115,7 @@ test('billing: bill a seen visit with a discount and part payment, take the rest
   await expect(page.getByTestId('to-bill').first()).toContainText('Sunanda Patil');
   await page.getByTestId('to-bill').filter({ hasText: 'Sunanda Patil' }).getByTestId('bill-visit').click();
   await expect(page.getByTestId('item-desc').first()).toHaveValue('Follow-up, Dr. Sagar Karvir');
-  await page.getByTestId('quick-item').filter({ hasText: 'X-ray' }).click();
+  await page.getByTestId('add-rate-item').selectOption({ label: 'X-ray (2 views) · ₹450' });
   await page.getByTestId('bill-discount').fill('50');
   await expect(page.getByTestId('bill-total')).toHaveText('₹1,200');
   await page.getByTestId('bill-paid').fill('500');

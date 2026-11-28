@@ -1,3 +1,4 @@
+import type { BedKind, RateCategory } from '../types/db';
 /** Plain-language labels for database status codes, so screens never show
  * raw values like "awaiting_verification". */
 const QUEUE_STATUS: Record<string, string> = {
@@ -29,3 +30,13 @@ const SUBSCRIPTION_STATUS: Record<string, string> = {
 export function subscriptionStatusLabel(status: string): string {
   return SUBSCRIPTION_STATUS[status] ?? status.replace(/_/g, ' ');
 }
+
+export const CATEGORY_LABEL: Record<RateCategory, string> = {
+  consultation: 'Consultations', procedure: 'Procedures', investigation: 'Tests and scans', therapy: 'Therapy',
+  ward: 'Ward and rooms', pharmacy: 'Pharmacy', other: 'Other',
+};
+
+export const BED_KIND: Record<BedKind, string> = {
+  general: 'General', semi_private: 'Semi-private', private: 'Private', icu: 'ICU', day_care: 'Day care',
+};
+

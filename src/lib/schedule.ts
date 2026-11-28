@@ -172,3 +172,32 @@ export function clinicToday(): string {
 export function clinicNow(): Date {
   return frozenDemo() ? at('2026-08-29', '11:05') : new Date();
 }
+
+export const WEEK: { key: Weekday; label: string }[] = [
+  { key: 'mon', label: 'Monday' }, { key: 'tue', label: 'Tuesday' }, { key: 'wed', label: 'Wednesday' },
+  { key: 'thu', label: 'Thursday' }, { key: 'fri', label: 'Friday' }, { key: 'sat', label: 'Saturday' }, { key: 'sun', label: 'Sunday' },
+];
+
+const HHMM = /^([01]\d|2[0-3]):[0-5]\d$/;
+
+/** Checks a week of working hours: valid times, each session ends after it
+ * starts, sessions in order and not overlapping. Returns a message or null. */
+export function validateHours(hours: WorkingHours): string | null {
+  for (const { key, label } of WEEK) {
+    const sessions = hours[key] ?? [];
+    let lastEnd = '';
+    for (const [from, to] of sessions) {
+      if (!HHMM.test(from) || !HHMM.test(to)) return `${label}: enter times as HH:MM.`;
+      if (from >= to) return `${label}: a session must end after it starts (${from} to ${to}).`;
+      if (lastEnd && from < lastEnd) return `${label}: sessions overlap or are out of order.`;
+      lastEnd = to;
+    }
+  }
+  return null;
+}
+
+/** Bookable slots in a week of hours at a slot length. */
+export function weeklySlots(hours: WorkingHours, minutes: number): number {
+  const mins = (t: string) => Number(t.slice(0, 2)) * 60 + Number(t.slice(3, 5));
+  return WEEK.reduce((n, { key }) => n + (hours[key] ?? []).reduce((m, [f, t]) => m + Math.floor((mins(t) - mins(f)) / minutes), 0), 0);
+}

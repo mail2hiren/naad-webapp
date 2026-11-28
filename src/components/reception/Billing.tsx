@@ -8,6 +8,8 @@ import {
   VISIT_LABEL, addDays, apptStart, balance, billTotals, clinicNow, clinicToday, dayKey, money, timeLabel,
 } from '../../lib/schedule';
 import { createBill, recordPayment, voidBill } from '../../lib/frontDesk';
+import { useRates } from '../../hooks/useHospitalSetup';
+import { CATEGORY_LABEL } from '../../lib/labels';
 import type { AppointmentRow, BillItem, BillRow, BillStatus, PatientRow, PaymentMethod } from '../../types/db';
 
 const METHOD_LABEL: Record<PaymentMethod, string> = { cash: 'Cash', upi: 'UPI', card: 'Card', insurance: 'Insurance' };
@@ -53,13 +55,19 @@ export function BillModal({
   const [method, setMethod] = useState<PaymentMethod>('cash');
   const [saving, setSaving] = useState(false);
 
-  const quick: BillItem[] = [
-    { description: 'Registration', qty: 1, rate: 100 },
-    { description: 'X-ray (2 views)', qty: 1, rate: 450 },
-    { description: 'Dressing', qty: 1, rate: 200 },
-    { description: 'Physiotherapy session', qty: 1, rate: physioFee },
-    { description: 'Physiotherapy package, 8 sessions', qty: 8, rate: physioFee },
-  ];
+  // The admin's price list; until a hospital sets one up, a few common charges.
+  const { rates } = useRates(orgId);
+  const priced = rates.filter((r) => r.active);
+  const quick: { label: string; group: string; item: BillItem }[] = priced.length
+    ? priced.map((r) => ({ label: `${r.name} · ${money(r.amount)}`, group: CATEGORY_LABEL[r.category], item: { description: r.name, qty: 1, rate: r.amount } }))
+    : [
+      { description: 'Registration', qty: 1, rate: 100 },
+      { description: 'X-ray (2 views)', qty: 1, rate: 450 },
+      { description: 'Dressing', qty: 1, rate: 200 },
+      { description: 'Physiotherapy session', qty: 1, rate: physioFee },
+      { description: 'Physiotherapy package, 8 sessions', qty: 8, rate: physioFee },
+    ].map((item) => ({ label: `${item.description} · ${money(item.qty * item.rate)}`, group: 'Common charges', item }));
+  const groups = [...new Set(quick.map((q) => q.group))];
   const setItem = (i: number, patch: Partial<BillItem>) => setItems(items.map((it, j) => (j === i ? { ...it, ...patch } : it)));
 
   async function save() {
@@ -107,9 +115,19 @@ export function BillModal({
           </ul>
           <div className="mt-2 flex flex-wrap gap-2">
             <Btn variant="default" data-testid="add-item" onClick={() => setItems([...items, { description: '', qty: 1, rate: 0 }])}>+ Item</Btn>
-            {quick.map((q) => (
-              <Btn key={q.description} variant="default" data-testid="quick-item" onClick={() => setItems([...items, q])}>+ {q.description}</Btn>
-            ))}
+            <label className="block flex-1 min-w-[14rem]"><span className="sr-only">Add a charge from the price list</span>
+              <select className={inputCls} data-testid="add-rate-item" value="" onChange={(e) => {
+                const q = quick[Number(e.target.value)];
+                if (q) setItems([...items, { ...q.item }]);
+              }}>
+                <option value="">+ Add from price list…</option>
+                {groups.map((g) => (
+                  <optgroup key={g} label={g}>
+                    {quick.map((q, i) => (q.group === g ? <option key={q.label} value={i}>{q.label}</option> : null))}
+                  </optgroup>
+                ))}
+              </select>
+            </label>
           </div>
         </div>
 
