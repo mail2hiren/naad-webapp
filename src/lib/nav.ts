@@ -11,7 +11,7 @@ export type NavItem = { to: string; section?: string; label: string; icon: IconN
  * job instead of one long scrolling page. */
 export const ROLE_NAV: Record<StaffRole, NavItem[]> = {
   receptionist: [
-    { to: '/reception', section: 'queue', label: "Today's queue", icon: 'queue' },
+    { to: '/reception', section: 'queue', label: 'Today', icon: 'queue' },
     { to: '/reception', section: 'calendar', label: 'Calendar', icon: 'calendar' },
     { to: '/reception', section: 'patients', label: 'Patients', icon: 'users' },
     { to: '/reception', section: 'walk-in', label: 'Walk-in registration', icon: 'userPlus' },
