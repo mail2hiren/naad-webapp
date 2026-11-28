@@ -188,6 +188,7 @@ for (const vp of [{ n: 'phone', w: 390, h: 844 }, { n: 'desktop', w: 1280, h: 80
     found.push(...await scan(page, `bill-${vp.n}`));
     await page.getByTestId('bill-save').click();
     await expect(page.getByTestId('receipt')).toBeVisible();
+    await page.waitForTimeout(600); // let the "bill saved" notification finish fading in before measuring contrast
     found.push(...await scan(page, `receipt-${vp.n}`));
     await page.getByTestId('close-receipt').click();
     await nav('patients');
