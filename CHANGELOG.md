@@ -8,7 +8,7 @@ versions follow [SemVer](https://semver.org/) and each release is tagged `vX.Y.Z
 ## [0.8.1] - 2026-11-28
 
 ### Added
-- Proposed data load `0018_seed_patient_demo` for the demo hospital (org1): 5 test results (one awaiting its result, one the doctor flagged) and 4 documents for Ramesh, Kavita and Deepak, so the patient app's Reports tab and its Home alert show on the live site. Awaiting the owner's go.
+- Data load `20261128092837_seed_patient_demo` for the demo hospital (org1): 5 test results (one awaiting its result, one the doctor flagged) and 4 documents for Ramesh, Kavita and Deepak, so the patient app's Reports tab and its Home alert show on the live site. Applied to the Naad database with the owner's go.
 
 ### Fixed
 - Demo test results now use the database's own test types (xray, mri, blood) and record the ordering doctor by id, as the live table requires; the patient app shows the doctor's name.
