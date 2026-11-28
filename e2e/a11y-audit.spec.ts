@@ -219,3 +219,41 @@ for (const vp of [{ n: 'phone', w: 390, h: 844 }, { n: 'desktop', w: 1280, h: 80
     expect(serious.map((v) => `${v.id}: ${v.nodes[0]?.target}`)).toEqual([]);
   });
 }
+
+for (const vp of [{ n: 'phone', w: 390, h: 844 }, { n: 'desktop', w: 1280, h: 800 }]) {
+  test(`pharmacy stock, dispense, sales and the ward chart pass the scan (${vp.n})`, async ({ page }) => {
+    await page.setViewportSize({ width: vp.w, height: vp.h });
+    const found: Awaited<ReturnType<typeof scan>> = [];
+    const nav = async (id: string) => {
+      if (vp.n === 'phone') await page.getByRole('button', { name: 'Open menu' }).click();
+      await page.getByTestId(id).filter({ visible: true }).click();
+    };
+    const fits = async (label: string) => {
+      const o = await page.evaluate(() => document.documentElement.scrollWidth - window.innerWidth);
+      expect(o, `${label} scrolls sideways`).toBeLessThanOrEqual(0);
+    };
+    await login(page, 'pharmacist', 'vikram@digiyaan.demo');
+    await expect(page).toHaveURL(/\/pharmacy$/);
+    await page.getByTestId('dispense').first().click();
+    await expect(page.getByTestId('dispense-modal')).toBeVisible();
+    found.push(...await scan(page, `dispense-${vp.n}`));
+    await page.getByTestId('dispense-modal').getByRole('button', { name: 'Cancel' }).click();
+    await nav('nav-pharmacy-stock');
+    await page.getByTestId('stock-row').first().getByRole('button').first().click();
+    await page.waitForTimeout(300);
+    found.push(...await scan(page, `stock-${vp.n}`)); await fits('stock');
+    await nav('nav-pharmacy-sales');
+    found.push(...await scan(page, `sales-${vp.n}`)); await fits('sales');
+
+    await page.evaluate(() => sessionStorage.clear()); // sign out before switching user
+    await login(page, 'surgeon', 'sagar@digiyaan.demo');
+    await expect(page).toHaveURL(/\/doctor$/);
+    await nav('nav-inpatient');
+    await page.getByTestId('open-ward-chart').first().click();
+    await expect(page.getByTestId('vitals-panel')).toBeVisible();
+    await page.waitForTimeout(400);
+    found.push(...await scan(page, `ward-chart-${vp.n}`)); await fits('ward chart');
+    const serious = found.filter((x) => x.impact === 'serious' || x.impact === 'critical');
+    expect(serious.map((v) => `${v.id}: ${v.nodes[0]?.target}`)).toEqual([]);
+  });
+}

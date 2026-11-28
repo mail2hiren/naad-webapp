@@ -2,6 +2,7 @@ import * as seed from './seed';
 import * as physioSeed from './physioSeed';
 import * as receptionSeed from './receptionSeed';
 import * as adminSeed from './adminSeed';
+import * as pharmacySeed from './pharmacySeed';
 import { handle as platformAdminHandle } from '../../supabase/functions/platform-admin/handler';
 
 /**
@@ -78,7 +79,9 @@ const TABLES: Record<string, Row[]> = {
   pharmacy_orders: seed.pharmacyOrders as unknown as Row[],
   referrals: seed.referrals as unknown as Row[],
   ward_billing_ledger: seed.wardBillingLedger as unknown as Row[],
-  inventory: seed.inventory as unknown as Row[],
+  inventory: [...seed.inventory, ...pharmacySeed.inventory] as unknown as Row[],
+  stock_batches: pharmacySeed.batches as unknown as Row[],
+  vitals: pharmacySeed.vitals as unknown as Row[],
   documents: seed.documents as unknown as Row[],
   notifications: seed.notifications as unknown as Row[],
   audit_events: seed.auditEvents as unknown as Row[],
@@ -186,7 +189,10 @@ class MockBuilder {
         return { data: null, error: { message: 'duplicate key value violates unique constraint "bills_org_id_number_key"' } };
       }
       const inserted: Row[] = rowsIn.map((r) => {
-        const row = { id: r.id ?? genId(this.table.slice(0, 4)), ...r };
+        // Identity (bigint) ids for the tables that have them in Postgres.
+        const numeric = this.table === 'inventory' || this.table === 'exercise_library';
+        const nextNum = () => Math.max(0, ...table.map((x) => Number(x.id) || 0)) + 1;
+        const row = { id: r.id ?? (numeric ? nextNum() : genId(this.table.slice(0, 4))), ...r };
         // Like the real column default (ts timestamptz default now()).
         if (this.table === 'audit_events' && !row.ts) row.ts = new Date().toISOString();
         table.push(row);

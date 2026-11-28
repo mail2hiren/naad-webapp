@@ -101,6 +101,7 @@ export async function markSeen(appts: AppointmentRow[], patientId: string, pract
 export interface BillDraft {
   patientId: string; appointmentId: string | null; items: BillItem[]; discount: number;
   paid: number; method: PaymentMethod | null; createdBy: string | null;
+  source?: 'front_desk' | 'pharmacy' | 'ward'; pharmacyOrderId?: string | null;
 }
 
 export async function createBill(orgId: string, bills: BillRow[], d: BillDraft, now: Date): Promise<{ bill: BillRow | null; error: string | null }> {
@@ -113,6 +114,7 @@ export async function createBill(orgId: string, bills: BillRow[], d: BillDraft, 
     subtotal: t.subtotal, discount: t.discount, total: t.total, paid, payment_method: paid > 0 ? d.method : null,
     status: billStatusFor(t.total, paid), void_reason: null, created_by: d.createdBy, created_at: now.toISOString(),
     paid_at: paid > 0 ? now.toISOString() : null,
+    source: d.source ?? 'front_desk', pharmacy_order_id: d.pharmacyOrderId ?? null,
   };
   // Two desks billing at once can pick the same next number; the unique
   // constraint refuses the second, so try the following number.

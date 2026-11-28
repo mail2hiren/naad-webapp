@@ -2,10 +2,12 @@
  * 0-10). Plain SVG with theme colours; values are labelled on every point so
  * nobody has to read them off the axis. */
 export function LineChart({
-  points, yMax, title, unit = '', testId,
+  points, yMax, yMin = 0, title, unit = '', testId,
 }: {
   points: { label: string; value: number }[];
   yMax: number;
+  /** Bottom of the scale (default 0), so a narrow range like body temperature shows its trend. */
+  yMin?: number;
   title: string;
   unit?: string;
   testId?: string;
@@ -13,8 +15,9 @@ export function LineChart({
   const w = 640, h = 220, left = 44, right = 52, top = 24, bottom = 40;
   const iw = w - left - right, ih = h - top - bottom;
   const x = (i: number) => left + (points.length <= 1 ? iw / 2 : (i * iw) / (points.length - 1));
-  const y = (v: number) => top + ih - (Math.max(0, Math.min(yMax, v)) / yMax) * ih;
-  const ticks = [0, yMax / 2, yMax];
+  const span = yMax - yMin || 1;
+  const y = (v: number) => top + ih - ((Math.max(yMin, Math.min(yMax, v)) - yMin) / span) * ih;
+  const ticks = [yMin, Math.round(((yMin + yMax) / 2) * 10) / 10, yMax];
   const path = points.map((p, i) => `${i === 0 ? 'M' : 'L'}${x(i)} ${y(p.value)}`).join(' ');
 
   return (

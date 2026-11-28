@@ -30,6 +30,7 @@ export const ROLE_NAV: Record<StaffRole, NavItem[]> = {
   pharmacist: [
     { to: '/pharmacy', section: 'orders', label: 'Orders', icon: 'pill' },
     { to: '/pharmacy', section: 'stock', label: 'Stock', icon: 'box' },
+    { to: '/pharmacy', section: 'sales', label: 'Sales', icon: 'receipt' },
   ],
   admin: [
     { to: '/admin', section: 'overview', label: 'Overview', icon: 'chart' },

@@ -5,6 +5,26 @@ versions follow [SemVer](https://semver.org/) and each release is tagged `vX.Y.Z
 
 ## [Unreleased]
 
+## [0.7.0] - 2026-11-28
+
+Phase 5, part 2 of the product gap audit: the pharmacist's and the ward's working day.
+
+### Added
+- **Pharmacy stock by batch:** each medicine's batches with expiry date, quantity and selling price; filters for reorder, expiring within 90 days and expired; editable reorder level; receive stock (existing or new medicine, duplicate batches and already-expired stock refused); write off a batch with a reason (it stays on record); reorder list as CSV.
+- **Dispense and bill:** dispensing an order works out the quantity from dose and duration, takes the earliest-expiring usable batches first (never expired stock), shows any shortfall, lowers stock and creates the pharmacy bill with a receipt; part payments and discounts as at reception.
+- **Pharmacy Sales** page: today's sales and takings, every pharmacy bill with its receipt, and later payments.
+- **Ward admission:** admit any patient to a free bed under a doctor; today's bed charge goes on the ward bill; move a patient to another bed; marking for discharge frees the bed, and so does the admin clearing payment.
+- **Vital signs:** record BP, pulse, temperature, SpO2, breathing rate and pain with range checks; readings that need attention (high or low BP, fast or slow pulse, fever, low oxygen, fast breathing, severe pain) are flagged on the chart and the ward card; trend charts for pulse, temperature, BP and SpO2; every reading kept.
+- Ward summary: free beds per ward and patients whose latest vitals need attention.
+- Demo: stock for every prescribed demo medicine in batches (some expiring, one expired), and vitals for the three ward patients (Suresh with a rising fever).
+- Migration `20261128084529_pharmacy_ward` (`stock_batches`, `vitals`, bill source and pharmacy order, pharmacist billing, doctors and physios may change only bed occupancy), applied to the Naad database with the owner's go.
+- Tests: `e2e/pharmacy-ward-phase5b.spec.ts` (4 flows), pharmacy and ward screens in the accessibility scan at phone and desktop width, unit tests for dosing, expiry, earliest-expiry picking and vital-sign flags.
+
+### Changed
+- A rounds note charges that bed's daily rate once a day (it used to add a fixed ₹1,500 every time).
+- Line charts can start above zero, so narrow ranges such as body temperature show their trend.
+- Generic-equivalent chips on pharmacy orders have stronger contrast.
+
 ## [0.6.1] - 2026-11-28
 
 ### Added

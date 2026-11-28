@@ -142,7 +142,11 @@ test('reception -> doctor -> pharmacy -> admin: one patient all the way through'
 
   const readyCard = page.locator('.bg-surface-2', { hasText: patientName }).first();
   await readyCard.getByTestId('dispense').click();
+  // Dispensing takes stock from the earliest-expiry batch and bills the medicines.
+  await expect(page.getByTestId('dispense-modal')).toBeVisible();
+  await page.getByTestId('dispense-save').click();
   await expect(page.getByText('Dispensed', { exact: true })).toBeVisible();
+  if (await page.getByTestId('receipt').isVisible()) await page.getByTestId('close-receipt').click();
 
   await signOut(page);
 

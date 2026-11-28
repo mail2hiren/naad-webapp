@@ -5,7 +5,13 @@ import { useAuth } from '../context/AuthContext';
 import { useClinic } from '../context/ClinicContext';
 import { supabase } from '../lib/supabaseClient';
 import { STAGE_LABEL, STAGE_ORDER, fmtDateTime, stagePillTone } from '../lib/journey';
-import type { JourneyHistoryEntry, JourneyStage, PatientRow } from '../types/db';
+import type { BedRow, JourneyHistoryEntry, JourneyStage, PatientRow, VitalsRow } from '../types/db';
+import { useBeds } from '../hooks/useHospitalSetup';
+import { useOrgTable } from '../hooks/useOrgTable';
+import { AdmitModal, BedPanel, VitalsPanel } from '../components/ward/WardPanels';
+import { chargeBedDay, freeBed } from '../lib/wardActions';
+import { vitalFlags } from '../lib/ward';
+import { clinicNow, clinicToday, dayKey } from '../lib/schedule';
 
 function nextStage(stage: JourneyStage): JourneyStage | null {
   const idx = STAGE_ORDER.indexOf(stage);
@@ -48,6 +54,12 @@ export default function InpatientWardView() {
   const [dischargeSaving, setDischargeSaving] = useState(false);
   const [admitting, setAdmitting] = useState(false);
   const [stabilitySavingId, setStabilitySavingId] = useState<string | null>(null);
+  const [admitOpen, setAdmitOpen] = useState(false);
+  const { beds } = useBeds(orgId);
+  const { rows: vitals } = useOrgTable<VitalsRow>('vitals', orgId, (v) => ({ ...v, temp_c: v.temp_c == null ? null : Number(v.temp_c) }));
+  const bedOf = (patientId: string): BedRow | undefined => beds.find((b) => b.patient_id === patientId);
+  const latestVitals = (patientId: string): VitalsRow | undefined =>
+    vitals.filter((v) => v.patient_id === patientId).sort((a, b) => b.taken_at.localeCompare(a.taken_at))[0];
 
   const admitted = useMemo(
     () => patients.filter((p) => p.queue_status === 'admitted' || p.queue_status === 'pending_discharge_clearance'),
@@ -58,8 +70,8 @@ export default function InpatientWardView() {
     wardLedger.filter((l) => l.patient_id === patientId).reduce((sum, l) => sum + l.amount, 0);
 
   const todayTotal = useMemo(() => {
-    const today = new Date().toISOString().slice(0, 10);
-    return wardLedger.filter((l) => l.created_at.slice(0, 10) === today).reduce((sum, l) => sum + l.amount, 0);
+    const today = clinicToday();
+    return wardLedger.filter((l) => dayKey(new Date(l.created_at)) === today).reduce((sum, l) => sum + l.amount, 0);
   }, [wardLedger]);
 
   const selected = admitted.find((p) => p.id === selectedId) ?? null;
@@ -134,16 +146,25 @@ export default function InpatientWardView() {
       pushToast({ tone: 'critical', title: 'Could not save rounds note', detail: histErr.message });
       return;
     }
-    const { error: ledgerErr } = await supabase.from('ward_billing_ledger').insert({
-      id: `wl-${Date.now()}`,
-      org_id: orgId,
-      patient_id: patient.id,
-      encounter_id: null,
-      description: 'Inpatient care — daily rounds',
-      amount: 1500,
-      created_by: practitioner?.name ?? null,
-      created_at: new Date().toISOString(),
-    });
+    // Today's bed charge, once a day, at the bed's own rate. A patient
+    // without a bed (admitted before beds existed) is charged the flat
+    // daily inpatient rate instead, also once a day.
+    const now = clinicNow();
+    const bed = bedOf(patient.id);
+    let ledgerErr: { message: string } | null = null;
+    let charged = false;
+    if (bed) {
+      charged = await chargeBedDay(orgId, wardLedger, patient, bed, practitioner?.name ?? null, now);
+    } else {
+      const description = `Inpatient care, ${dayKey(now)}`;
+      if (!wardLedger.some((l) => l.patient_id === patient.id && l.description === description)) {
+        ledgerErr = (await supabase.from('ward_billing_ledger').insert({
+          id: `wl-${Date.now()}`, org_id: orgId, patient_id: patient.id, encounter_id: null, description, amount: 1500,
+          created_by: practitioner?.name ?? null, created_at: now.toISOString(),
+        })).error;
+        charged = !ledgerErr;
+      }
+    }
     setSavingRounds(false);
     if (ledgerErr) {
       pushToast({ tone: 'warning', title: 'Rounds note saved, but ledger charge failed', detail: ledgerErr.message });
@@ -151,7 +172,7 @@ export default function InpatientWardView() {
       return;
     }
     setRoundsNote('');
-    pushToast({ tone: 'ok', title: 'Rounds note saved', detail: 'Ledger updated for today.' });
+    pushToast({ tone: 'ok', title: 'Rounds note saved', detail: charged ? "Today's bed charge added." : "Today's bed charge was already on the bill." });
   }
 
   async function handleAdvanceStage(patient: PatientRow) {
@@ -209,6 +230,7 @@ export default function InpatientWardView() {
       pushToast({ tone: 'critical', title: 'Could not mark for discharge', detail: error.message });
       return;
     }
+    await freeBed(bedOf(patient.id));
     await logAudit('mark-for-discharge', patient.name);
     setDischargeOpen(false);
     setDischargeSummary('');
@@ -219,10 +241,27 @@ export default function InpatientWardView() {
     <Shell title="Ward">
       <p className="text-ink-soft text-[15px] -mt-3 mb-6">Admitted patients, their stage of care, daily rounds notes and discharge.</p>
 
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6">
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-4">
         <StatTile label="Charges added today" value={fmtRupees(todayTotal)} tone="accent" />
-        <StatTile label="Admitted beds" value={admitted.length} />
+        <StatTile label="Admitted patients" value={admitted.length} />
+        <StatTile label="Free beds" value={`${beds.filter((b) => b.active && !b.patient_id).length} of ${beds.filter((b) => b.active).length}`} tone="ok" />
+        <StatTile label="Vitals needing attention" value={admitted.filter((p) => { const v = latestVitals(p.id); return v && vitalFlags(v).length > 0; }).length} tone="danger" />
       </div>
+      {!selected && (
+        <Card className="mb-6" data-testid="ward-beds-summary">
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <ul className="flex flex-wrap gap-x-4 gap-y-1 text-sm text-ink-soft">
+              {[...new Set(beds.filter((b) => b.active).map((b) => b.ward))].map((w) => {
+                const list = beds.filter((b) => b.active && b.ward === w);
+                return <li key={w}><span className="font-semibold text-ink">{w}</span>: {list.filter((b) => !b.patient_id).length} free of {list.length}</li>;
+              })}
+              {beds.length === 0 && <li>No beds set up yet. The hospital admin adds them under Wards and beds.</li>}
+            </ul>
+            <Btn variant="glow" data-testid="admit-open" disabled={!beds.some((b) => b.active && !b.patient_id)} onClick={() => setAdmitOpen(true)}>+ Admit a patient</Btn>
+          </div>
+        </Card>
+      )}
+      {admitOpen && <AdmitModal beds={beds} onClose={() => setAdmitOpen(false)} />}
 
       {selected ? (
         <ChartDetail
@@ -250,6 +289,8 @@ export default function InpatientWardView() {
           dischargeSaving={dischargeSaving}
           onSetStability={(status) => handleSetStability(selected, status)}
           stabilitySaving={stabilitySavingId === selected.id}
+          beds={beds}
+          vitals={vitals}
         />
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -286,7 +327,10 @@ export default function InpatientWardView() {
                 </div>
                 <div className="text-xs text-ink-soft">
                   Doctor: <span className="text-ink">{doctorName(p)}</span>
+                  {' · '}Bed: <span className="text-ink" data-testid="card-bed">{bedOf(p.id) ? `${bedOf(p.id)?.ward} ${bedOf(p.id)?.label}` : 'none'}</span>
                 </div>
+                {(() => { const v = latestVitals(p.id); const fl = v ? vitalFlags(v) : []; return fl.length > 0
+                  ? <div className="flex flex-wrap gap-2" data-testid="card-vitals-flags">{fl.map((x) => <Pill key={x.label} tone="danger">{x.label}</Pill>)}</div> : null; })()}
                 {p.queue_status === 'pending_discharge_clearance' && (
                   <div className="text-[13px] text-gate bg-gate-soft rounded-lg px-2.5 py-1.5">
                     Routed to Admin dashboard for balance verification
@@ -332,6 +376,8 @@ interface ChartDetailProps {
   dischargeSaving: boolean;
   onSetStability: (status: 'stable' | 'unstable') => void;
   stabilitySaving: boolean;
+  beds: BedRow[];
+  vitals: VitalsRow[];
 }
 
 function ChartDetail({
@@ -339,7 +385,7 @@ function ChartDetail({
   roundsNote, setRoundsNote, onSaveRounds, savingRounds,
   advanceOpen, setAdvanceOpen, advanceNote, setAdvanceNote, onAdvance, advancing,
   dischargeOpen, setDischargeOpen, dischargeSummary, setDischargeSummary, onMarkForDischarge, dischargeSaving,
-  onSetStability, stabilitySaving,
+  onSetStability, stabilitySaving, beds, vitals,
 }: ChartDetailProps) {
   const stability = stabilityLabel(patient.triage?.wardStability);
   const locked = patient.queue_status === 'pending_discharge_clearance';
@@ -404,6 +450,9 @@ function ChartDetail({
           </div>
         )}
       </Card>
+
+      <BedPanel patient={patient} beds={beds} locked={locked} />
+      <VitalsPanel patient={patient} vitals={vitals} locked={locked} />
 
       {!patient.journey_stage && (
         <Card>

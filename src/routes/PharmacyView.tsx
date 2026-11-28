@@ -1,11 +1,17 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { useClinic } from '../context/ClinicContext';
-import { Card, Btn, Pill, SectionHead } from '../components/ui';
+import { Card, Btn, Pill } from '../components/ui';
 import Shell from '../components/Shell';
 import { useSection } from '../lib/nav';
 import { supabase } from '../lib/supabaseClient';
-import type { InventoryRow, PharmacyOrderRow, PrescriptionItem } from '../types/db';
+import type { BillRow, InventoryRow, PharmacyOrderRow, PrescriptionItem, StockBatchRow } from '../types/db';
+import { useBills } from '../hooks/useBills';
+import { useOrgTable } from '../hooks/useOrgTable';
+import { matchInventory } from '../lib/pharmacy';
+import { StockSection } from '../components/pharmacy/Stock';
+import { DispenseModal, SalesSection } from '../components/pharmacy/Dispense';
+import { Receipt } from '../components/reception/Billing';
 
 /**
  * Pharmacy Counter — a 3-column Kanban board (Pending / Preparing / Ready)
@@ -49,15 +55,6 @@ function useElapsed(sinceIso: string): string {
   return formatDuration(now - since);
 }
 
-/** Cross-references an inventory row against a prescribed item by a simple
- * case-insensitive substring match on the drug's first word (e.g.
- * "Ibuprofen 400mg" ~ item name "Ibuprofen"). */
-function matchInventory(inventory: InventoryRow[], itemName: string): InventoryRow | undefined {
-  const key = itemName.toLowerCase().trim().split(' ')[0];
-  if (!key) return undefined;
-  return inventory.find((inv) => inv.drug.toLowerCase().includes(key));
-}
-
 function isLowStock(matched: InventoryRow | undefined): boolean {
   if (!matched) return true;
   return matched.stock === 0 || matched.stock <= matched.low;
@@ -72,7 +69,7 @@ function exceptionNoteFor(matched: InventoryRow | undefined): string {
 }
 
 export default function PharmacyView() {
-  const section = useSection<'orders' | 'stock'>('orders');
+  const section = useSection<'orders' | 'stock' | 'sales'>('orders');
   useAuth(); // practitioner identity flows into logAudit via ClinicContext
   // Row 4.0 — Real-Time Sync Notification: the toast + audio chime for a
   // fresh authorization already fire globally (ClinicContext watches
@@ -83,7 +80,10 @@ export default function PharmacyView() {
   // up while this view happens to already be mounted.
   const { orgId, pharmacyOrders, inventory, patients, pushToast, logAudit, newPharmacyOrderIds } = useClinic();
   const [busyIds, setBusyIds] = useState<Set<string>>(new Set());
-  const showInventory = true;
+  const { bills } = useBills(orgId);
+  const { rows: batches } = useOrgTable<StockBatchRow>('stock_batches', orgId, (b) => ({ ...b, mrp: Number(b.mrp) }));
+  const [dispensing, setDispensing] = useState<PharmacyOrderRow | null>(null);
+  const [receipt, setReceipt] = useState<BillRow | null>(null);
 
   function setBusy(id: string, busy: boolean) {
     setBusyIds((prev) => {
@@ -128,23 +128,8 @@ export default function PharmacyView() {
     }
   }
 
-  async function handleDispense(order: PharmacyOrderRow) {
-    setBusy(order.id, true);
-    try {
-      const name = patientName(order.patient_id);
-      const nowIso = new Date().toISOString();
-      await supabase.from('pharmacy_orders')
-        .update({ status: 'collected', updated_at: nowIso })
-        .eq('id', order.id);
-      await supabase.from('notifications').insert({
-        id: newId('nt'), org_id: orgId, type: 'general', patient_id: order.patient_id, practitioner_id: null,
-        message: `Medicines dispensed for ${name}`, channel: 'inapp', read: false,
-      });
-      await logAudit('pharmacy-dispense', name);
-      pushToast({ tone: 'ok', title: 'Dispensed', detail: name });
-    } finally {
-      setBusy(order.id, false);
-    }
+  function handleDispense(order: PharmacyOrderRow) {
+    setDispensing(order);
   }
 
   async function handleFlagAlternate(order: PharmacyOrderRow, item: PrescriptionItem) {
@@ -186,7 +171,7 @@ export default function PharmacyView() {
   }
 
   return (
-    <Shell title={section === 'stock' ? 'Stock' : 'Orders'}>
+    <Shell title={section === 'stock' ? 'Stock' : section === 'sales' ? 'Sales' : 'Orders'}>
       {exceptions.length > 0 && (
         <div className="mb-6 space-y-3">
           {exceptions.map((order) => (
@@ -262,25 +247,14 @@ export default function PharmacyView() {
         </div>
       )}
 
-      {section === 'stock' && (
-        <Card>
-          <SectionHead title="Medicines in stock" desc="Items at or below their reorder level are marked Low." />
-          {showInventory && (
-            <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-2">
-              {inventory.length === 0 && <div className="text-sm text-ink-faint">No inventory records.</div>}
-              {inventory.map((inv) => (
-                <div key={inv.id} className="flex items-center justify-between bg-surface-2 rounded-lg px-3 py-2">
-                  <div>
-                    <div className="text-sm text-ink font-semibold">{inv.drug}</div>
-                    <div className="text-[13px] text-ink-faint">{inv.stock} {inv.unit ?? ''}</div>
-                  </div>
-                  <Pill tone={inv.stock <= inv.low ? 'danger' : 'ok'}>{inv.stock <= inv.low ? 'Low' : 'OK'}</Pill>
-                </div>
-              ))}
-            </div>
-          )}
-        </Card>
+      {section === 'stock' && <StockSection batches={batches} />}
+      {section === 'sales' && <SalesSection bills={bills} />}
+
+      {dispensing && (
+        <DispenseModal order={dispensing} batches={batches} bills={bills} onClose={() => setDispensing(null)}
+          onDone={(b) => { setDispensing(null); if (b) setReceipt(b); }} />
       )}
+      {receipt && <Receipt bill={bills.find((b) => b.id === receipt.id) ?? receipt} onClose={() => setReceipt(null)} />}
     </Shell>
   );
 }
@@ -399,7 +373,7 @@ function OrderCard({
                   {matched.alternates.map((alt) => (
                     <span
                       key={alt}
-                      className="font-mono text-xs px-1.5 py-0.5 rounded-full bg-accent-soft text-accent-ink"
+                      className="font-mono text-xs px-1.5 py-0.5 rounded-full border border-line-strong bg-surface-solid text-ink"
                     >
                       {alt}
                     </span>
