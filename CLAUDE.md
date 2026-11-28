@@ -67,6 +67,7 @@ Navigation: `src/lib/nav.ts` (`ROLE_NAV`) lists each role's sidebar pages;
 ## Hosting
 
 - **GitHub Pages** — primary per README: `.github/workflows/deploy-pages.yml` builds on every push to `main` → **`https://naad.digiyaan.com/`** (custom domain since 2026-11-28: CNAME `naad` → `mail2hiren.github.io` in GoDaddy DNS for digiyaan.com, repo variable `PAGES_BASE_PATH=/`, HTTPS enforced). The old `https://mail2hiren.github.io/naad-webapp/` redirects there. This is the demo site; real hospitals get their own domain and a separate paid database later.
+- **E-brochure:** `public/brochure/index.html` is a standalone static marketing page served at `/brochure/` (not part of the React app).
 - **Netlify** — site `naad-care` (`https://naad-care.netlify.app`) also exists, built from `netlify.toml` (`npm run build` → `dist`, SPA redirect).
 - Pushes to `main` deploy, which is another reason nothing merges without "go".
 - CI: `.github/workflows/ci.yml` — `tsc -b`, `oxlint`, both Playwright projects (incl. axe WCAG 2.1 AA gate) on every push/PR.
